@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Báo cáo thống kê - TH True Mart{% endblock %}
+{% block page_title %}Báo cáo thống kê{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="bg-primary bg-gradient text-white p-4 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h4 class="fw-bold mb-1">Báo cáo & Thống kê</h4>
+      <p class="mb-0">Phân tích dữ liệu kho hàng và hiệu suất</p>
+    </div>
+    <i class="fa-solid fa-chart-column fa-3x"></i>
+  </div>
+
+  <!-- Bộ lọc -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-3">
+        <select class="form-select" onchange="this.form.submit()">
+          <option selected>Tháng này</option>
+          <option>Tháng trước</option>
+          <option>Quý này</option>
+          <option>Quý trước</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+      </div>
+      <div class="col-md-3">
+        <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+      </div>
+      <div class="col-md-3 text-end">
+        <button type="submit" class="btn btn-success w-100">
+          <i class="fa-solid fa-rotate-right me-1"></i> Cập nhật báo cáo
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Thống kê tổng hợp -->
+  <div class="row g-3 mb-4">
+    <!-- Tổng doanh thu -->
+    <div class="col-md-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3">
+        <div class="text-muted small mb-1">Tổng doanh thu</div>
+        <h3 class="fw-bold text-success mb-0">{{ total_revenue|floatformat:0|intcomma }} <span class="fs-6">VNĐ</span></h3>
+      </div>
+    </div>
+
+    <!-- Tổng phiếu nhập -->
+    <div class="col-md-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3">
+        <div class="text-muted small mb-1">Tổng phiếu nhập</div>
+        <h3 class="fw-bold text-primary mb-0">{{ total_imports }}</h3>
+      </div>
+    </div>
+
+    <!-- Tổng phiếu xuất -->
+    <div class="col-md-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3">
+        <div class="text-muted small mb-1">Tổng phiếu xuất</div>
+        <h3 class="fw-bold text-info mb-0">{{ total_exports }}</h3>
+      </div>
+    </div>
+
+    <!-- Tỷ lệ hoàn hàng -->
+    <div class="col-md-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3">
+        <div class="text-muted small mb-1">Tỷ lệ hoàn hàng</div>
+        <h3 class="fw-bold text-danger mb-0">{{ return_rate }}%</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Biểu đồ thống kê (placeholder) -->
+  <div class="bg-white p-5 rounded-3 shadow-sm text-center text-muted">
+    {% if total_revenue or total_imports or total_exports %}
+      <i class="fa-solid fa-chart-simple fa-2x mb-2 text-secondary"></i>
+      <div>Dữ liệu đã được thống kê cho giai đoạn từ
+        <strong>{{ start_date|date:"d/m/Y" }}</strong> đến
+        <strong>{{ end_date|date:"d/m/Y" }}</strong>.
+      </div>
+      <div class="small mt-2 text-muted">[Biểu đồ chi tiết đang được cập nhật]</div>
+    {% else %}
+      [Biểu đồ thống kê — chưa có dữ liệu]
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

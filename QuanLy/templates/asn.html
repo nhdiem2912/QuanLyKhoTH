@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Giao hàng (ASN) - TH True Mart{% endblock %}
+{% block page_title %}Giao hàng (ASN){% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- Header -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h6 class="fw-semibold mb-0">Quản lý giao hàng (ASN)</h6>
+      <small class="text-muted">Thông báo giao hàng từ nhà cung ứng</small>
+    </div>
+    <button class="btn btn-success">
+      <i class="fa-solid fa-plus me-1"></i> Tạo ASN mới
+    </button>
+  </div>
+
+  <!-- Danh sách ASN -->
+  <div class="bg-white p-3 rounded-3 shadow-sm">
+    {% if asns %}
+    <table class="table align-middle table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Mã ASN</th>
+          <th>Ngày tạo</th>
+          <th>Nhà cung ứng</th>
+          <th>Sản phẩm</th>
+          <th>Đơn vị</th>
+          <th>Số lượng</th>
+          <th>Tổng giá trị</th>
+          <th>Người giao</th>
+          <th>SĐT</th>
+          <th>Ngày dự kiến</th>
+          <th class="text-end">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asn in asns %}
+        <tr>
+          <td>{{ asn.asn_code }}</td>
+          <td>{{ asn.created_date|date:"d/m/Y" }}</td>
+          <td>{{ asn.supplier.company_name }}</td>
+          <td>{{ asn.product.name }}</td>
+          <td>{{ asn.unit }}</td>
+          <td>{{ asn.quantity }}</td>
+          <td class="fw-semibold text-success">{{ asn.total_value|floatformat:0|intcomma }} VNĐ</td>
+          <td>{{ asn.deliverer_name }}</td>
+          <td>{{ asn.deliverer_phone }}</td>
+          <td>{{ asn.expected_date|date:"d/m/Y" }}</td>
+          <td style="text-align: right;">
+            <div class="d-flex flex-column align-items-end">
+              <a href="#" class="text-primary mb-1">Xem</a>
+              <a href="#" class="text-danger">Xóa</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa-regular fa-file-lines fa-2x mb-3"></i>
+      <div>Chưa có ASN nào</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

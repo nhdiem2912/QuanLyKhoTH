@@ -1,0 +1,225 @@
+[
+  {
+    "model": "QuanLy.category",
+    "pk": 1,
+    "fields": {
+      "category_code": "CAT01",
+      "name": "Sữa",
+      "description": "Các loại sữa đóng hộp"
+    }
+  },
+  {
+    "model": "QuanLy.category",
+    "pk": 2,
+    "fields": {
+      "category_code": "CAT02",
+      "name": "Nước giải khát",
+      "description": "Nước ngọt và nước khoáng"
+    }
+  },
+  {
+    "model": "QuanLy.supplier",
+    "pk": 1,
+    "fields": {
+      "supplier_code": "SUP01",
+      "company_name": "TH True Milk",
+      "contact_name": "Nguyễn An",
+      "phone": "0905123456",
+      "email": "an@thmilk.vn",
+      "status": "active"
+    }
+  },
+  {
+    "model": "QuanLy.supplier",
+    "pk": 2,
+    "fields": {
+      "supplier_code": "SUP02",
+      "company_name": "Coca-Cola VN",
+      "contact_name": "Trần Bình",
+      "phone": "0905333888",
+      "email": "binh@cocacola.vn",
+      "status": "active"
+    }
+  },
+  {
+    "model": "QuanLy.product",
+    "pk": 1,
+    "fields": {
+      "product_code": "P001",
+      "name": "Sữa TH True Milk 1L",
+      "category": 1,
+      "quantity": 120,
+      "unit": "Hộp",
+      "location": "Kệ A1",
+      "status": "available"
+    }
+  },
+  {
+    "model": "QuanLy.product",
+    "pk": 2,
+    "fields": {
+      "product_code": "P002",
+      "name": "Coca Cola 330ml",
+      "category": 2,
+      "quantity": 200,
+      "unit": "Lon",
+      "location": "Kệ B1",
+      "status": "available"
+    }
+  },
+  {
+    "model": "QuanLy.importreceipt",
+    "pk": 1,
+    "fields": {
+      "import_code": "IM001",
+      "import_date": "2025-10-01",
+      "product": 1,
+      "quantity": 50,
+      "unit": "Hộp",
+      "total_price": "2500000.00",
+      "supplier": 1,
+      "status": "done"
+    }
+  },
+  {
+    "model": "QuanLy.importreceipt",
+    "pk": 2,
+    "fields": {
+      "import_code": "IM002",
+      "import_date": "2025-10-05",
+      "product": 2,
+      "quantity": 100,
+      "unit": "Lon",
+      "total_price": "1500000.00",
+      "supplier": 2,
+      "status": "processing"
+    }
+  },
+  {
+    "model": "QuanLy.exportreceipt",
+    "pk": 1,
+    "fields": {
+      "export_code": "EX001",
+      "export_date": "2025-10-10",
+      "product": 1,
+      "quantity": 20,
+      "unit": "Hộp",
+      "total_price": "1000000.00",
+      "destination": "Winmart Hải Châu",
+      "status": "done"
+    }
+  },
+  {
+    "model": "QuanLy.exportreceipt",
+    "pk": 2,
+    "fields": {
+      "export_code": "EX002",
+      "export_date": "2025-10-15",
+      "product": 2,
+      "quantity": 30,
+      "unit": "Lon",
+      "total_price": "500000.00",
+      "destination": "Tạp hóa Sơn Trà",
+      "status": "delivering"
+    }
+  },
+  {
+    "model": "QuanLy.returnreceipt",
+    "pk": 1,
+    "fields": {
+      "return_code": "RT001",
+      "return_date": "2025-10-12",
+      "product": 2,
+      "quantity": 10,
+      "return_type": "customer",
+      "reason": "Bị móp lon",
+      "status": "done"
+    }
+  },
+  {
+    "model": "QuanLy.returnreceipt",
+    "pk": 2,
+    "fields": {
+      "return_code": "RT002",
+      "return_date": "2025-10-20",
+      "product": 1,
+      "quantity": 5,
+      "return_type": "store",
+      "reason": "Cận hạn sử dụng",
+      "status": "processing"
+    }
+  },
+  {
+    "model": "QuanLy.purchaseorder",
+    "pk": 1,
+    "fields": {
+      "po_code": "PO001",
+      "supplier": 1,
+      "product": 1,
+      "quantity": 100,
+      "unit": "Hộp",
+      "created_date": "2025-09-28",
+      "total_price": "5000000.00",
+      "status": "approved"
+    }
+  },
+  {
+    "model": "QuanLy.purchaseorder",
+    "pk": 2,
+    "fields": {
+      "po_code": "PO002",
+      "supplier": 2,
+      "product": 2,
+      "quantity": 150,
+      "unit": "Lon",
+      "created_date": "2025-09-30",
+      "total_price": "2250000.00",
+      "status": "pending"
+    }
+  },
+  {
+    "model": "QuanLy.asn",
+    "pk": 1,
+    "fields": {
+      "asn_code": "ASN001",
+      "supplier": 1,
+      "product": 1,
+      "quantity": 50,
+      "unit": "Hộp",
+      "total_value": "2500000.00",
+      "deliverer_name": "Vũ Minh",
+      "deliverer_phone": "0905111222",
+      "created_date": "2025-10-02",
+      "expected_date": "2025-10-03"
+    }
+  },
+  {
+    "model": "QuanLy.asn",
+    "pk": 2,
+    "fields": {
+      "asn_code": "ASN002",
+      "supplier": 2,
+      "product": 2,
+      "quantity": 80,
+      "unit": "Lon",
+      "total_value": "1200000.00",
+      "deliverer_name": "Phạm Hòa",
+      "deliverer_phone": "0905888999",
+      "created_date": "2025-10-06",
+      "expected_date": "2025-10-07"
+    }
+  },
+  {
+    "model": "QuanLy.report",
+    "pk": 1,
+    "fields": {
+      "report_date": "2025-10-25",
+      "total_imports": 2,
+      "total_exports": 2,
+      "total_returns": 2,
+      "total_revenue": "3500000.00",
+      "total_loss": "50000.00",
+      "created_by": 1
+    }
+  }
+]

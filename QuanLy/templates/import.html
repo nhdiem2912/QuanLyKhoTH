@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Nhập kho - TH True Mart{% endblock %}
+{% block page_title %}Nhập kho{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h6 class="fw-semibold mb-0">Quản lý nhập kho</h6>
+      <small class="text-muted">Theo dõi các phiếu nhập kho</small>
+    </div>
+    <button class="btn btn-success">
+      <i class="fa-solid fa-plus me-1"></i> Tạo phiếu nhập
+    </button>
+  </div>
+
+  <div class="bg-white p-3 rounded-3 shadow-sm">
+    {% if imports %}
+    <table class="table align-middle table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Mã phiếu</th>
+          <th>Ngày nhập</th>
+          <th>Sản phẩm</th>
+          <th class="text-end">Số lượng</th>
+          <th>Đơn vị</th>
+          <th class="text-end">Tổng tiền</th>
+          <th>Nhà cung ứng</th>
+          <th>Trạng thái</th>
+          <th class="text-end">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in imports %}
+        <tr>
+          <td>{{ r.import_code }}</td>
+          <td>{{ r.import_date|date:"d/m/Y" }}</td>
+          <td>{{ r.product.name }}</td>
+          <td class="text-end">{{ r.quantity|intcomma }}</td>
+          <td>{{ r.unit }}</td>
+          <td class="fw-semibold text-success text-end">
+            {{ r.total_price|floatformat:0|intcomma }} ₫
+          </td>
+          <td>{{ r.supplier.company_name }}</td>
+          <td>
+            {% if r.status == 'done' %}
+              <span class="badge bg-success bg-opacity-25 text-success">Hoàn thành</span>
+            {% else %}
+              <span class="badge bg-warning bg-opacity-25 text-warning">Đang xử lý</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <a href="#" class="text-primary me-3">Xem</a>
+            <a href="#" class="text-danger">Xóa</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa-regular fa-file-lines fa-2x mb-3"></i>
+      <div>Chưa có phiếu nhập nào</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

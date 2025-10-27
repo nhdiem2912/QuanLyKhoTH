@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Danh mục - TH True Mart{% endblock %}
+{% block page_title %}Danh mục{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h6 class="fw-semibold mb-0">Quản lý danh mục</h6>
+      <small class="text-muted">Tạo và chỉnh sửa các nhóm sản phẩm</small>
+    </div>
+    <button class="btn btn-success"><i class="fa-solid fa-plus me-1"></i> Thêm danh mục</button>
+  </div>
+
+  <div class="row g-3">
+    {% if categories %}
+      {% for c in categories %}
+      <div class="col-md-6 col-xl-4">
+        <div class="bg-white p-3 rounded-3 shadow-sm h-100">
+          <div class="d-flex justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded-3 bg-light d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+                <i class="fa-solid fa-bag-shopping"></i>
+              </div>
+              <div>
+                <div class="fw-bold">{{ c.name }}</div>
+                <div class="text-muted small">{{ c.description }}</div>
+                <div class="text-muted small">{{ c.products.count }} sản phẩm</div>
+              </div>
+            </div>
+            <span class="text-muted small">{{ c.category_code }}</span>
+          </div>
+          <div class="mt-3">
+            <a href="#" class="me-3">Sửa</a>
+            <a href="#" class="text-danger">Xóa</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="col-12">
+        <div class="text-center text-muted py-5 bg-white rounded-3 shadow-sm">
+          <i class="fa-regular fa-rectangle-list fa-2x mb-3"></i>
+          <div>Chưa có danh mục nào</div>
+          <button class="btn btn-success btn-sm mt-2"><i class="fa-solid fa-plus me-1"></i> Thêm danh mục</button>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

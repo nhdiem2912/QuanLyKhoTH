@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Trang chủ - TH True Mart{% endblock %}
+{% block page_title %}Trang chủ{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome section -->
+    <div class="bg-primary text-white p-4 rounded-3 mb-4 d-flex justify-content-between align-items-center shadow-sm">
+        <div>
+            <h3 class="fw-bold mb-1">Chào mừng trở lại!</h3>
+            <p class="mb-0">Hệ thống quản lý kho <strong>TH True Mart</strong></p>
+        </div>
+        <div><i class="fa-solid fa-cubes fa-3x"></i></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <h5 class="fw-semibold mb-3">Thao tác nhanh</h5>
+    <div class="row g-3 mb-4">
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{% url 'products' %}" class="btn btn-light w-100 py-3 border rounded-3 shadow-sm d-flex flex-column align-items-center">
+                <i class="fa-solid fa-box text-primary mb-2 fs-3"></i>
+                Quản lý hàng hóa
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{% url 'import' %}" class="btn btn-light w-100 py-3 border rounded-3 shadow-sm d-flex flex-column align-items-center">
+                <i class="fa-solid fa-arrow-down text-success mb-2 fs-3"></i>
+                Nhập kho
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{% url 'export' %}" class="btn btn-light w-100 py-3 border rounded-3 shadow-sm d-flex flex-column align-items-center">
+                <i class="fa-solid fa-arrow-up text-primary mb-2 fs-3"></i>
+                Xuất kho
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{% url 'po' %}" class="btn btn-light w-100 py-3 border rounded-3 shadow-sm d-flex flex-column align-items-center">
+                <i class="fa-solid fa-file-invoice text-warning mb-2 fs-3"></i>
+                Đặt hàng (PO)
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{% url 'suppliers' %}" class="btn btn-light w-100 py-3 border rounded-3 shadow-sm d-flex flex-column align-items-center">
+                <i class="fa-solid fa-building text-info mb-2 fs-3"></i>
+                Nhà cung ứng
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{% url 'reports' %}" class="btn btn-light w-100 py-3 border rounded-3 shadow-sm d-flex flex-column align-items-center">
+                <i class="fa-solid fa-chart-bar text-danger mb-2 fs-3"></i>
+                Báo cáo
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <h5 class="fw-semibold mb-3">Tổng quan hôm nay</h5>
+    <div class="row g-3">
+        <!-- Tồn kho -->
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small">Tồn kho hiện tại</div>
+                        <h3 class="fw-bold text-dark mb-0">{{ total_stock|intcomma }}</h3>
+                        <div class="text-muted small">sản phẩm</div>
+                    </div>
+                    <div class="text-primary fs-3"><i class="fa-solid fa-box"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Đơn hàng hôm nay -->
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small">Đơn hàng hôm nay</div>
+                        <h3 class="fw-bold text-success mb-0">{{ total_orders_today }}</h3>
+                        <div class="text-success small">đơn hàng mới</div>
+                    </div>
+                    <div class="text-success fs-3"><i class="fa-solid fa-file-lines"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cần xử lý -->
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small">Cần xử lý</div>
+                        <h3 class="fw-bold text-warning mb-0">{{ pending_count }}</h3>
+                        <div class="text-warning small">phiếu chờ duyệt</div>
+                    </div>
+                    <div class="text-warning fs-3"><i class="fa-solid fa-clock"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cảnh báo -->
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small">Cảnh báo</div>
+                        <h3 class="fw-bold text-danger mb-0">{{ low_stock_count }}</h3>
+                        <div class="text-danger small">sản phẩm sắp hết</div>
+                    </div>
+                    <div class="text-danger fs-3"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
