@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Tạo phiếu hoàn hàng{% endblock %}
+{% block page_title %}Tạo phiếu hoàn hàng{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
+    <h5 class="fw-semibold text-primary mb-1">Tạo phiếu hoàn hàng</h5>
+    <small class="text-muted">Khách hàng hoàn trả → nhập vào kho</small>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Thông tin chung -->
+    <div class="card p-3 mb-4 shadow-sm">
+      <h6 class="fw-semibold text-primary mb-2">Thông tin phiếu hoàn</h6>
+      <div class="row g-3">
+        <div class="col-md-3">{{ form.return_code.label_tag }}{{ form.return_code }}</div>
+        <div class="col-md-3">{{ form.return_date.label_tag }}{{ form.return_date }}</div>
+        <div class="col-md-12">{{ form.note.label_tag }}{{ form.note }}</div>
+      </div>
+    </div>
+
+    <!-- Formset -->
+    <div class="card p-3 shadow-sm">
+      <div class="d-flex justify-content-between mb-2">
+        <h6 class="fw-semibold text-primary">Danh sách sản phẩm hoàn</h6>
+        <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
+          + Thêm dòng
+        </button>
+      </div>
+
+      {{ formset.management_form }}
+
+      <table class="table table-bordered text-center align-middle">
+        <thead class="table-primary">
+          <tr>
+            <th>Sản phẩm</th>
+            <th style="width:120px;">SL</th>
+            <th style="width:140px;">Đơn giá</th>
+            <th style="width:120px;">Đơn vị</th>
+            <th style="width:120px;">Vị trí</th>
+            <th style="width:160px;">Hạn sử dụng</th>
+            <th>Lý do</th>
+            <th>Thành tiền</th>
+            <th>Xóa</th>
+          </tr>
+        </thead>
+
+        <tbody id="item-body">
+          {% for f in formset.forms %}
+          <tr>
+            <td>{{ f.product }}</td>
+            <td>{{ f.quantity }}</td>
+            <td>{{ f.unit_price }}</td>
+            <td>{{ f.unit }}</td>
+            <td>{{ f.location }}</td>
+            <td>{{ f.expiry_date }}</td>
+            <td>{{ f.reason }}</td>
+            <td class="total-cell text-primary text-end fw-bold">0</td>
+            <td>{{ f.DELETE }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+        <tfoot>
+          <tr>
+            <td colspan="7" class="text-end fw-semibold">Tổng cộng:</td>
+            <td id="grand-total" class="text-end text-success fw-bold">0 ₫</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="text-end mt-4">
+      <a href="{% url 'return_list' %}" class="btn btn-secondary">Hủy</a>
+      <button type="submit" class="btn btn-primary">Lưu phiếu hoàn</button>
+    </div>
+
+  </form>
+</div>
+
+<style>
+.table input, .table select { height: 38px; }
+.total-cell { color:#0d6efd; font-size:15px; }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  function calcTotals() {
+    let grand = 0;
+    document.querySelectorAll("#item-body tr").forEach(row => {
+      let qty = parseFloat(row.querySelector("[name*='quantity']").value) || 0;
+      let price = parseFloat(row.querySelector("[name*='unit_price']").value) || 0;
+      let total = qty * price;
+      row.querySelector(".total-cell").innerText = total.toLocaleString("vi-VN");
+      grand += total;
+    });
+    document.getElementById("grand-total").innerText = grand.toLocaleString("vi-VN") + " ₫";
+  }
+
+  document.querySelectorAll("[name*='quantity'], [name*='unit_price']").forEach(
+    el => el.addEventListener("input", calcTotals)
+  );
+
+  calcTotals();
+});
+</script>
+
+{% endblock %}

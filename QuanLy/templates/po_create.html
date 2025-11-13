@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Tạo đơn đặt hàng (PO) - TH True Mart{% endblock %}
+{% block page_title %}Tạo đơn đặt hàng (PO){% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- HEADER -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
+    <h5 class="fw-semibold text-primary mb-1">Tạo đơn đặt hàng (PO)</h5>
+    <small class="text-muted">Nhập thông tin đơn hàng và sản phẩm cần đặt</small>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- THÔNG TIN PO -->
+    <div class="card p-3 mb-4 shadow-sm">
+      <h6 class="fw-semibold text-primary mb-3">Thông tin đơn đặt hàng</h6>
+      <div class="row g-3">
+        <div class="col-md-4">
+          {{ form.po_code.label_tag }}{{ form.po_code }}
+        </div>
+        <div class="col-md-4">
+          {{ form.supplier.label_tag }}{{ form.supplier }}
+        </div>
+        <div class="col-md-4">
+          {{ form.status.label_tag }}{{ form.status }}
+        </div>
+        <div class="col-md-12">
+          {{ form.note.label_tag }}{{ form.note }}
+        </div>
+      </div>
+    </div>
+
+    <!-- DANH SÁCH SẢN PHẨM -->
+    <div class="card p-3 shadow-sm">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-semibold text-primary mb-0">Danh sách sản phẩm đặt</h6>
+        <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
+          <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm
+        </button>
+      </div>
+
+      {{ formset.management_form }}
+      <table class="table table-bordered align-middle text-center">
+        <thead class="table-primary">
+          <tr>
+            <th>Sản phẩm</th>
+            <th style="width:140px;">Số lượng</th>
+            <th style="width:150px;">Đơn vị</th>
+            <th style="width:60px;">Xóa</th>
+          </tr>
+        </thead>
+        <tbody id="item-body">
+          {% for f in formset.forms %}
+          <tr class="item-row align-middle">
+            <td>{{ f.product }}</td>
+            <td>{{ f.quantity }}</td>
+            <td>{{ f.unit }}</td>
+            <td class="text-center">{{ f.DELETE }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- NÚT LƯU -->
+    <div class="text-end mt-4">
+      <a href="{% url 'po_list' %}" class="btn btn-secondary">
+        <i class="fa-solid fa-xmark me-1"></i> Hủy
+      </a>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-save me-1"></i> Lưu đơn đặt hàng
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- MẪU TRỐNG (thêm dòng mới) -->
+<table class="d-none">
+  <tbody id="empty-form-template">
+    <tr class="item-row align-middle">
+      <td>
+        <select name="items-__prefix__-product" class="form-select">
+          {% for p in formset.forms.0.fields.product.queryset %}
+          <option value="{{ p.pk }}">{{ p.product_code }} - {{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td><input type="number" name="items-__prefix__-quantity" class="form-control text-end" min="1" required></td>
+      <td><input type="text" name="items-__prefix__-unit" class="form-control" placeholder="VD: Thùng"></td>
+      <td class="text-center"><input type="checkbox" name="items-__prefix__-DELETE"></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- STYLE -->
+<style>
+.table th, .table td { vertical-align: middle !important; }
+.table input, .table select { height: 38px; font-size: 14px; }
+td label { display: none; }
+</style>
+
+<!-- SCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const addButton = document.getElementById("add-row");
+  const totalForms = document.getElementById("id_items-TOTAL_FORMS");
+  const tbody = document.getElementById("item-body");
+  const template = document.getElementById("empty-form-template").innerHTML.trim();
+
+  addButton.addEventListener("click", function(e) {
+    e.preventDefault();
+    const formIndex = parseInt(totalForms.value);
+    const newRow = template.replace(/__prefix__/g, formIndex);
+    tbody.insertAdjacentHTML("beforeend", newRow);
+    totalForms.value = formIndex + 1;
+  });
+});
+</script>
+{% endblock %}

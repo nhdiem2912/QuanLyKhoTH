@@ -1,52 +1,166 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block title %}Nhà cung ứng - TH True Mart{% endblock %}
 {% block page_title %}Nhà cung ứng{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
+
+  <!-- HEADER -->
   <div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
     <div>
       <h6 class="fw-semibold mb-0">Quản lý nhà cung ứng</h6>
-      <small class="text-muted">Theo dõi thông tin các đối tác</small>
+      <small class="text-muted">Theo dõi và cập nhật thông tin các nhà cung cấp</small>
     </div>
-    <button class="btn btn-success"><i class="fa-solid fa-plus me-1"></i> Thêm nhà cung ứng</button>
+    <a href="{% url 'add_supplier' %}" class="btn btn-success">
+      <i class="fa-solid fa-plus me-1"></i> Thêm nhà cung ứng
+    </a>
   </div>
 
+  <!-- DANH SÁCH NHÀ CUNG ỨNG -->
   <div class="bg-white p-3 rounded-3 shadow-sm">
     {% if suppliers %}
     <table class="table align-middle table-hover mb-0">
       <thead class="table-light">
         <tr>
-          <th>Mã NCC</th><th>Tên công ty</th><th>Người liên hệ</th><th>Điện thoại</th>
-          <th>Email</th><th>Trạng thái</th><th class="text-end">Thao tác</th>
+          <th>Mã NCC</th>
+          <th>Tên công ty</th>
+          <th>Người liên hệ</th>
+          <th>Số điện thoại</th>
+          <th>Email</th>
+          <th>Trạng thái</th>
+          <th class="text-center">Thao tác</th>
         </tr>
       </thead>
       <tbody>
         {% for s in suppliers %}
         <tr>
-          <td>{{ s.supplier_code }}</td>
+          <td class="fw-semibold">{{ s.supplier_code }}</td>
           <td>{{ s.company_name }}</td>
           <td>{{ s.contact_name }}</td>
           <td>{{ s.phone }}</td>
-          <td>{{ s.email }}</td>
+          <td>{{ s.email|default:"-" }}</td>
           <td>
-            {% if s.status == 'active' %}
-              <span class="badge bg-success bg-opacity-25 text-success">Hoạt động</span>
+            {% if s.status == "active" %}
+              <span class="badge bg-success">Hoạt động</span>
             {% else %}
-              <span class="badge bg-danger bg-opacity-25 text-danger">Tạm dừng</span>
+              <span class="badge bg-secondary">Tạm dừng</span>
             {% endif %}
           </td>
-          <td class="text-end"><a href="#" class="text-primary me-3">Sửa</a><a href="#" class="text-danger">Xóa</a></td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm" role="group">
+              <!-- Xem -->
+              <button class="btn btn-outline-primary" title="Xem chi tiết"
+                      data-bs-toggle="modal" data-bs-target="#viewModal{{ s.supplier_code }}">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+
+              <!-- Sửa -->
+              <a href="{% url 'edit_supplier' s.supplier_code %}" class="btn btn-outline-warning" title="Chỉnh sửa">
+                <i class="fa-solid fa-pen"></i>
+              </a>
+
+              <!-- Xóa -->
+              <button class="btn btn-outline-danger" title="Xóa nhà cung ứng"
+                      onclick="confirmDelete('{{ s.supplier_code }}')">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </td>
         </tr>
+
+        <!-- POPUP CHI TIẾT -->
+        <div class="modal fade" id="viewModal{{ s.supplier_code }}" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold">Thông tin chi tiết {{ s.company_name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item"><strong>Mã NCC:</strong> {{ s.supplier_code }}</li>
+                  <li class="list-group-item"><strong>Tên công ty:</strong> {{ s.company_name }}</li>
+                  <li class="list-group-item"><strong>Người liên hệ:</strong> {{ s.contact_name }}</li>
+                  <li class="list-group-item"><strong>Số điện thoại:</strong> {{ s.phone }}</li>
+                  <li class="list-group-item"><strong>Email:</strong> {{ s.email|default:"-" }}</li>
+                  <li class="list-group-item">
+                    <strong>Trạng thái:</strong>
+                    {% if s.status == "active" %}
+                      <span class="text-success fw-semibold">Hoạt động</span>
+                    {% else %}
+                      <span class="text-muted fw-semibold">Tạm dừng</span>
+                    {% endif %}
+                  </li>
+                </ul>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+              </div>
+            </div>
+          </div>
+        </div>
         {% endfor %}
       </tbody>
     </table>
+
     {% else %}
-      <div class="text-center text-muted py-5">
-        <i class="fa-regular fa-building fa-2x mb-3"></i>
-        <div>Chưa có nhà cung ứng nào</div>
-      </div>
+    <div class="text-center text-muted py-5">
+      <i class="fa-regular fa-user fa-2x mb-3"></i>
+      <div>Chưa có nhà cung ứng nào</div>
+    </div>
     {% endif %}
   </div>
 </div>
+
+<!-- SCRIPT -->
+<script>
+function confirmDelete(code){
+  if(confirm("Bạn có chắc muốn xóa nhà cung ứng " + code + " ?")){
+    fetch(`/suppliers/delete/${code}/`, {
+      method: "POST",
+      headers: { "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value },
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.success){
+        alert(data.message);
+        location.reload();
+      }else{
+        alert("❌ Không thể xóa nhà cung ứng!");
+      }
+    })
+    .catch(() => alert("⚠️ Lỗi máy chủ!"));
+  }
+}
+</script>
+
+<!-- STYLE -->
+<style>
+.btn-group .btn {
+  min-width: 36px;
+  padding: 6px 8px;
+  border-radius: 6px !important;
+}
+.btn-outline-primary i,
+.btn-outline-danger i,
+.btn-outline-warning i {
+  font-size: 14px;
+}
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+.btn-outline-warning:hover {
+  background-color: #ffc107;
+  color: #000;
+}
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: #fff;
+}
+.table td, .table th {
+  vertical-align: middle;
+}
+</style>
 {% endblock %}

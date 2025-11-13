@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Quản lý phiếu giao hàng (ASN) - TH True Mart{% endblock %}
+{% block page_title %}Quản lý phiếu giao hàng (ASN){% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- HEADER -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h6 class="fw-semibold mb-0">Danh sách phiếu giao hàng (ASN)</h6>
+      <small class="text-muted">Theo dõi các phiếu giao hàng gần đây</small>
+    </div>
+    <a href="{% url 'create_asn' %}" class="btn btn-success">
+      <i class="fa-solid fa-plus me-1"></i> Tạo phiếu giao hàng
+    </a>
+  </div>
+
+  <!-- DANH SÁCH ASN -->
+  <div class="bg-white p-3 rounded-3 shadow-sm">
+    {% if asns %}
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light text-center align-middle">
+        <tr>
+          <th style="width: 12%">Mã ASN</th>
+          <th style="width: 12%">Liên kết PO</th>
+          <th style="width: 13%">Ngày giao</th>
+          <th style="width: 25%">Người giao</th>
+          <th style="width: 10%" class="text-end">Tổng SP</th>
+          <th style="width: 15%" class="text-end">Tổng tiền (₫)</th>
+          <th style="width: 13%" class="text-center">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in asns %}
+        <tr>
+          <td class="fw-semibold text-primary text-center align-middle">{{ a.asn_code }}</td>
+          <td class="text-center align-middle">{{ a.po.po_code|default:"-" }}</td>
+          <td class="text-center align-middle">{{ a.expected_date|date:"d/m/Y" }}</td>
+          <td class="align-middle">
+            <span class="fw-semibold">{{ a.deliverer_name }}</span><br>
+            <small class="text-muted">{{ a.deliverer_phone|default:"-" }}</small>
+          </td>
+          <td class="text-end align-middle">{{ a.items.count|intcomma }}</td>
+          <td class="text-success text-end fw-semibold align-middle">{{ a.total_value|floatformat:0|intcomma }} ₫</td>
+          <td class="text-center align-middle">
+            <div class="btn-group btn-group-sm" role="group">
+              <button class="btn btn-outline-primary" data-bs-toggle="modal"
+                      data-bs-target="#viewModal{{ a.asn_code }}" title="Xem chi tiết">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+              <button class="btn btn-outline-danger" title="Xóa"
+                      onclick="confirmDelete('{% url 'delete_asn' a.asn_code %}')">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- MODAL CHI TIẾT ASN -->
+    {% for a in asns %}
+    <div class="modal fade" id="viewModal{{ a.asn_code }}" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold text-primary">Chi tiết phiếu giao hàng {{ a.asn_code }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="row mb-3">
+              <div class="col-md-6"><strong>Liên kết PO:</strong> {{ a.po.po_code|default:"-" }}</div>
+              <div class="col-md-6"><strong>Ngày giao dự kiến:</strong> {{ a.expected_date|date:"d/m/Y" }}</div>
+              <div class="col-md-6"><strong>Người giao:</strong> {{ a.deliverer_name }}</div>
+              <div class="col-md-6"><strong>SĐT:</strong> {{ a.deliverer_phone|default:"-" }}</div>
+            </div>
+
+            <h6 class="fw-semibold mt-3 mb-2">Danh sách sản phẩm giao</h6>
+            <table class="table table-bordered align-middle text-center">
+              <thead class="table-light">
+                <tr>
+                  <th>Mã SP</th>
+                  <th class="text-start">Tên sản phẩm</th>
+                  <th class="text-end">Số lượng</th>
+                  <th>Đơn vị</th>
+                  <th class="text-end">Đơn giá (₫)</th>
+                  <th>Hạn sử dụng</th>
+                  <th class="text-end">Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for i in a.items.all %}
+                <tr>
+                  <td>{{ i.product.product_code }}</td>
+                  <td class="text-start">{{ i.product.name }}</td>
+                  <td class="text-end">{{ i.quantity|intcomma }}</td>
+                  <td>{{ i.unit }}</td>
+                  <td class="text-end">{{ i.unit_price|floatformat:0|intcomma }}</td>
+                  <td>{{ i.expiry_date|date:"d/m/Y"|default:"-" }}</td>
+                  <td class="text-success text-end fw-semibold">{{ i.total_value|floatformat:0|intcomma }} ₫</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-muted">Không có sản phẩm</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            {% if a.note %}
+            <div class="mt-2">
+              <strong>Ghi chú:</strong>
+              <p class="text-muted">{{ a.note }}</p>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="modal-footer justify-content-between">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="fa-solid fa-xmark me-1"></i> Đóng
+            </button>
+            <a href="{% url 'asn_export_pdf' a.asn_code %}" target="_blank" class="btn btn-outline-primary">
+              <i class="fa-solid fa-print me-1"></i> In / Xuất PDF
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa-regular fa-file-lines fa-2x mb-3"></i>
+      <div>Chưa có phiếu giao hàng nào trong hệ thống</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- SCRIPT -->
+<script>
+function confirmDelete(url){
+  if(confirm("Bạn có chắc muốn xóa phiếu giao hàng này không?")){
+    window.location.href = url;
+  }
+}
+</script>
+
+<!-- STYLE -->
+<style>
+.table td, .table th {
+  vertical-align: middle !important;
+}
+.btn-group .btn {
+  min-width: 36px;
+  padding: 6px 8px;
+  border-radius: 6px !important;
+}
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: #fff;
+}
+.text-success { color: #16a34a !important; }
+.text-warning { color: #f59e0b !important; }
+.text-danger { color: #dc2626 !important; }
+.table-hover tbody tr:hover {
+  background-color: #f9fbff;
+}
+.modal-footer a.btn-outline-primary {
+  border-color: #0d6efd;
+}
+.modal-footer a.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+</style>
+{% endblock %}

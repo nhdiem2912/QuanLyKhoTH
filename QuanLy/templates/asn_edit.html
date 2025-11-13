@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Chỉnh sửa phiếu ASN - TH True Mart{% endblock %}
+{% block page_title %}Chỉnh sửa phiếu ASN{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h4 class="fw-bold mb-3 text-primary">Chỉnh sửa phiếu giao hàng {{ asn.asn_code }}</h4>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="card p-3 mb-3 shadow-sm">
+      <h6 class="fw-semibold text-primary mb-2">Thông tin phiếu giao hàng</h6>
+      <div class="row g-3">
+        <div class="col-md-3">{{ form.asn_code.label_tag }}{{ form.asn_code }}</div>
+        <div class="col-md-4">{{ form.po.label_tag }}{{ form.po }}</div>
+        <div class="col-md-4">{{ form.supplier.label_tag }}{{ form.supplier }}</div>
+        <div class="col-md-4">{{ form.product.label_tag }}{{ form.product }}</div>
+        <div class="col-md-3">{{ form.quantity.label_tag }}{{ form.quantity }}</div>
+        <div class="col-md-3">{{ form.unit.label_tag }}{{ form.unit }}</div>
+        <div class="col-md-3">{{ form.total_value.label_tag }}{{ form.total_value }}</div>
+        <div class="col-md-4">{{ form.deliverer_name.label_tag }}{{ form.deliverer_name }}</div>
+        <div class="col-md-3">{{ form.deliverer_phone.label_tag }}{{ form.deliverer_phone }}</div>
+        <div class="col-md-3">{{ form.expected_date.label_tag }}{{ form.expected_date }}</div>
+      </div>
+    </div>
+
+    <div class="text-end">
+      <a href="{% url 'asn' %}" class="btn btn-secondary">Hủy</a>
+      <button type="submit" class="btn btn-success">Cập nhật phiếu giao hàng</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,232 @@
+[
+  {
+    "model": "QuanLy.category",
+    "pk": "DM01",
+    "fields": {
+      "name": "Sữa tươi",
+      "description": "Sữa tươi tiệt trùng TH True Milk"
+    }
+  },
+  {
+    "model": "QuanLy.category",
+    "pk": "DM02",
+    "fields": {
+      "name": "Sữa chua",
+      "description": "Các loại sữa chua TH True Milk"
+    }
+  },
+  {
+    "model": "QuanLy.category",
+    "pk": "DM03",
+    "fields": {
+      "name": "Đồ uống",
+      "description": "Nước tinh khiết, nước cam, đồ giải khát"
+    }
+  },
+  {
+    "model": "QuanLy.product",
+    "pk": "SP01",
+    "fields": {
+      "name": "Sữa tươi TH 180ml",
+      "category": "DM01",
+      "quantity": 120,
+      "unit": "Hộp",
+      "location": "Kệ A1",
+      "status": "available"
+    }
+  },
+  {
+    "model": "QuanLy.product",
+    "pk": "SP02",
+    "fields": {
+      "name": "Sữa tươi TH 1L",
+      "category": "DM01",
+      "quantity": 80,
+      "unit": "Hộp",
+      "location": "Kệ A2",
+      "status": "available"
+    }
+  },
+  {
+    "model": "QuanLy.product",
+    "pk": "SP03",
+    "fields": {
+      "name": "Sữa chua uống TH vị dâu",
+      "category": "DM02",
+      "quantity": 150,
+      "unit": "Chai",
+      "location": "Kệ B1",
+      "status": "available"
+    }
+  },
+  {
+    "model": "QuanLy.product",
+    "pk": "SP04",
+    "fields": {
+      "name": "Sữa chua ăn TH nha đam",
+      "category": "DM02",
+      "quantity": 100,
+      "unit": "Hộp",
+      "location": "Kệ B2",
+      "status": "available"
+    }
+  },
+  {
+    "model": "QuanLy.product",
+    "pk": "SP05",
+    "fields": {
+      "name": "Nước tinh khiết TH 500ml",
+      "category": "DM03",
+      "quantity": 300,
+      "unit": "Chai",
+      "location": "Kệ C1",
+      "status": "available"
+    }
+  },
+  {
+    "model": "QuanLy.supplier",
+    "pk": "NCC01",
+    "fields": {
+      "company_name": "TH Food",
+      "contact_name": "Nguyễn Văn An",
+      "phone": "0905123456",
+      "email": "an@thfood.vn",
+      "status": "active"
+    }
+  },
+  {
+    "model": "QuanLy.supplier",
+    "pk": "NCC02",
+    "fields": {
+      "company_name": "Sữa Việt Co.",
+      "contact_name": "Trần Thị Bình",
+      "phone": "0905345678",
+      "email": "binh@sua.vn",
+      "status": "active"
+    }
+  },
+  {
+    "model": "QuanLy.importreceipt",
+    "pk": "NK01",
+    "fields": {
+      "import_date": "2025-11-01",
+      "product": "SP01",
+      "quantity": 50,
+      "unit": "Hộp",
+      "total_price": "250000.00",
+      "supplier": "NCC01",
+      "status": "done",
+      "created_by": 1
+    }
+  },
+  {
+    "model": "QuanLy.importreceipt",
+    "pk": "NK02",
+    "fields": {
+      "import_date": "2025-11-02",
+      "product": "SP03",
+      "quantity": 60,
+      "unit": "Chai",
+      "total_price": "300000.00",
+      "supplier": "NCC01",
+      "status": "done",
+      "created_by": 1
+    }
+  },
+  {
+    "model": "QuanLy.exportreceipt",
+    "pk": "XK01",
+    "fields": {
+      "export_date": "2025-11-03",
+      "product": "SP05",
+      "quantity": 30,
+      "unit": "Chai",
+      "total_price": "120000.00",
+      "destination": "TH True Mart - Hà Nội",
+      "status": "done",
+      "created_by": 1
+    }
+  },
+  {
+    "model": "QuanLy.exportreceipt",
+    "pk": "XK02",
+    "fields": {
+      "export_date": "2025-11-03",
+      "product": "SP04",
+      "quantity": 20,
+      "unit": "Hộp",
+      "total_price": "80000.00",
+      "destination": "TH True Mart - Đà Nẵng",
+      "status": "done",
+      "created_by": 1
+    }
+  },
+  {
+    "model": "QuanLy.returnreceipt",
+    "pk": "HH01",
+    "fields": {
+      "return_date": "2025-11-04",
+      "product": "SP03",
+      "quantity": 5,
+      "return_type": "store",
+      "reason": "Hàng lỗi bao bì",
+      "status": "done",
+      "created_by": 1
+    }
+  },
+  {
+    "model": "QuanLy.returnreceipt",
+    "pk": "HH02",
+    "fields": {
+      "return_date": "2025-11-04",
+      "product": "SP02",
+      "quantity": 3,
+      "return_type": "customer",
+      "reason": "Khách trả hàng",
+      "status": "done",
+      "created_by": 1
+    }
+  },
+  {
+    "model": "QuanLy.purchaseorder",
+    "pk": "PO01",
+    "fields": {
+      "supplier": "NCC01",
+      "product": "SP01",
+      "quantity": 100,
+      "unit": "Hộp",
+      "created_date": "2025-10-30",
+      "total_price": "500000.00",
+      "status": "approved",
+      "created_by": 1
+    }
+  },
+  {
+    "model": "QuanLy.asn",
+    "pk": "ASN01",
+    "fields": {
+      "supplier": "NCC01",
+      "product": "SP01",
+      "quantity": 100,
+      "unit": "Hộp",
+      "total_value": "500000.00",
+      "deliverer_name": "Lê Hữu Tài",
+      "deliverer_phone": "0905777788",
+      "created_date": "2025-10-31",
+      "expected_date": "2025-11-05",
+      "created_by": 1
+    }
+  },
+  {
+    "model": "QuanLy.report",
+    "pk": "BC01",
+    "fields": {
+      "report_date": "2025-11-05",
+      "total_imports": 2,
+      "total_exports": 2,
+      "total_returns": 2,
+      "total_revenue": "700000.00",
+      "created_by": 1
+    }
+  }
+]

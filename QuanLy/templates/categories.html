@@ -3,14 +3,38 @@
 {% block page_title %}Danh mục{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-  <div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
-    <div>
-      <h6 class="fw-semibold mb-0">Quản lý danh mục</h6>
-      <small class="text-muted">Tạo và chỉnh sửa các nhóm sản phẩm</small>
-    </div>
-    <button class="btn btn-success"><i class="fa-solid fa-plus me-1"></i> Thêm danh mục</button>
+<div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+  <div>
+    <h6 class="fw-semibold mb-0">Quản lý danh mục</h6>
+    <small class="text-muted">Tạo và chỉnh sửa các nhóm sản phẩm</small>
   </div>
+  <a href="{% url 'add_category' %}" class="btn btn-success">
+    <i class="fa-solid fa-plus me-1"></i> Thêm danh mục
+  </a>
+</div>
+
+<!-- Bộ lọc & tìm kiếm -->
+<form method="get" class="row g-3 mb-4 bg-white p-3 rounded-3 shadow-sm">
+  <div class="col-md-4">
+    <input type="text" name="q" class="form-control"
+           placeholder="Tìm theo tên, mã, mô tả…" value="{{ q }}">
+  </div>
+
+
+
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100">
+      <i class="fa-solid fa-filter me-1"></i> Lọc
+    </button>
+  </div>
+
+  <div class="col-md-2">
+    <a href="{% url 'categories' %}" class="btn btn-secondary w-100">
+      <i class="fa-solid fa-rotate-left me-1"></i> Reset
+    </a>
+  </div>
+</form>
+
 
   <div class="row g-3">
     {% if categories %}
@@ -31,8 +55,14 @@
             <span class="text-muted small">{{ c.category_code }}</span>
           </div>
           <div class="mt-3">
-            <a href="#" class="me-3">Sửa</a>
-            <a href="#" class="text-danger">Xóa</a>
+            <a href="{% url 'edit_category' c.category_code %}" class="text-primary me-3">
+  <i class="fa-solid fa-pen"></i> Sửa
+</a>
+<a href="#" class="text-danger btn-delete-category" data-id="{{ c.category_code }}" data-name="{{ c.name }}">
+  <i class="fa-solid fa-trash"></i> Xóa
+</a>
+
+
           </div>
         </div>
       </div>
@@ -42,10 +72,50 @@
         <div class="text-center text-muted py-5 bg-white rounded-3 shadow-sm">
           <i class="fa-regular fa-rectangle-list fa-2x mb-3"></i>
           <div>Chưa có danh mục nào</div>
-          <button class="btn btn-success btn-sm mt-2"><i class="fa-solid fa-plus me-1"></i> Thêm danh mục</button>
+          <a href="{% url 'add_category' %}" class="btn btn-success">
+  <i class="fa-solid fa-plus me-1"></i> Thêm danh mục
+</a>
+
         </div>
       </div>
+
     {% endif %}
   </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const getCSRFToken = () => document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  document.querySelectorAll(".btn-delete-category").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.preventDefault();
+      const id = btn.dataset.id;
+      const name = btn.dataset.name;
+
+      if (confirm(`Bạn có chắc muốn xóa danh mục "${name}" không?`)) {
+        fetch(`/categories/delete/${id}/`, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert(data.message);
+            location.reload();
+          } else {
+            alert("❌ Không thể xóa danh mục!");
+          }
+        })
+        .catch(() => alert("⚠️ Lỗi máy chủ!"));
+      }
+    });
+  });
+});
+</script>
+
+
+
 {% endblock %}

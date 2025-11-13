@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Xuất kho - TH True Mart{% endblock %}
+{% block page_title %}Xuất kho{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- HEADER -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h6 class="fw-semibold mb-0">Quản lý phiếu xuất kho</h6>
+      <small class="text-muted">Theo dõi và tạo mới phiếu xuất hàng</small>
+    </div>
+    <a href="{% url 'create_export' %}" class="btn btn-success">
+      <i class="fa-solid fa-plus me-1"></i> Tạo phiếu xuất
+    </a>
+  </div>
+
+  <!-- DANH SÁCH PHIẾU XUẤT -->
+  <div class="bg-white p-3 rounded-3 shadow-sm">
+    {% if exports %}
+    <table class="table align-middle table-hover mb-0">
+      <thead class="table-light text-center">
+        <tr>
+          <th>Mã phiếu</th>
+          <th>Ngày xuất</th>
+          <th class="text-start">Sản phẩm</th>
+          <th class="text-end">Số lượng</th>
+          <th class="text-end">Tổng tiền</th>
+          <th>Địa điểm giao</th>
+          <th class="text-center">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in exports %}
+        <tr>
+          <td class="fw-semibold text-primary">{{ r.export_code }}</td>
+          <td>{{ r.export_date|date:"d/m/Y" }}</td>
+          <td class="text-start">
+            {% for item in r.items.all %}
+              {{ item.stock_item.product.name }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+              <span class="text-muted">Chưa có sản phẩm</span>
+            {% endfor %}
+          </td>
+
+          <!-- Nếu model có @property total_quantity/total_price -->
+          <td class="text-end">{{ r.total_quantity|intcomma }}</td>
+          <td class="fw-semibold text-success text-end">{{ r.total_price|floatformat:0|intcomma }} ₫</td>
+
+          <td>{{ r.destination }}</td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm" role="group">
+              <!-- Nút xem chi tiết -->
+              <button class="btn btn-outline-primary" title="Xem chi tiết"
+                      data-bs-toggle="modal" data-bs-target="#viewModal{{ r.export_code }}">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+
+              <!-- ✅ Nút in phiếu PDF -->
+              <a href="{% url 'export_export_pdf' r.export_code %}"
+                 class="btn btn-outline-secondary" title="In phiếu xuất (PDF)" target="_blank">
+                <i class="fa-solid fa-print"></i>
+              </a>
+
+              <!-- Nút xóa -->
+              <a class="btn btn-outline-danger" title="Xóa phiếu xuất"
+                 href="{% url 'delete_export' r.export_code %}"
+                 onclick="return confirm('Bạn có chắc muốn xóa phiếu xuất {{ r.export_code }} ?');">
+                <i class="fa-solid fa-trash"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- POPUP CHI TIẾT -->
+    {% for r in exports %}
+    <div class="modal fade" id="viewModal{{ r.export_code }}" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold">Chi tiết phiếu xuất {{ r.export_code }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row mb-2">
+              <div class="col-md-6"><strong>Ngày xuất:</strong> {{ r.export_date|date:"d/m/Y" }}</div>
+              <div class="col-md-6"><strong>Người tạo:</strong> {{ r.created_by.username }}</div>
+              <div class="col-md-12"><strong>Địa điểm giao:</strong> {{ r.destination }}</div>
+            </div>
+
+            <h6 class="fw-semibold mt-3 mb-2">Danh sách sản phẩm</h6>
+            <table class="table table-bordered align-middle text-center">
+              <thead class="table-light">
+                <tr>
+                  <th class="text-start">Tên sản phẩm</th>
+                  <th>Mã nhập (lô)</th>
+                  <th>HSD</th>
+                  <th>Trạng thái</th>
+                  <th class="text-end">Số lượng</th>
+                  <th class="text-end">Đơn giá</th>
+                  <th class="text-end">Chiết khấu</th>
+                  <th class="text-end">Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for i in r.items.all %}
+                <tr>
+                  <td class="text-start">{{ i.stock_item.product.name }}</td>
+                  <td>{{ i.stock_item.import_receipt.import_code }}</td>
+                  <td>
+                    {% if i.stock_item.expiry_date %}
+                      {{ i.stock_item.expiry_date|date:"d/m/Y" }}
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.stock_item.status == 'expired' %}
+                      <span class="badge bg-danger">Hết hạn</span>
+                    {% elif i.stock_item.status == 'nearly_expired' %}
+                      <span class="badge bg-warning text-dark">Cận hạn</span>
+                    {% else %}
+                      <span class="badge bg-success">Còn hạn</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">{{ i.quantity|intcomma }}</td>
+                  <td class="text-end">{{ i.unit_price|floatformat:0|intcomma }} ₫</td>
+                  <td class="text-end">{{ i.discount_percent|floatformat:0 }}%</td>
+                  <td class="text-end text-success fw-semibold">{{ i.total|floatformat:0|intcomma }} ₫</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-muted">Không có sản phẩm</td></tr>
+                {% endfor %}
+              </tbody>
+              <tfoot class="table-light fw-semibold">
+                <tr>
+                  <td colspan="7" class="text-end">Tổng chiết khấu:</td>
+                  <td class="text-end text-danger">{{ r.total_discount|floatformat:0|intcomma }} ₫</td>
+                </tr>
+                <tr>
+                  <td colspan="7" class="text-end">Tổng cộng sau giảm:</td>
+                  <td class="text-end text-success">{{ r.total_price|floatformat:0|intcomma }} ₫</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            {% if r.note %}
+            <div class="mt-3">
+              <strong>Ghi chú:</strong>
+              <p class="text-muted mb-0">{{ r.note }}</p>
+            </div>
+            {% endif %}
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa-regular fa-file-lines fa-2x mb-3"></i>
+      <div>Chưa có phiếu xuất nào</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.btn-group .btn {
+  min-width: 36px;
+  padding: 6px 8px;
+  border-radius: 6px !important;
+}
+.btn-outline-primary:hover { background-color: #0d6efd; color: #fff; }
+.btn-outline-secondary:hover { background-color: #6c757d; color: #fff; }
+.btn-outline-danger:hover  { background-color: #dc3545; color: #fff; }
+.table td, .table th { vertical-align: middle; }
+.badge { font-weight: 600; border-radius: 10px; }
+</style>
+{% endblock %}

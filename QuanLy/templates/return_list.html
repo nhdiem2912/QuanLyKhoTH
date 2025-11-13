@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load humanize custom_filters %}
+
+{% block title %}Hoàn hàng - TH True Mart{% endblock %}
+{% block page_title %}Quản lý phiếu hoàn hàng{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- HEADER -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h6 class="fw-semibold mb-0">Danh sách phiếu hoàn hàng</h6>
+      <small class="text-muted">Theo dõi các phiếu hoàn từ khách hàng</small>
+    </div>
+    <a href="{% url 'create_return' %}" class="btn btn-success">
+      <i class="fa-solid fa-plus me-1"></i> Tạo phiếu hoàn mới
+    </a>
+  </div>
+
+  <!-- TABLE -->
+  <div class="bg-white p-3 rounded-3 shadow-sm">
+    {% if returns %}
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-primary text-center">
+        <tr>
+          <th>Mã phiếu</th>
+          <th>Ngày hoàn</th>
+          <th>Sản phẩm</th>
+          <th class="text-end">Tổng SL</th>
+          <th class="text-end">Tổng tiền</th>
+          <th class="text-center">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        {% for r in returns %}
+        <tr>
+          <td class="fw-semibold text-primary">{{ r.return_code }}</td>
+          <td>{{ r.return_date|date:"d/m/Y" }}</td>
+
+          <!-- Danh sách sản phẩm -->
+          <td class="text-start">
+            {% for item in r.items.all %}
+              {{ item.product.name }}{% if not forloop.last %}, {% endif %}
+            {% empty %}
+              <span class="text-muted">Không có sản phẩm</span>
+            {% endfor %}
+          </td>
+
+          <!-- Tổng số lượng -->
+          <td class="text-end">{{ r.total_quantity|intcomma }}</td>
+
+
+          <!-- Tổng tiền -->
+          <td class="text-end text-success">{{ r.total_price|floatformat:0|intcomma }} ₫</td>
+
+
+          <!-- Buttons -->
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              <!-- Xem -->
+              <button class="btn btn-outline-primary" title="Xem chi tiết"
+                      data-bs-toggle="modal"
+                      data-bs-target="#viewModal{{ r.return_code }}">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+                <a class="btn btn-outline-primary btn-sm"
+   href="{% url 'return_export_pdf' r.return_code %}" target="_blank">
+    <i class="fa-solid fa-print"></i>
+</a>
+
+
+              <!-- Xóa -->
+              <button class="btn btn-outline-danger" title="Xóa phiếu hoàn"
+                      onclick="confirmDelete('{{ r.return_code }}')">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+
+    <!-- MODAL CHI TIẾT -->
+    {% for r in returns %}
+    <div class="modal fade" id="viewModal{{ r.return_code }}" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold text-primary">Chi tiết phiếu hoàn {{ r.return_code }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <strong>Ngày hoàn:</strong> {{ r.return_date|date:"d/m/Y" }}
+              </div>
+              <div class="col-md-4">
+                <strong>Người tạo:</strong> {{ r.created_by.username }}
+              </div>
+              <div class="col-md-4">
+                <strong>Ghi chú:</strong> {{ r.note|default:"-" }}
+              </div>
+            </div>
+
+            <h6 class="fw-semibold mt-3 mb-2">Sản phẩm hoàn</h6>
+
+            <table class="table table-bordered text-center align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Tên sản phẩm</th>
+                  <th class="text-end">SL</th>
+                  <th class="text-end">Đơn giá</th>
+                  <th class="text-end">Thành tiền</th>
+                  <th>Đơn vị</th>
+                  <th>Lý do</th>
+                  <th>Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for i in r.items.all %}
+                <tr>
+                  <td class="text-start">{{ i.product.name }}</td>
+                  <td class="text-end">{{ i.quantity|intcomma }}</td>
+                  <td class="text-end">{{ i.unit_price|intcomma }} ₫</td>
+                  <td class="text-end text-success fw-semibold">{{ i.total|intcomma }} ₫</td>
+                  <td>{{ i.unit }}</td>
+                  <td>{{ i.reason|default:"-" }}</td>
+                  <td>{{ i.detail_note|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-muted">Không có dữ liệu</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              Đóng
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa-regular fa-file-lines fa-2x mb-3"></i>
+      <div>Chưa có phiếu hoàn hàng nào</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Confirm delete -->
+<script>
+function confirmDelete(code){
+  if(confirm("Bạn có chắc muốn xóa phiếu hoàn " + code + " ?")){
+    window.location.href = "/return/delete/" + code + "/";
+  }
+}
+</script>
+
+<style>
+.btn-group .btn {
+  min-width: 36px;
+  padding: 6px 8px;
+  border-radius: 6px !important;
+}
+.btn-outline-primary:hover { background-color:#0d6efd; color:white; }
+.btn-outline-danger:hover { background-color:#dc3545; color:white; }
+.table td, .table th { vertical-align: middle !important; }
+.badge { font-weight:600; border-radius:10px; }
+</style>
+
+{% endblock %}

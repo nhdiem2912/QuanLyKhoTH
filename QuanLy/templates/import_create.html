@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Tạo phiếu nhập - TH True Mart{% endblock %}
+{% block page_title %}Tạo phiếu nhập kho{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- HEADER -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
+    <h5 class="fw-semibold text-primary mb-1">Tạo phiếu nhập kho</h5>
+    <small class="text-muted">Nhập thông tin phiếu và danh sách sản phẩm cần nhập</small>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Thông tin chung -->
+    <div class="card p-3 mb-4 shadow-sm">
+      <h6 class="fw-semibold text-primary mb-2">Thông tin phiếu nhập</h6>
+      <div class="row g-3">
+        <div class="col-md-3">{{ form.import_code.label_tag }}{{ form.import_code }}</div>
+        <div class="col-md-4">{{ form.supplier.label_tag }}{{ form.supplier }}</div>
+        <div class="col-md-3">{{ form.import_date.label_tag }}{{ form.import_date }}</div>
+        <div class="col-md-12">{{ form.note.label_tag }}{{ form.note }}</div>
+      </div>
+    </div>
+
+    <!-- Danh sách sản phẩm -->
+    <div class="card p-3 shadow-sm">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-semibold text-primary mb-0">Danh sách sản phẩm nhập</h6>
+        <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
+          <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm
+        </button>
+      </div>
+
+      {{ formset.management_form }}
+
+      <table class="table table-bordered align-middle text-center" id="import-table">
+        <thead class="table-primary">
+          <tr>
+            <th>Sản phẩm</th>
+            <th style="width:100px;">Số lượng</th>
+            <th style="width:130px;">Đơn giá (₫)</th>
+            <th style="width:120px;">Chiết khấu (%)</th>
+            <th style="width:120px;">Đơn vị</th>
+            <th style="width:120px;">Vị trí</th>
+            <th style="width:130px;">Hạn sử dụng</th>
+            <th style="width:150px;">Thành tiền (₫)</th>
+            <th style="width:60px;">Xóa</th>
+          </tr>
+        </thead>
+
+        <tbody id="item-body">
+          {% for f in formset.forms %}
+          <tr class="item-row align-middle">
+            <td>{{ f.product }}</td>
+            <td>{{ f.quantity }}</td>
+            <td>{{ f.unit_price }}</td>
+            <td>{{ f.discount_percent }}</td>
+            <td>{{ f.unit }}</td>
+            <td>{{ f.location }}</td>
+            <td>{{ f.expiry_date }}</td>
+            <td class="text-end total-cell text-primary fw-semibold">0</td>
+            <td class="text-center">{{ f.DELETE }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+        <!-- ✅ Tổng cộng -->
+        <tfoot class="table-light fw-semibold">
+          <tr>
+            <td colspan="7" class="text-end">Tổng chiết khấu:</td>
+            <td class="text-end text-danger" id="discount-total">0 ₫</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td colspan="7" class="text-end">Tổng cộng sau giảm:</td>
+            <td class="text-end text-primary fs-6" id="grand-total">0 ₫</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Nút hành động -->
+    <div class="text-end mt-4">
+      <a href="{% url 'import_list' %}" class="btn btn-secondary">
+        <i class="fa-solid fa-xmark me-1"></i> Hủy
+      </a>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-save me-1"></i> Lưu phiếu nhập
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Hidden empty form template -->
+<table class="d-none">
+  <tbody id="empty-form-template">
+    <tr class="item-row align-middle">
+      <td>
+        <select name="items-__prefix__-product" class="form-select" required>
+          {% for p in formset.forms.0.fields.product.queryset %}
+            <option value="{{ p.pk }}">{{ p.product_code }} - {{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td><input type="number" name="items-__prefix__-quantity" class="form-control text-end quantity" min="1" value="1" required></td>
+      <td><input type="number" name="items-__prefix__-unit_price" class="form-control text-end unit-price" min="0" step="0.01" required></td>
+      <td><input type="number" name="items-__prefix__-discount_percent" class="form-control text-end discount" min="0" step="0.01" value="0"></td>
+      <td><input type="text" name="items-__prefix__-unit" class="form-control" placeholder="VD: Thùng"></td>
+      <td><input type="text" name="items-__prefix__-location" class="form-control" placeholder="VD: Kệ A1"></td>
+      <td><input type="date" name="items-__prefix__-expiry_date" class="form-control"></td>
+      <td class="text-end total-cell text-primary fw-semibold">0</td>
+      <td class="text-center"><input type="checkbox" name="items-__prefix__-DELETE"></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- STYLE -->
+<style>
+.table th, .table td { vertical-align: middle !important; }
+.table th { font-weight: 600; }
+.table input, .table select { height: 38px; font-size: 14px; }
+.item-row td { vertical-align: middle !important; }
+td label { display: none; }
+.total-cell { font-weight: 600; color: #0d6efd; }
+#discount-total { color: #dc3545; font-weight: 600; }
+#grand-total { color: #0d6efd; font-weight: 700; font-size: 15px; }
+</style>
+
+<!-- SCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const addButton = document.getElementById("add-row");
+  const totalForms = document.getElementById("id_items-TOTAL_FORMS");
+  const tbody = document.getElementById("item-body");
+  const template = document.getElementById("empty-form-template").innerHTML.trim();
+  const grandTotalCell = document.getElementById("grand-total");
+  const discountTotalCell = document.getElementById("discount-total");
+
+  // ✅ Thêm class cần thiết cho các input đã render từ Django
+  document.querySelectorAll('[name$="-quantity"]').forEach(i => i.classList.add('quantity'));
+  document.querySelectorAll('[name$="-unit_price"]').forEach(i => i.classList.add('unit-price'));
+  document.querySelectorAll('[name$="-discount_percent"]').forEach(i => i.classList.add('discount'));
+
+  // ✅ Tính từng dòng
+  function calculateRow(row) {
+    const qty = parseFloat(row.querySelector(".quantity")?.value || 0);
+    const price = parseFloat(row.querySelector(".unit-price")?.value || 0);
+    const discount = parseFloat(row.querySelector(".discount")?.value || 0);
+    const totalCell = row.querySelector(".total-cell");
+    const base = qty * price;
+    const discounted = base * (1 - discount / 100);
+    totalCell.textContent = discounted ? discounted.toLocaleString("vi-VN") : "0";
+    return { base, discounted };
+  }
+
+  // ✅ Tính tổng toàn bảng
+  function calculateTotals() {
+    let totalBase = 0, totalDiscounted = 0;
+    document.querySelectorAll(".item-row").forEach(row => {
+      const { base, discounted } = calculateRow(row);
+      totalBase += base;
+      totalDiscounted += discounted;
+    });
+    const totalDiscount = totalBase - totalDiscounted;
+    discountTotalCell.textContent = totalDiscount.toLocaleString("vi-VN") + " ₫";
+    grandTotalCell.textContent = totalDiscounted.toLocaleString("vi-VN") + " ₫";
+  }
+
+  // ✅ Gắn sự kiện cho từng input
+  function attachEvents(row) {
+    ["quantity", "unit-price", "discount"].forEach(cls => {
+      const input = row.querySelector("." + cls);
+      if (input) input.addEventListener("input", calculateTotals);
+    });
+  }
+
+  // Gắn sự kiện cho các dòng đã render
+  document.querySelectorAll(".item-row").forEach(row => attachEvents(row));
+
+  // Khi thêm dòng mới
+  addButton.addEventListener("click", e => {
+    e.preventDefault();
+    const index = parseInt(totalForms.value);
+    const newRow = template.replace(/__prefix__/g, index);
+    tbody.insertAdjacentHTML("beforeend", newRow);
+    totalForms.value = index + 1;
+    const newRowElement = tbody.lastElementChild;
+    attachEvents(newRowElement);
+    calculateTotals();
+  });
+
+  // ✅ Tính ngay khi load (fix hàng đầu tiên bị 0)
+  setTimeout(calculateTotals, 200);
+});
+</script>
+
+{% endblock %}

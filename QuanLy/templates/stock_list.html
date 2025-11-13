@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Quản lý tồn kho - TH True Mart{% endblock %}
+{% block page_title %}Quản lý hàng tồn kho{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- Bộ lọc -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-3">
+        <input type="text" name="q" value="{{ query }}" class="form-control"
+               placeholder="🔍 Tìm theo mã phiếu, mã SP, tên SP, vị trí...">
+      </div>
+
+      <div class="col-md-2">
+        <select name="category" class="form-select">
+          <option value="">Tất cả danh mục</option>
+          {% for c in categories %}
+            <option value="{{ c.name }}" {% if c.name == category_filter %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <select name="location" class="form-select">
+          <option value="">Tất cả vị trí</option>
+          {% for loc in locations %}
+            <option value="{{ loc }}" {% if loc == location_filter %}selected{% endif %}>{{ loc }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">Tất cả trạng thái</option>
+          <option value="valid" {% if status_filter == 'valid' %}selected{% endif %}>Còn hạn</option>
+          <option value="nearly_expired" {% if status_filter == 'nearly_expired' %}selected{% endif %}>Cận hạn</option>
+          <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>Hết hạn</option>
+        </select>
+      </div>
+
+      <div class="col-md-3 text-end">
+        <button type="submit" class="btn btn-primary me-2">
+          <i class="fa-solid fa-filter me-1"></i> Lọc
+        </button>
+        <a href="{% url 'stock_list' %}" class="btn btn-outline-secondary">
+          <i class="fa-solid fa-rotate-left me-1"></i> Reset
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Bảng tồn kho -->
+  <div class="bg-white p-3 rounded-3 shadow-sm">
+    {% if stocks %}
+    <table class="table table-hover align-middle mb-0" id="stockTable">
+      <thead class="table-light text-center align-middle">
+        <tr>
+          <th>Mã phiếu</th>
+          <th>Loại lô</th>
+          <th>Mã SP</th>
+          <th>Tên sản phẩm</th>
+          <th>Danh mục</th>
+          <th class="text-end">Tồn kho</th>
+          <th>Đơn vị</th>
+          <th>Vị trí</th>
+          <th>Hạn sử dụng</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for s in stocks %}
+        <tr class="align-middle text-center">
+
+          <!-- Mã phiếu -->
+          <td class="fw-semibold text-primary">
+            {% if s.source_type == "import" %}
+              {{ s.import_receipt.import_code }}
+            {% else %}
+              {{ s.return_receipt.return_code }}
+            {% endif %}
+          </td>
+
+          <!-- Loại lô -->
+          <td>
+  {% if s.source_type == 'import' %}
+      <span class="badge bg-info">Nhập kho</span>
+  {% else %}
+      <span class="badge bg-secondary">Hoàn hàng</span>
+  {% endif %}
+</td>
+
+          <td>{{ s.product.product_code }}</td>
+          <td class="text-start">{{ s.product.name }}</td>
+          <td>{{ s.product.category.name }}</td>
+
+          <td class="text-end">{{ s.quantity|intcomma }}</td>
+          <td>{{ s.unit }}</td>
+          <td>{{ s.location|default:"-" }}</td>
+
+          <td>
+            {% if s.expiry_date %}
+              {{ s.expiry_date|date:"d/m/Y" }}
+            {% else %}
+              <span class="text-muted">Không có</span>
+            {% endif %}
+          </td>
+
+          <!-- Trạng thái -->
+          <td>
+            {% if s.status == 'expired' %}
+              <span class="badge bg-danger px-3 py-2">Hết hạn</span>
+            {% elif s.status == 'nearly_expired' %}
+              <span class="badge bg-warning text-dark px-3 py-2">Cận hạn</span>
+            {% else %}
+              <span class="badge bg-success px-3 py-2">Còn hạn</span>
+            {% endif %}
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="fa-regular fa-box-open fa-2x mb-3"></i>
+        <div>Chưa có dữ liệu tồn kho</div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<style>
+.table td, .table th { vertical-align: middle !important; }
+.badge { font-weight: 600; border-radius: 10px; }
+.table-hover tbody tr:hover { background-color: #f8fafc !important; }
+</style>
+
+{% endblock %}

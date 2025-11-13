@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Phiếu giao hàng - {{ asn.asn_code }}</title>
+  {% load humanize %}
+  <style>
+    body {
+      font-family: "DejaVu Sans", sans-serif;
+      font-size: 13px;
+      color: #000;
+      margin: 40px;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+    .header img {
+      height: 60px;
+    }
+    .company-info {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .doc-info {
+      text-align: right;
+      font-size: 13px;
+    }
+
+    /* ===== TITLE ===== */
+    .title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 13px;
+      margin-bottom: 15px;
+    }
+
+    /* ===== CONTENT ===== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 6px;
+    }
+    th {
+      background: #f5f5f5;
+      text-align: center;
+    }
+    td {
+      text-align: center;
+    }
+    .text-left { text-align: left; }
+    .text-right { text-align: right; }
+    .no-border td { border: none; }
+    .fw-bold { font-weight: bold; }
+
+    /* ===== SIGNATURE ===== */
+    .sign {
+      width: 100%;
+      text-align: center;
+      margin-top: 40px;
+    }
+    .sign td {
+      width: 33%;
+      vertical-align: top;
+      font-weight: 600;
+    }
+    .note {
+      font-size: 12px;
+      margin-top: 10px;
+      font-style: italic;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="company-info">
+      <img src="/static/images/th_logo.png" alt="TH True Mart Logo"><br>
+      <strong>CÔNG TY TNHH TH TRUE MART</strong><br>
+      Địa chỉ: Nghệ An, Việt Nam<br>
+      MST: 0312456789
+    </div>
+    <div class="doc-info">
+      <strong>Số phiếu:</strong> {{ asn.asn_code }}<br>
+      <strong>Ngày:</strong> {{ asn.expected_date|date:"d/m/Y" }}<br>
+      <strong>Liên kết PO:</strong> {{ asn.po.po_code|default:"-" }}
+    </div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="title">PHIẾU GIAO HÀNG</div>
+  <div class="subtitle">Liên 1 - Lưu nội bộ</div>
+
+  <!-- THÔNG TIN GIAO NHẬN -->
+  <table class="no-border">
+    <tr>
+      <td class="text-left" width="55%">
+        <strong>Bên nhận hàng:</strong> Kho tổng TH True Mart<br>
+        <strong>Người giao:</strong> {{ asn.deliverer_name }}<br>
+        <strong>Điện thoại:</strong> {{ asn.deliverer_phone|default:"-" }}
+      </td>
+      <td class="text-left">
+        <strong>Ngày giao:</strong> {{ asn.expected_date|date:"d/m/Y" }}<br>
+        <strong>Người lập phiếu:</strong> {{ asn.created_by.username|default:"Admin" }}
+      </td>
+    </tr>
+  </table>
+
+  <!-- BẢNG SẢN PHẨM -->
+  <table style="margin-top: 15px;">
+    <thead>
+      <tr>
+        <th>STT</th>
+        <th>Mã hàng</th>
+        <th>Tên mặt hàng</th>
+        <th>ĐVT</th>
+        <th>Số lượng</th>
+        <th>Đơn giá (₫)</th>
+        <th>Thành tiền (₫)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in asn.items.all %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ i.product.product_code }}</td>
+        <td class="text-left">{{ i.product.name }}</td>
+        <td>{{ i.unit }}</td>
+        <td>{{ i.quantity|floatformat:0|intcomma }}</td>
+        <td class="text-right">{{ i.unit_price|floatformat:0|intcomma }}</td>
+        <td class="text-right">{{ i.total_value|floatformat:0|intcomma }}</td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td colspan="6" class="text-right fw-bold">Tổng cộng:</td>
+        <td class="text-right fw-bold">{{ asn.total_value|floatformat:0|intcomma }}</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- GHI CHÚ -->
+  <div class="note">
+    <strong>Ghi chú:</strong> {{ asn.note|default:"Không có ghi chú" }}<br>
+    Quý khách vui lòng kiểm tra kỹ hàng hóa trước khi ký nhận.
+  </div>
+
+  <!-- CHỮ KÝ -->
+  <table class="sign">
+    <tr>
+      <td>Người nhận hàng<br><br><br><br>...........................</td>
+      <td>Đã nhận đủ tiền<br><br><br><br>...........................</td>
+      <td>Người lập phiếu<br><br><br><br>...........................</td>
+    </tr>
+  </table>
+
+</body>
+</html>

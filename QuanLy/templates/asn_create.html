@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Tạo phiếu giao hàng (ASN) - TH True Mart{% endblock %}
+{% block page_title %}Tạo phiếu giao hàng (ASN){% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h4 class="fw-bold mb-3 text-primary">Tạo phiếu giao hàng (ASN)</h4>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- Thông tin chung -->
+    <div class="card p-3 mb-3 shadow-sm">
+      <h6 class="fw-semibold text-primary mb-2">Thông tin phiếu giao hàng</h6>
+      <div class="row g-3">
+        <div class="col-md-3">{{ form.asn_code.label_tag }}{{ form.asn_code }}</div>
+        <div class="col-md-3">{{ form.po.label_tag }}{{ form.po }}</div>
+        <div class="col-md-3">{{ form.supplier.label_tag }}{{ form.supplier }}</div>
+        <div class="col-md-3">{{ form.expected_date.label_tag }}{{ form.expected_date }}</div>
+        <div class="col-md-3">{{ form.deliverer_name.label_tag }}{{ form.deliverer_name }}</div>
+        <div class="col-md-3">{{ form.deliverer_phone.label_tag }}{{ form.deliverer_phone }}</div>
+        <div class="col-md-6">{{ form.note.label_tag }}{{ form.note }}</div>
+      </div>
+    </div>
+
+    <!-- Danh sách sản phẩm -->
+    <div class="card p-3 shadow-sm">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-semibold text-primary mb-0">Danh sách sản phẩm giao</h6>
+        <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
+          <i class="fa-solid fa-plus me-1"></i> Thêm dòng
+        </button>
+      </div>
+
+      {{ formset.management_form }}
+      <table class="table table-bordered align-middle text-center">
+        <thead class="table-light">
+          <tr>
+            <th>Sản phẩm</th>
+            <th>Số lượng</th>
+            <th>Đơn vị</th>
+            <th>Đơn giá (₫)</th>
+            <th>Hạn sử dụng</th>
+            <th>Xóa</th>
+          </tr>
+        </thead>
+        <tbody id="item-body">
+          {% for f in formset.forms %}
+          <tr class="align-middle">
+            <td>{{ f.product }}</td>
+            <td>{{ f.quantity }}</td>
+            <td>{{ f.unit }}</td>
+            <td>{{ f.unit_price }}</td>
+            <td>{{ f.expiry_date }}</td>
+            <td>{{ f.DELETE }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="text-end mt-3">
+      <a href="{% url 'asn_list' %}" class="btn btn-secondary">Hủy</a>
+      <button type="submit" class="btn btn-primary">Lưu phiếu giao hàng</button>
+    </div>
+  </form>
+</div>
+
+<style>
+.table th, .table td { vertical-align: middle !important; }
+.table input, .table select { height: 38px; font-size: 14px; }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const addButton = document.getElementById("add-row");
+  const totalForms = document.getElementById("id_items-TOTAL_FORMS");
+  const tbody = document.getElementById("item-body");
+  const firstRow = tbody.querySelector("tr");
+
+  addButton.addEventListener("click", function(e) {
+    e.preventDefault();
+    const formIndex = parseInt(totalForms.value);
+    const newRow = firstRow.cloneNode(true);
+    newRow.innerHTML = newRow.innerHTML.replace(/items-\d+/g, `items-${formIndex}`);
+    tbody.appendChild(newRow);
+    totalForms.value = formIndex + 1;
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Quản lý đơn đặt hàng (PO) - TH True Mart{% endblock %}
+{% block page_title %}Quản lý đơn đặt hàng (PO){% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- HEADER -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h6 class="fw-semibold mb-0">Danh sách đơn đặt hàng (PO)</h6>
+      <small class="text-muted">Theo dõi các đơn đặt hàng gần đây</small>
+    </div>
+    <a href="{% url 'create_po' %}" class="btn btn-success">
+      <i class="fa-solid fa-plus me-1"></i> Tạo đơn đặt hàng
+    </a>
+  </div>
+
+  <!-- DANH SÁCH PO -->
+  <div class="bg-white p-3 rounded-3 shadow-sm">
+    {% if pos %}
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light text-center">
+        <tr>
+          <th>Mã PO</th>
+          <th>Ngày tạo</th>
+          <th>Nhà cung ứng</th>
+          <th class="text-end">Tổng sản phẩm</th>
+          <th>Trạng thái</th>
+          <th class="text-center">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pos %}
+        <tr>
+          <td class="fw-semibold text-primary">{{ p.po_code }}</td>
+          <td>{{ p.created_date|date:"d/m/Y" }}</td>
+          <td>{{ p.supplier.company_name }}</td>
+          <td class="text-end">{{ p.items.count }}</td>
+          <td class="text-center">
+            {% if p.status == 'approved' %}
+              <span class="badge bg-success px-3 py-2">Đã duyệt</span>
+            {% elif p.status == 'closed' %}
+              <span class="badge bg-secondary px-3 py-2">Đã đóng</span>
+            {% else %}
+              <span class="badge bg-warning text-dark px-3 py-2">Chờ duyệt</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm" role="group">
+              <!-- Xem -->
+              <button class="btn btn-outline-primary" title="Xem chi tiết"
+                      data-bs-toggle="modal" data-bs-target="#viewModal{{ p.po_code }}">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+              <!-- Xóa -->
+              <button class="btn btn-outline-danger" title="Xóa đơn hàng"
+                      onclick="confirmDelete('{{ p.po_code }}')">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Modal chi tiết PO -->
+    {% for p in pos %}
+    <div class="modal fade" id="viewModal{{ p.po_code }}" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold text-primary">
+              Chi tiết đơn đặt hàng {{ p.po_code }}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row mb-3">
+              <div class="col-md-6"><strong>Nhà cung ứng:</strong> {{ p.supplier.company_name }}</div>
+              <div class="col-md-6"><strong>Ngày tạo:</strong> {{ p.created_date|date:"d/m/Y" }}</div>
+              <div class="col-md-6"><strong>Người tạo:</strong> {{ p.created_by.username|default:"-" }}</div>
+              {% if p.note %}
+              <div class="col-md-12 mt-2"><strong>Ghi chú:</strong> <span class="text-muted">{{ p.note }}</span></div>
+              {% endif %}
+            </div>
+
+            <h6 class="fw-semibold mt-3 mb-2">Danh sách sản phẩm đặt</h6>
+            <table class="table table-bordered align-middle text-center">
+              <thead class="table-light">
+                <tr>
+                  <th>Mã SP</th>
+                  <th>Tên sản phẩm</th>
+                  <th class="text-end">Số lượng</th>
+                  <th>Đơn vị</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in p.items.all %}
+                <tr>
+                  <td>{{ item.product.product_code }}</td>
+                  <td class="text-start">{{ item.product.name }}</td>
+                  <td class="text-end">{{ item.quantity|intcomma }}</td>
+                  <td>{{ item.unit }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-muted">Không có sản phẩm nào</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            <div class="text-end mt-3">
+              <a href="{% url 'po_edit' p.po_code %}" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-pen me-1"></i> Cập nhật
+              </a>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="fa-solid fa-xmark me-1"></i> Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa-regular fa-file-lines fa-2x mb-3"></i>
+      <div>Chưa có đơn đặt hàng nào trong hệ thống</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- SCRIPT -->
+<script>
+function confirmDelete(code) {
+  if (confirm("Bạn có chắc muốn xóa đơn đặt hàng " + code + " ?")) {
+    window.location.href = "/po/delete/" + code + "/";
+  }
+}
+</script>
+
+<!-- STYLE -->
+<style>
+.table td, .table th {
+  vertical-align: middle !important;
+}
+.btn-group .btn {
+  min-width: 36px;
+  padding: 6px 8px;
+  border-radius: 6px !important;
+}
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: #fff;
+}
+.text-warning { color: #f59e0b !important; }
+.text-success { color: #16a34a !important; }
+.text-danger { color: #dc2626 !important; }
+</style>
+{% endblock %}

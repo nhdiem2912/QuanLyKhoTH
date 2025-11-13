@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Cập nhật đơn đặt hàng - {{ po.po_code }}{% endblock %}
+{% block page_title %}Cập nhật đơn đặt hàng{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="bg-white p-4 rounded-3 shadow-sm">
+    <h5 class="fw-semibold text-primary mb-1">Cập nhật đơn đặt hàng {{ po.po_code }}</h5>
+    <small class="text-muted">Thay đổi trạng thái hoặc ghi chú đơn hàng</small>
+
+    <form method="post" class="mt-4">
+      {% csrf_token %}
+      <div class="card p-4 shadow-sm mb-3">
+        <div class="row g-3">
+          <div class="col-md-4">
+            {{ form.po_code.label_tag }}
+            {{ form.po_code }}
+          </div>
+          <div class="col-md-4">
+            {{ form.supplier.label_tag }}
+            {{ form.supplier }}
+          </div>
+          <div class="col-md-4">
+            {{ form.status.label_tag }}
+            {{ form.status }}
+          </div>
+          <div class="col-md-12">
+            {{ form.note.label_tag }}
+            {{ form.note }}
+          </div>
+        </div>
+      </div>
+
+      <div class="text-end">
+        <a href="{% url 'po_list' %}" class="btn btn-secondary">
+          <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-save me-1"></i> Lưu thay đổi
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.form-control[readonly] {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+</style>
+{% endblock %}
