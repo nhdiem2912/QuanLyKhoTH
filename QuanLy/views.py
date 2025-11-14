@@ -30,9 +30,11 @@ from .forms import (
     PurchaseOrderForm, PurchaseOrderItemFormSet,
     ASNForm, ASNItemFormSet
 )
-
+from .decorators import group_required
 # ===================== DASHBOARD =====================
-@login_required(login_url='login')
+
+@group_required('Cửa hàng trưởng', 'Nhân viên')
+
 def index(request):
     today = date.today()
     context = {
@@ -47,9 +49,32 @@ def index(request):
     }
     return render(request, "index.html", context)
 
-from django.db.models import Q, Count
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+
+
+@login_required
+def home_redirect(request):
+    user = request.user
+
+    # Superuser → Trang chủ (dashboard)
+    if user.is_superuser:
+        return redirect('index')
+
+    # Cửa hàng trưởng / Nhân viên
+    if user.groups.filter(name__in=['Cửa hàng trưởng', 'Nhân viên']).exists():
+        return redirect('index')
+
+    # Nhà cung ứng
+    if user.groups.filter(name='Nhà cung ứng').exists():
+        return redirect('asn_list')
+
+    # Unknown role → logout
+    return redirect('logout')
+
 
 # ===================== DANH MỤC =====================
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def categories(request):
     q = request.GET.get("q", "").strip()
@@ -79,20 +104,21 @@ def categories(request):
         "count_filter": count_filter,
     })
 
-
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def add_category(request):
-    form = CategoryForm(request.POST or None)
+    form = CategoryForm(request.POST or None,request.FILES or None)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "✅ Thêm danh mục mới thành công!")
         return redirect("categories")
     return render(request, "category_add.html", {"form": form})
 
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def edit_category(request, pk):
     category = get_object_or_404(Category, pk=pk)
-    form = CategoryForm(request.POST or None, instance=category)
+    form = CategoryForm(request.POST or None,request.FILES or None, instance=category)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "✅ Đã cập nhật danh mục!")
@@ -100,11 +126,56 @@ def edit_category(request, pk):
     return render(request, "category_edit.html", {"form": form, "category": category})
 
 
+from django.views.decorators.http import require_POST
+@require_POST
+@group_required('Cửa hàng trưởng','Nhân viên')
+def delete_category(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+    category.delete()
+
+    # Nếu là request AJAX (fetch) → trả JSON
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({"success": True, "message": "Đã xoá danh mục thành công."})
+
+    # Nếu là request thường → quay về danh sách
+    messages.success(request, "Đã xoá danh mục.")
+    return redirect('categories')
 # ===================== NHÀ CUNG ỨNG =====================
+from django.db.models import Q, Count
+
 @login_required(login_url='login')
 def suppliers(request):
+    q = request.GET.get("q", "").strip()
+    city = request.GET.get("city", "")
+    count_filter = request.GET.get("count", "")
+
     suppliers = Supplier.objects.all()
-    return render(request, "suppliers.html", {"suppliers": suppliers})
+
+    # --- Search (Tên, mã, người liên hệ, email, số điện thoại…) ---
+    if q:
+        suppliers = suppliers.filter(
+            Q(company_name__icontains=q) |
+            Q(supplier_code__icontains=q) |
+            Q(contact_name__icontains=q) |
+            Q(phone__icontains=q) |
+            Q(email__icontains=q) |
+            Q(address__icontains=q)
+        )
+
+    # --- Lọc theo thành phố ---
+    if city:
+        suppliers = suppliers.filter(address__icontains=city)
+
+
+    suppliers = suppliers.order_by("company_name")
+
+    return render(request, "suppliers.html", {
+        "suppliers": suppliers,
+        "q": q,
+        "city_filter": city,
+        "count_filter": count_filter,
+    })
+
 
 @login_required(login_url='login')
 def add_supplier(request):
@@ -127,30 +198,34 @@ def edit_supplier(request, pk):
 
 
 # ===================== SẢN PHẨM KINH DOANH =====================
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def product_master_list(request):
     products = ProductMaster.objects.select_related("category").all()
     return render(request, "product_master_list.html", {"products": products})
 
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def add_product_master(request):
-    form = ProductMasterForm(request.POST or None)
+    form = ProductMasterForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "✅ Thêm sản phẩm mới thành công!")
         return redirect("product_master_list")
     return render(request, "product_master_add.html", {"form": form})
 
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def edit_product_master(request, pk):
     product = get_object_or_404(ProductMaster, pk=pk)
-    form = ProductMasterForm(request.POST or None, instance=product)
+    form = ProductMasterForm(request.POST or None, request.FILES or None, instance=product)
     if request.method == "POST" and form.is_valid():
         form.save()
         messages.success(request, "✅ Cập nhật sản phẩm thành công!")
         return redirect("product_master_list")
     return render(request, "product_master_edit.html", {"form": form, "product": product})
 
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def delete_product_master(request, pk):
     product = get_object_or_404(ProductMaster, pk=pk)
@@ -166,6 +241,7 @@ from django.db.models import Case, When, Value, IntegerField, Q
 from .models import StockItem, Category
 from django.db import models
 
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def stock_list(request):
     """Trang quản lý tồn kho có bộ lọc nâng cao"""
@@ -226,7 +302,7 @@ def stock_list(request):
         "location_filter": location_filter,
     })
 
-
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def edit_stock(request, pk):
     stock = get_object_or_404(StockItem, pk=pk)
@@ -239,12 +315,54 @@ def edit_stock(request, pk):
 
 
 # ===================== NHẬP KHO =====================
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def import_list(request):
-    imports = ImportReceipt.objects.select_related("supplier").prefetch_related("items__product").order_by("-import_date")
-    return render(request, "import_list.html", {"imports": imports})
+    q = request.GET.get("q", "").strip()
+    supplier_filter = request.GET.get("supplier", "")
+    date_from = request.GET.get("date_from", "")
+    date_to = request.GET.get("date_to", "")
+    count_filter = request.GET.get("count", "")
+
+    imports = ImportReceipt.objects.select_related("supplier") \
+        .prefetch_related("items__product")
+
+    # --- Lọc theo từ khóa ---
+    if q:
+        imports = imports.filter(
+            Q(import_code__icontains=q) |
+            Q(note__icontains=q) |
+            Q(created_by__username__icontains=q) |
+            Q(supplier__company_name__icontains=q)
+        )
+
+    # --- Lọc theo nhà cung cấp ---
+    if supplier_filter:
+        imports = imports.filter(supplier__id=supplier_filter)
+
+    # --- Lọc theo ngày ---
+    if date_from:
+        imports = imports.filter(import_date__gte=date_from)
+    if date_to:
+        imports = imports.filter(import_date__lte=date_to)
 
 
+    imports = imports.order_by("-import_date")
+
+    suppliers = Supplier.objects.all()
+
+    return render(request, "import_list.html", {
+        "imports": imports,
+        "suppliers": suppliers,
+        "q": q,
+        "supplier_filter": supplier_filter,
+        "date_from": date_from,
+        "date_to": date_to,
+        "count_filter": count_filter,
+    })
+
+
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 @transaction.atomic
 def create_import(request):
@@ -285,6 +403,7 @@ def create_import(request):
     return render(request, "import_create.html", {"form": form, "formset": formset})
 
 # ===================== DELETE IMPORT =====================
+@group_required('Cửa hàng trưởng')
 @transaction.atomic
 @login_required(login_url='login')
 def delete_import(request, code):
@@ -306,7 +425,7 @@ from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def import_export_pdf(request, code):
     """
@@ -339,12 +458,60 @@ def import_export_pdf(request, code):
 
 
 # ===================== XUẤT KHO =====================
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def export_list(request):
-    exports = ExportReceipt.objects.prefetch_related("items__stock_item__product").order_by("-export_date")
-    return render(request, "export_list.html", {"exports": exports})
+    q = request.GET.get("q", "").strip()
+    destination = request.GET.get("destination", "")
+    date_from = request.GET.get("date_from", "")
+    date_to = request.GET.get("date_to", "")
+    count_filter = request.GET.get("count", "")
+
+    exports = ExportReceipt.objects.prefetch_related(
+        "items__stock_item__product"
+    )
+
+    # --- Search ---
+    if q:
+        exports = exports.filter(
+            Q(export_code__icontains=q) |
+            Q(note__icontains=q) |
+            Q(destination__icontains=q) |
+            Q(created_by__username__icontains=q) |
+            Q(items__stock_item__product__name__icontains=q)
+        ).distinct()
+
+    # --- Lọc theo nơi nhận ---
+    if destination:
+        exports = exports.filter(destination__icontains=destination)
+
+    # --- Lọc theo khoảng ngày ---
+    if date_from:
+        exports = exports.filter(export_date__gte=date_from)
+    if date_to:
+        exports = exports.filter(export_date__lte=date_to)
+
+    exports = exports.order_by("-export_date")
+
+    # Danh sách nơi nhận gợi ý
+    destinations = (
+        ExportReceipt.objects.exclude(destination="")
+        .values_list("destination", flat=True)
+        .distinct()
+    )
+
+    return render(request, "export_list.html", {
+        "exports": exports,
+        "destinations": destinations,
+        "q": q,
+        "destination_filter": destination,
+        "date_from": date_from,
+        "date_to": date_to,
+        "count_filter": count_filter,
+    })
 
 
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 @transaction.atomic
 def create_export(request):
@@ -398,7 +565,7 @@ def create_export(request):
 
     return render(request, "export_create.html", {"form": form, "formset": formset})
 
-
+@group_required('Cửa hàng trưởng')
 @login_required(login_url='login')
 @transaction.atomic
 def delete_export(request, code):
@@ -422,7 +589,7 @@ import pdfkit
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def export_export_pdf(request, code):
     """
@@ -458,17 +625,53 @@ def export_export_pdf(request, code):
 # ------------------------ DANH SÁCH PHIẾU HOÀN ------------------------
 # ------------------------ DANH SÁCH PHIẾU HOÀN ------------------------
 # ===================== HOÀN HÀNG =====================
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def return_list(request):
-    returns = ReturnReceipt.objects.prefetch_related("items").order_by("-return_date")
-    return render(request, "return_list.html", {"returns": returns})
+    q = request.GET.get("q", "").strip()
+
+    date_from = request.GET.get("date_from", "")
+    date_to = request.GET.get("date_to", "")
+    count_filter = request.GET.get("count", "")
+
+    returns = ReturnReceipt.objects.prefetch_related(
+        "items__product",
+        "created_by"
+    )
+
+    # --- Search ---
+    if q:
+        returns = returns.filter(
+            Q(return_code__icontains=q) |
+            Q(note__icontains=q) |
+            Q(items__reason__icontains=q) |
+            Q(items__product__name__icontains=q) |
+            Q(created_by__username__icontains=q)
+        ).distinct()
 
 
+
+    # --- Lọc theo ngày ---
+    if date_from:
+        returns = returns.filter(return_date__gte=date_from)
+    if date_to:
+        returns = returns.filter(return_date__lte=date_to)
+
+
+
+    returns = returns.order_by("-return_date")
+
+    return render(request, "return_list.html", {
+        "returns": returns,
+        "q": q,
+
+        "date_from": date_from,
+        "date_to": date_to,
+        "count_filter": count_filter,
+    })
 
 # ------------------------ TẠO PHIẾU HOÀN ------------------------
-
-
-# ------------------------ TẠO PHIẾU HOÀN ------------------------
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 @transaction.atomic
 def create_return(request):
@@ -510,7 +713,7 @@ def create_return(request):
 
     return render(request, "return_create.html", {"form": form, "formset": formset})
 
-
+@group_required('Cửa hàng trưởng')
 @login_required(login_url='login')
 @transaction.atomic
 def delete_return(request, code):
@@ -531,7 +734,7 @@ def delete_return(request, code):
 
 
 from .models import ReturnReceipt
-
+@group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def return_export_pdf(request, code):
     """
@@ -574,11 +777,70 @@ from django.db import transaction
 from .models import PurchaseOrder
 from .forms import PurchaseOrderForm, PurchaseOrderItemFormSet
 
+from django.db.models import Q, Count
+@group_required('Cửa hàng trưởng', 'Nhân viên', 'Nhà cung ứng')
 @login_required(login_url='login')
 def po_list(request):
-    pos = PurchaseOrder.objects.select_related("supplier", "created_by").prefetch_related("items__product").order_by("-created_date")
-    return render(request, "po_list.html", {"pos": pos})
+    q = request.GET.get("q", "").strip()
+    supplier_id = request.GET.get("supplier", "")
+    date_from = request.GET.get("date_from", "")
+    date_to = request.GET.get("date_to", "")
+    count_filter = request.GET.get("count", "")
+    status = request.GET.get("status", "")
 
+    pos = PurchaseOrder.objects.select_related(
+        "supplier", "created_by"
+    ).prefetch_related(
+        "items__product"
+    )
+
+    # --- SEARCH ---
+    if q:
+        pos = pos.filter(
+            Q(po_code__icontains=q) |
+            Q(note__icontains=q) |
+            Q(supplier__company_name__icontains=q) |
+            Q(created_by__username__icontains=q) |
+            Q(items__product__name__icontains=q)
+        ).distinct()
+
+    # --- FILTER BY SUPPLIER ---
+    if supplier_id:
+        pos = pos.filter(supplier_id=supplier_id)
+
+    # --- FILTER BY STATUS IF YOU USE ONE ---
+    if status:
+        pos = pos.filter(status=status)
+
+    # --- FILTER DATE RANGE ---
+    if date_from:
+        pos = pos.filter(created_date__gte=date_from)
+
+    if date_to:
+        pos = pos.filter(created_date__lte=date_to)
+
+    # --- FILTER BY NUMBER OF PRODUCTS ---
+    if count_filter == "0":
+        pos = pos.annotate(total_items=Count("items")).filter(total_items=0)
+    elif count_filter == "1":
+        pos = pos.annotate(total_items=Count("items")).filter(total_items__gt=0)
+
+    pos = pos.order_by("-created_date")
+
+    suppliers = Supplier.objects.all()
+
+    return render(request, "po_list.html", {
+        "pos": pos,
+        "suppliers": suppliers,
+        "q": q,
+        "supplier_id": supplier_id,
+        "date_from": date_from,
+        "date_to": date_to,
+        "count_filter": count_filter,
+        "status": status,
+    })
+
+@group_required('Cửa hàng trưởng')
 @login_required(login_url='login')
 @transaction.atomic
 def create_po(request):
@@ -596,6 +858,7 @@ def create_po(request):
         messages.error(request, "❌ Dữ liệu chưa hợp lệ, vui lòng kiểm tra lại.")
     return render(request, "po_create.html", {"form": form, "formset": formset})
 
+@group_required('Cửa hàng trưởng')
 @login_required(login_url='login')
 @transaction.atomic
 def po_edit(request, code):
@@ -609,6 +872,7 @@ def po_edit(request, code):
         messages.error(request, "❌ Cập nhật thất bại, vui lòng kiểm tra lại.")
     return render(request, "po_edit.html", {"form": form, "po": po})
 
+@group_required('Cửa hàng trưởng')
 @login_required(login_url='login')
 def delete_po(request, code):
     po = get_object_or_404(PurchaseOrder, pk=code)
@@ -616,29 +880,121 @@ def delete_po(request, code):
     messages.success(request, f"🗑️ Đã xóa đơn đặt hàng {code} thành công.")
     return redirect("po_list")
 
+@group_required('Cửa hàng trưởng', 'Nhân viên')
+@login_required(login_url='login')
+def po_export_pdf(request, code):
+    po = get_object_or_404(PurchaseOrder, po_code=code)
+
+    html = render_to_string("po_pdf.html", {"po": po})
+
+    config = pdfkit.configuration(
+        wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+    )
+
+    pdf = pdfkit.from_string(
+        html,
+        False,
+        configuration=config,
+        options={
+            "encoding": "utf-8",
+            "page-size": "A4",
+            "margin-top": "10mm",
+            "margin-bottom": "15mm",
+            "margin-left": "10mm",
+            "margin-right": "10mm",
+        }
+    )
+
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = f'inline; filename="PO_{po.po_code}.pdf"'
+    return response
+
 
 # ===================== ASN =====================
 from datetime import date, timedelta
 from django.db.models import Sum, F
 from .models import ASN, ASNItem
 from .forms import ASNForm, ASNItemFormSet
+
+
+
+from django.db.models import Q, Count
+from datetime import date, timedelta
+@group_required('Cửa hàng trưởng', 'Nhân viên', 'Nhà cung ứng')
 @login_required(login_url='login')
-
-
-
-@login_required(login_url='login')
-
-
 def asn_list(request):
+    q = request.GET.get("q", "").strip()
+    supplier_id = request.GET.get("supplier", "")
+    date_from = request.GET.get("date_from", "")
+    date_to = request.GET.get("date_to", "")
+    status = request.GET.get("status", "")     # overdue | soon | normal
+    count_filter = request.GET.get("count", "")
+
     today = date.today()
-    asns = ASN.objects.prefetch_related("items__product", "po", "supplier").order_by("-expected_date")
+
+    asns = ASN.objects.prefetch_related(
+        "items__product",
+        "po",
+        "supplier",
+        "created_by"
+    )
+
+    # --- SEARCH ---
+    if q:
+        asns = asns.filter(
+            Q(asn_code__icontains=q) |
+            Q(po__po_code__icontains=q) |
+            Q(supplier__company_name__icontains=q) |
+            Q(note__icontains=q) |
+            Q(items__product__name__icontains=q) |
+            Q(created_by__username__icontains=q)
+        ).distinct()
+
+    # --- FILTER SUPPLIER ---
+    if supplier_id:
+        asns = asns.filter(supplier_id=supplier_id)
+
+    # --- FILTER DATE RANGE ---
+    if date_from:
+        asns = asns.filter(expected_date__gte=date_from)
+
+    if date_to:
+        asns = asns.filter(expected_date__lte=date_to)
+
+    # --- FILTER BY ASN STATUS ---
+    if status == "overdue":
+        asns = asns.filter(expected_date__lt=today)
+    elif status == "soon":
+        asns = asns.filter(expected_date__range=[today, today + timedelta(days=3)])
+    elif status == "normal":
+        asns = asns.filter(expected_date__gt=today + timedelta(days=3))
+
+    # --- FILTER BY ITEM COUNT ---
+    if count_filter == "0":
+        asns = asns.annotate(total_items=Count("items")).filter(total_items=0)
+    elif count_filter == "1":
+        asns = asns.annotate(total_items=Count("items")).filter(total_items__gt=0)
+
+    asns = asns.order_by("-expected_date")
+
+    # Supplier list for filter
+    suppliers = Supplier.objects.all()
+
     return render(request, "asn_list.html", {
         "asns": asns,
+        "suppliers": suppliers,
+        "q": q,
+        "supplier_id": supplier_id,
+        "date_from": date_from,
+        "date_to": date_to,
+        "status": status,
+        "count_filter": count_filter,
         "today": today,
         "today_plus_30": today + timedelta(days=30),
     })
 
 
+@group_required( 'Nhà cung ứng')
 @login_required(login_url='login')
 @transaction.atomic
 def create_asn(request):
@@ -657,37 +1013,39 @@ def create_asn(request):
             messages.error(request, "❌ Dữ liệu không hợp lệ!")
     return render(request, "asn_create.html", {"form": form, "formset": formset})
 
+@group_required('Cửa hàng trưởng', 'Nhân viên', 'Nhà cung ứng')
 def asn_export_pdf(request, code):
     asn = get_object_or_404(ASN, asn_code=code)
-    return render(request, "asn_pdf.html", {"asn": asn})
-# ===================== BÁO CÁO =====================
-@login_required(login_url='login')
-def reports(request):
-    today = date.today()
-    start_date = request.GET.get("start_date") or today.replace(day=1).strftime("%Y-%m-%d")
-    end_date = request.GET.get("end_date") or today.strftime("%Y-%m-%d")
 
-    total_imports = ImportReceipt.objects.filter(import_date__range=[start_date, end_date]).count()
-    total_exports = ExportReceipt.objects.filter(export_date__range=[start_date, end_date]).count()
-    total_returns = ReturnReceipt.objects.filter(return_date__range=[start_date, end_date]).count()
-    total_stock = StockItem.objects.aggregate(total=Sum("quantity"))["total"] or 0
-    expired = StockItem.objects.filter(status="expired").count()
-    nearly = StockItem.objects.filter(status="nearly_expired").count()
+    # Render HTML từ template
+    html = render_to_string("asn_pdf.html", {"asn": asn})
 
-    context = {
-        "start_date": start_date,
-        "end_date": end_date,
-        "total_imports": total_imports,
-        "total_exports": total_exports,
-        "total_returns": total_returns,
-        "total_stock": total_stock,
-        "expired": expired,
-        "nearly": nearly,
-    }
-    return render(request, "reports.html", context)
+    # Cấu hình wkhtmltopdf (giống po_export_pdf)
+    config = pdfkit.configuration(
+        wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+    )
+
+    pdf = pdfkit.from_string(
+        html,
+        False,
+        configuration=config,
+        options={
+            "encoding": "utf-8",
+            "page-size": "A4",
+            "margin-top": "10mm",
+            "margin-bottom": "15mm",
+            "margin-left": "10mm",
+            "margin-right": "10mm",
+        }
+    )
+
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = f'inline; filename=\"ASN_{asn.asn_code}.pdf\"'
+    return response
+
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
-
+@group_required( 'Nhà cung ứng')
 @login_required(login_url='login')
 def delete_asn(request, code):
     """Xóa phiếu giao hàng ASN cùng các chi tiết liên quan."""
@@ -695,3 +1053,96 @@ def delete_asn(request, code):
     asn.delete()
     messages.success(request, f"🗑️ Đã xóa phiếu giao hàng {code} thành công.")
     return redirect("asn_list")
+# ===================== BÁO CÁO =====================
+# views.py
+from django.db.models import Sum
+from datetime import date
+import json
+
+@group_required('Cửa hàng trưởng', 'Nhân viên')
+@login_required(login_url='login')
+def reports(request):
+    today = date.today()
+
+    # Giữ nguyên filter: start_date, end_date (mặc định từ đầu tháng đến hôm nay)
+    start_date = request.GET.get("start_date") or today.replace(day=1).strftime("%Y-%m-%d")
+    end_date = request.GET.get("end_date") or today.strftime("%Y-%m-%d")
+
+    # ---- 3. Tổng số phiếu nhập / xuất / hoàn trong khoảng ngày ----
+    imports_qs = ImportReceipt.objects.filter(import_date__range=[start_date, end_date])
+    exports_qs = ExportReceipt.objects.filter(export_date__range=[start_date, end_date])
+    returns_qs = ReturnReceipt.objects.filter(return_date__range=[start_date, end_date])
+
+    total_imports = imports_qs.count()
+    total_exports = exports_qs.count()
+    total_returns = returns_qs.count()
+
+    # Tổng tồn kho & tình trạng hạn dùng (không phụ thuộc ngày)
+    total_stock = StockItem.objects.aggregate(total=Sum("quantity"))["total"] or 0
+    expired = StockItem.objects.filter(status="expired").count()
+    nearly = StockItem.objects.filter(status="nearly_expired").count()
+
+    # ---- 2. Tổng doanh thu = tổng tiền ở các phiếu xuất ----
+    # Dùng ExportItem.total trong khoảng ngày export_date
+    total_revenue = ExportItem.objects.filter(
+        receipt__export_date__range=[start_date, end_date]
+    ).aggregate(total=Sum("total"))["total"] or 0
+
+    # ---- 4. Top 3 sản phẩm bán chạy (theo số lượng xuất) ----
+    top_products_qs = (
+        ExportItem.objects.filter(
+            receipt__export_date__range=[start_date, end_date]
+        )
+        .values(
+            "stock_item__product__product_code",
+            "stock_item__product__name"
+        )
+        .annotate(total_qty=Sum("quantity"))
+        .order_by("-total_qty")[:3]
+    )
+
+    # Chuẩn hóa lại để đẩy ra template dễ dùng
+    top_products = [
+        {
+            "code": p["stock_item__product__product_code"],
+            "name": p["stock_item__product__name"],
+            "total_qty": p["total_qty"],
+        }
+        for p in top_products_qs
+    ]
+
+    # ---- 5. Dữ liệu vẽ biểu đồ doanh thu theo ngày ----
+    revenue_by_date_qs = (
+        ExportItem.objects.filter(
+            receipt__export_date__range=[start_date, end_date]
+        )
+        .values("receipt__export_date")
+        .annotate(total=Sum("total"))
+        .order_by("receipt__export_date")
+    )
+
+    chart_labels = [r["receipt__export_date"].strftime("%d/%m") for r in revenue_by_date_qs]
+    chart_data = [float(r["total"]) for r in revenue_by_date_qs]
+
+    context = {
+        "start_date": start_date,
+        "end_date": end_date,
+
+        # cards tổng quan
+        "total_imports": total_imports,
+        "total_exports": total_exports,
+        "total_returns": total_returns,
+        "total_stock": total_stock,
+        "expired": expired,
+        "nearly": nearly,
+
+        # doanh thu & top sản phẩm
+        "total_revenue": total_revenue,
+        "top_products": top_products,
+
+        # dữ liệu cho Chart.js
+        "chart_labels_json": json.dumps(chart_labels, ensure_ascii=False),
+        "chart_data_json": json.dumps(chart_data),
+    }
+    return render(request, "reports.html", context)
+

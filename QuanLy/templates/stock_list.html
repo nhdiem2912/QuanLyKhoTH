@@ -4,7 +4,58 @@
 {% block page_title %}Quản lý hàng tồn kho{% endblock %}
 
 {% block content %}
+{% block extra_head %}
+<style>
+  .hero-card {
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0d6efd, #38bdf8);
+    color: #fff;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+    margin-bottom: 18px;
+  }
+  .hero-card h5 {
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  .hero-card p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.92;
+  }
+  .hero-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+</style>
+{% endblock %}
+
 <div class="container-fluid">
+
+  <!-- HERO -->
+  <div class="hero-card">
+    <div>
+      <h5>Quản lý hàng tồn kho</h5>
+      <p>Kiểm soát số lượng tồn, hạn sử dụng và vị trí lưu kho.</p>
+    </div>
+    <div class="hero-icon">
+      <i class="fa-solid fa-boxes-stacked"></i>
+    </div>
+  </div>
+
+  <!-- Bộ lọc -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
+    ...
+
 
   <!-- Bộ lọc -->
   <div class="bg-white p-3 rounded-3 shadow-sm mb-4">

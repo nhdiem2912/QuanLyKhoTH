@@ -2,16 +2,80 @@
 {% block title %}Danh mục - TH True Mart{% endblock %}
 {% block page_title %}Danh mục{% endblock %}
 
+{# CSS riêng cho trang danh mục #}
+{% block extra_head %}
+<style>
+  .category-card {
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+    border: 1px solid #e5e7eb;
+  }
+  .category-card:hover {
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+  }
+  .category-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .category-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+
+  }
+    .hero-card {
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0d6efd, #38bdf8);
+    color: #fff;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+    margin-bottom: 18px;
+  }
+  .hero-card h5 {
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  .hero-card p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.92;
+  }
+  .hero-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+<div class="hero-card">
   <div>
-    <h6 class="fw-semibold mb-0">Quản lý danh mục</h6>
-    <small class="text-muted">Tạo và chỉnh sửa các nhóm sản phẩm</small>
+    <h5>Quản lý danh mục sản phẩm</h5>
+    <p>Tạo, chỉnh sửa và sắp xếp các nhóm sản phẩm trong hệ thống.</p>
   </div>
-  <a href="{% url 'add_category' %}" class="btn btn-success">
-    <i class="fa-solid fa-plus me-1"></i> Thêm danh mục
-  </a>
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'add_category' %}" class="btn btn-light btn-sm text-primary fw-semibold">
+      <i class="fa-solid fa-plus me-1"></i> Thêm danh mục
+    </a>
+  </div>
 </div>
+
+
 
 <!-- Bộ lọc & tìm kiếm -->
 <form method="get" class="row g-3 mb-4 bg-white p-3 rounded-3 shadow-sm">
@@ -19,8 +83,6 @@
     <input type="text" name="q" class="form-control"
            placeholder="Tìm theo tên, mã, mô tả…" value="{{ q }}">
   </div>
-
-
 
   <div class="col-md-2">
     <button class="btn btn-primary w-100">
@@ -35,65 +97,83 @@
   </div>
 </form>
 
+{# CSRF ẩn để JS dùng khi gọi fetch DELETE #}
+<form id="csrf-token-form" style="display:none;">
+  {% csrf_token %}
+</form>
 
-  <div class="row g-3">
-    {% if categories %}
-      {% for c in categories %}
+<div class="row g-3">
+  {% if categories %}
+    {% for c in categories %}
       <div class="col-md-6 col-xl-4">
-        <div class="bg-white p-3 rounded-3 shadow-sm h-100">
+        <div class="bg-white p-3 rounded-3 shadow-sm h-100 category-card">
           <div class="d-flex justify-content-between">
             <div class="d-flex align-items-center gap-3">
-              <div class="rounded-3 bg-light d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-                <i class="fa-solid fa-bag-shopping"></i>
+              <div class="category-thumb">
+                {% if c.image %}
+                  <img src="{{ c.image.url }}" alt="{{ c.name }}">
+                {% else %}
+                  <i class="fa-solid fa-bag-shopping text-muted"></i>
+                {% endif %}
               </div>
               <div>
                 <div class="fw-bold">{{ c.name }}</div>
-                <div class="text-muted small">{{ c.description }}</div>
-                <div class="text-muted small">{{ c.products.count }} sản phẩm</div>
+                <div class="text-muted small mb-1">
+                  {{ c.description|default:"Không có mô tả" }}
+                </div>
+                <div class="text-muted small">
+                  {{ c.products.count }} sản phẩm
+                </div>
               </div>
             </div>
             <span class="text-muted small">{{ c.category_code }}</span>
           </div>
-          <div class="mt-3">
-            <a href="{% url 'edit_category' c.category_code %}" class="text-primary me-3">
-  <i class="fa-solid fa-pen"></i> Sửa
-</a>
-<a href="#" class="text-danger btn-delete-category" data-id="{{ c.category_code }}" data-name="{{ c.name }}">
-  <i class="fa-solid fa-trash"></i> Xóa
-</a>
 
-
+          <div class="mt-3 d-flex justify-content-between align-items-center">
+            <div>
+              <a href="{% url 'edit_category' c.category_code %}" class="text-primary me-3">
+                <i class="fa-solid fa-pen"></i> Sửa
+              </a>
+              <a href="#" class="text-danger btn-delete-category"
+                 data-id="{{ c.category_code }}" data-name="{{ c.name }}">
+                <i class="fa-solid fa-trash"></i> Xóa
+              </a>
+            </div>
           </div>
         </div>
       </div>
-      {% endfor %}
-    {% else %}
-      <div class="col-12">
-        <div class="text-center text-muted py-5 bg-white rounded-3 shadow-sm">
-          <i class="fa-regular fa-rectangle-list fa-2x mb-3"></i>
-          <div>Chưa có danh mục nào</div>
-          <a href="{% url 'add_category' %}" class="btn btn-success">
-  <i class="fa-solid fa-plus me-1"></i> Thêm danh mục
-</a>
-
-        </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12">
+      <div class="text-center text-muted py-5 bg-white rounded-3 shadow-sm">
+        <i class="fa-regular fa-rectangle-list fa-2x mb-3"></i>
+        <div>Chưa có danh mục nào</div>
+        <a href="{% url 'add_category' %}" class="btn btn-success mt-2">
+          <i class="fa-solid fa-plus me-1"></i> Thêm danh mục
+        </a>
       </div>
-
-    {% endif %}
-  </div>
+    </div>
+  {% endif %}
 </div>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const getCSRFToken = () => document.querySelector("[name=csrfmiddlewaretoken]").value;
+  const getCSRFToken = () =>
+    document.querySelector("#csrf-token-form [name=csrfmiddlewaretoken]").value;
 
   document.querySelectorAll(".btn-delete-category").forEach(btn => {
     btn.addEventListener("click", e => {
       e.preventDefault();
-      const id = btn.dataset.id;
+      const url = btn.dataset.url;
       const name = btn.dataset.name;
 
+      if (!url) {
+        alert("Không tìm thấy URL xoá danh mục.");
+        return;
+      }
+
       if (confirm(`Bạn có chắc muốn xóa danh mục "${name}" không?`)) {
-        fetch(`/categories/delete/${id}/`, {
+        fetch(url, {
           method: "POST",
           headers: {
             "X-CSRFToken": getCSRFToken(),
@@ -115,7 +195,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
-
-
 
 {% endblock %}

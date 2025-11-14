@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Sửa nhà cung ứng{% endblock %}
 {% block page_title %}Chỉnh sửa nhà cung ứng{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
   <div class="card p-4 shadow-sm">
@@ -9,15 +10,64 @@
     <form method="post">
       {% csrf_token %}
       <div class="row g-3">
-        {% for field in form %}
+
         <div class="col-md-6">
-          <label class="form-label fw-semibold">{{ field.label }}</label>
-          {{ field }}
-          {% if field.errors %}
-            <div class="text-danger small">{{ field.errors|join:", " }}</div>
+          <label class="form-label fw-semibold">{{ form.supplier_code.label }}</label>
+          {{ form.supplier_code }}
+          {% if form.supplier_code.errors %}
+            <div class="text-danger small">{{ form.supplier_code.errors|join:", " }}</div>
           {% endif %}
         </div>
-        {% endfor %}
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ form.company_name.label }}</label>
+          {{ form.company_name }}
+          {% if form.company_name.errors %}
+            <div class="text-danger small">{{ form.company_name.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ form.contact_name.label }}</label>
+          {{ form.contact_name }}
+          {% if form.contact_name.errors %}
+            <div class="text-danger small">{{ form.contact_name.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ form.phone.label }}</label>
+          {{ form.phone }}
+          {% if form.phone.errors %}
+            <div class="text-danger small">{{ form.phone.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% if form.email.errors %}
+            <div class="text-danger small">{{ form.email.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        {# ĐỊA CHỈ: full width #}
+        <div class="col-12">
+          <label class="form-label fw-semibold">{{ form.address.label }}</label>
+          {{ form.address }}
+          {% if form.address.errors %}
+            <div class="text-danger small">{{ form.address.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ form.status.label }}</label>
+          {{ form.status }}
+          {% if form.status.errors %}
+            <div class="text-danger small">{{ form.status.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
       </div>
 
       <div class="text-end mt-4">

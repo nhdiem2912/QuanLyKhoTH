@@ -1,22 +1,62 @@
 {% extends "base.html" %}
 {% block title %}Sửa danh mục{% endblock %}
 {% block page_title %}Chỉnh sửa danh mục{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
   <div class="card p-4 shadow-sm">
-    <h5 class="text-primary fw-bold mb-3">Cập nhật danh mục</h5>
-    <form method="post">
-      {% csrf_token %}
-      {% for field in form %}
+    <h5 class="text-primary fw-bold mb-3">Cập nhật thông tin danh mục</h5>
+
+    {# Ảnh hiện tại (nếu có) #}
+    {% if category.image %}
       <div class="mb-3">
-        <label class="form-label fw-semibold">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}
-          <div class="text-danger small">{{ field.errors|join:", " }}</div>
-        {% endif %}
+        <label class="form-label fw-semibold">Ảnh hiện tại</label><br>
+        <img src="{{ category.image.url }}"
+             alt="{{ category.name }}"
+             style="max-height: 120px; border-radius: 8px;">
       </div>
-      {% endfor %}
-      <div class="text-end">
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">{{ form.category_code.label }}</label>
+          {{ form.category_code }}
+          {% if form.category_code.errors %}
+            <div class="text-danger small">{{ form.category_code.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-8">
+          <label class="form-label fw-semibold">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% if form.name.errors %}
+            <div class="text-danger small">{{ form.name.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-12">
+          <label class="form-label fw-semibold">{{ form.description.label }}</label>
+          {{ form.description }}
+          {% if form.description.errors %}
+            <div class="text-danger small">{{ form.description.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ form.image.label }}</label>
+          {{ form.image }}
+          {% if form.image.errors %}
+            <div class="text-danger small">{{ form.image.errors|join:", " }}</div>
+          {% endif %}
+          <div class="form-text">Để trống nếu muốn giữ nguyên ảnh hiện tại.</div>
+        </div>
+
+      </div>
+
+      <div class="text-end mt-4">
         <a href="{% url 'categories' %}" class="btn btn-secondary">Hủy</a>
         <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
       </div>

@@ -8,7 +8,11 @@ class Category(models.Model):
     category_code = models.CharField(max_length=10, primary_key=True, verbose_name="Mã danh mục")
     name = models.CharField(max_length=100, verbose_name="Tên danh mục")
     description = models.TextField(blank=True, null=True, verbose_name="Mô tả")
-
+    image = models.ImageField(
+        upload_to="categories/",
+        blank=True,
+        null=True,
+        verbose_name="Ảnh danh mục")
     def __str__(self):
         return f"{self.name} ({self.category_code})"
 
@@ -24,7 +28,12 @@ class ProductMaster(models.Model):
         default="active",
         verbose_name="Trạng thái"
     )
-
+    image = models.ImageField(
+        upload_to="products/",
+        blank=True,
+        null=True,
+        verbose_name="Ảnh sản phẩm"
+    )
     def __str__(self):
         return f"{self.product_code} - {self.name}"
 
@@ -36,6 +45,7 @@ class Supplier(models.Model):
     contact_name = models.CharField(max_length=100, verbose_name="Người liên hệ")
     phone = models.CharField(max_length=15, verbose_name="SĐT")
     email = models.EmailField(blank=True, null=True)
+    address = models.CharField(max_length=255, verbose_name="Địa chỉ", blank=True, null=True)
     status = models.CharField(
         max_length=20,
         choices=[("active", "Hoạt động"), ("inactive", "Tạm dừng")],

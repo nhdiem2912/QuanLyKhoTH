@@ -1,33 +1,61 @@
 {% extends "base.html" %}
-{% block title %}Thêm sản phẩm mới - TH True Mart{% endblock %}
-{% block page_title %}Thêm sản phẩm{% endblock %}
+{% block title %}Thêm sản phẩm kinh doanh{% endblock %}
+{% block page_title %}Thêm sản phẩm kinh doanh{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
   <div class="card p-4 shadow-sm">
-    <h5 class="text-primary fw-bold mb-3">Thêm sản phẩm mới</h5>
+    <h5 class="text-primary fw-bold mb-3">Thêm sản phẩm kinh doanh mới</h5>
 
-    <form method="post" novalidate>
+    <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <div class="row g-3">
-        {% for field in form %}
-          <div class="col-md-6">
-            <label class="form-label fw-semibold">{{ field.label }}</label>
-            {{ field }}
-            {% if field.errors %}
-              <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
-            {% endif %}
-          </div>
-        {% endfor %}
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">{{ form.product_code.label }}</label>
+          {{ form.product_code }}
+          {% if form.product_code.errors %}
+            <div class="text-danger small">{{ form.product_code.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-8">
+          <label class="form-label fw-semibold">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% if form.name.errors %}
+            <div class="text-danger small">{{ form.name.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ form.category.label }}</label>
+          {{ form.category }}
+          {% if form.category.errors %}
+            <div class="text-danger small">{{ form.category.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ form.status.label }}</label>
+          {{ form.status }}
+          {% if form.status.errors %}
+            <div class="text-danger small">{{ form.status.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ form.image.label }}</label>
+          {{ form.image }}
+          {% if form.image.errors %}
+            <div class="text-danger small">{{ form.image.errors|join:", " }}</div>
+          {% endif %}
+        </div>
+
       </div>
 
       <div class="text-end mt-4">
-        <a href="{% url 'product_master_list' %}" class="btn btn-secondary">
-          <i class="fa-solid fa-xmark me-1"></i> Hủy
-        </a>
-        <button type="submit" class="btn btn-primary">
-          <i class="fa-solid fa-save me-1"></i> Lưu sản phẩm
-        </button>
+        <a href="{% url 'product_master_list' %}" class="btn btn-secondary">Hủy</a>
+        <button type="submit" class="btn btn-primary">Lưu</button>
       </div>
     </form>
   </div>

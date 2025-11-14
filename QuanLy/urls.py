@@ -3,13 +3,18 @@ from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
+    # ĐẶT HOME = home_redirect
+    path('', views.home_redirect, name='home'),
+
     # ===================== DASHBOARD =====================
-    path('', views.index, name='index'),
+    path('dashboard/', views.index, name='index'),
+
 
     # ===================== DANH MỤC =====================
     path('categories/', views.categories, name='categories'),
     path('categories/add/', views.add_category, name='add_category'),
     path('categories/edit/<str:pk>/', views.edit_category, name='edit_category'),
+    path('categories/delete/<str:pk>/', views.delete_category, name='delete_category'),
 
     # ===================== NHÀ CUNG ỨNG =====================
     path('suppliers/', views.suppliers, name='suppliers'),
@@ -51,6 +56,8 @@ urlpatterns = [
     path('po/new/', views.create_po, name='create_po'),
     path("po/edit/<str:code>/", views.po_edit, name="po_edit"),
     path('po/delete/<str:code>/', views.delete_po, name='delete_po'),
+    path('po/export/<str:code>/', views.po_export_pdf, name="po_export_pdf"),
+
 
     # ===================== ASN =====================
     path('asn/', views.asn_list, name='asn_list'),

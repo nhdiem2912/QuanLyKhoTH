@@ -14,16 +14,18 @@ from .models import (
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ["category_code", "name", "description"]
+        fields = ["category_code", "name", "description","image"]
         labels = {
             "category_code": "Mã danh mục",
             "name": "Tên danh mục",
             "description": "Mô tả",
+            "image": "Ảnh danh mục",
         }
         widgets = {
             "category_code": forms.TextInput(attrs={"class": "form-control"}),
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "image": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
 
 
@@ -31,13 +33,14 @@ class CategoryForm(forms.ModelForm):
 class SupplierForm(forms.ModelForm):
     class Meta:
         model = Supplier
-        fields = ["supplier_code", "company_name", "contact_name", "phone", "email", "status"]
+        fields = ["supplier_code", "company_name", "contact_name", "phone", "email","address", "status"]
         labels = {
             "supplier_code": "Mã nhà cung ứng",
             "company_name": "Tên công ty",
             "contact_name": "Người liên hệ",
             "phone": "Số điện thoại",
             "email": "Email",
+            "address": "Địa chỉ",
             "status": "Trạng thái",
         }
         widgets = {
@@ -46,6 +49,7 @@ class SupplierForm(forms.ModelForm):
             "contact_name": forms.TextInput(attrs={"class": "form-control"}),
             "phone": forms.TextInput(attrs={"class": "form-control"}),
             "email": forms.EmailInput(attrs={"class": "form-control"}),
+            "address": forms.TextInput(attrs={"class": "form-control"}),
             "status": forms.Select(attrs={"class": "form-select"}),
         }
 
@@ -54,18 +58,20 @@ class SupplierForm(forms.ModelForm):
 class ProductMasterForm(forms.ModelForm):
     class Meta:
         model = ProductMaster
-        fields = ["product_code", "name", "category", "status"]
+        fields = ["product_code", "name", "category", "status","image"]
         labels = {
             "product_code": "Mã sản phẩm",
             "name": "Tên sản phẩm",
             "category": "Danh mục",
             "status": "Trạng thái",
+            "image": "Ảnh sản phẩm",
         }
         widgets = {
             "product_code": forms.TextInput(attrs={"class": "form-control"}),
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "category": forms.Select(attrs={"class": "form-select"}),
             "status": forms.Select(attrs={"class": "form-select"}),
+            "image": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
 
 

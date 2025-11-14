@@ -4,17 +4,92 @@
 {% block page_title %}Quản lý phiếu giao hàng (ASN){% endblock %}
 
 {% block content %}
+{% block extra_head %}
+<style>
+  .hero-card {
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0d6efd, #38bdf8);
+    color: #fff;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+    margin-bottom: 18px;
+  }
+  .hero-card h5 {
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  .hero-card p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.92;
+  }
+  .hero-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+</style>
+{% endblock %}
 <div class="container-fluid">
 
-  <!-- HEADER -->
-  <div class="bg-white p-3 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <!-- HERO -->
+  <div class="hero-card">
     <div>
-      <h6 class="fw-semibold mb-0">Danh sách phiếu giao hàng (ASN)</h6>
-      <small class="text-muted">Theo dõi các phiếu giao hàng gần đây</small>
+      <h5>Quản lý phiếu giao hàng (ASN)</h5>
+      <p>Theo dõi các phiếu giao hàng từ nhà cung ứng về kho.</p>
     </div>
-    <a href="{% url 'create_asn' %}" class="btn btn-success">
-      <i class="fa-solid fa-plus me-1"></i> Tạo phiếu giao hàng
-    </a>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'create_asn' %}" class="btn btn-light btn-sm text-primary fw-semibold">
+        <i class="fa-solid fa-plus me-1"></i> Tạo phiếu giao hàng
+      </a>
+    </div>
+  </div>
+
+<!-- Filters -->
+  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
+    <form method="get" class="row g-3 align-items-end">
+
+      <div class="col-md-3">
+        <label class="form-label">Tìm kiếm</label>
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Mã ASN, PO, NCC, sản phẩm…">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Nhà cung ứng</label>
+        <select name="supplier" class="form-select">
+          <option value="">Tất cả</option>
+          {% for s in suppliers %}
+            <option value="{{ s.id }}" {% if supplier_id == s.id|stringformat:"s" %}selected{% endif %}>
+              {{ s.company_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Từ ngày</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Đến ngày</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+      </div>
+
+
+      <div class="col-12 text-end">
+        <button class="btn btn-primary"><i class="fa-solid fa-filter"></i> Lọc</button>
+        <a href="{% url 'asn_list' %}" class="btn btn-secondary">Reset</a>
+      </div>
+    </form>
   </div>
 
   <!-- DANH SÁCH ASN -->
@@ -50,6 +125,13 @@
                       data-bs-target="#viewModal{{ a.asn_code }}" title="Xem chi tiết">
                 <i class="fa-solid fa-eye"></i>
               </button>
+                <!-- In / Xuất PDF -->
+    <a href="{% url 'asn_export_pdf' a.asn_code %}"
+       target="_blank"
+       class="btn btn-outline-secondary"
+       title="In / Xuất PDF">
+      <i class="fa-solid fa-print"></i>
+    </a>
               <button class="btn btn-outline-danger" title="Xóa"
                       onclick="confirmDelete('{% url 'delete_asn' a.asn_code %}')">
                 <i class="fa-solid fa-trash"></i>

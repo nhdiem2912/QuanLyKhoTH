@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+{% load humanize %}
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page { size: A4 portrait; margin: 1.5cm; }
+    body { font-family: "DejaVu Sans", sans-serif; font-size: 13px; line-height: 1.4; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #000; padding: 6px; }
+    th { background:#f2f2f2; text-align:center; }
+    .fw-bold { font-weight:700; }
+    .text-center { text-align:center; }
+    .text-right { text-align:right; }
+    .text-primary { color: #0d6efd; }
+    .title { font-size:18px; font-weight:700; text-align:center; margin:10px 0; }
+    .header-table td { border:none; padding:2px 0; }
+    .info-table td { border:none; padding:4px 0; }
+    .sign-table { border:none; width:100%; margin-top:40px; text-align:center; table-layout:fixed; }
+    .sign-table td { border:none; padding-top:30px; }
+    .signature-date { text-align:right; margin-top:10px; }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <table class="header-table">
+    <tr>
+      <td width="70%">
+        <strong>TH True Mart chi nhánh 397 Núi Thành - Đà Nẵng</strong><br>
+        Địa chỉ: 397 Núi Thành - Đà Nẵng<br>
+        Điện thoại: 0236 3734 001 &nbsp;&nbsp; Hotline: 094 266 9368
+      </td>
+      <td width="30%" style="text-align:right;">
+        <strong>Số PO:</strong> <span class="text-primary">{{ po.po_code }}</span><br>
+        <strong>Trạng thái:</strong> {{ po.get_status_display }}
+      </td>
+    </tr>
+  </table>
+
+  <div class="title">PHIẾU ĐẶT HÀNG (PURCHASE ORDER)</div>
+
+  <!-- INFO -->
+  <table class="info-table">
+    <tr>
+      <td>Ngày tạo PO: <strong>{{ po.created_date|date:"d/m/Y" }}</strong></td>
+    </tr>
+    <tr>
+      <td>
+        Nhà cung ứng:
+        <strong>{{ po.supplier.company_name }}</strong>
+        {% if po.supplier.contact_name or po.supplier.phone %}
+          &nbsp;– Người liên hệ:
+          {% if po.supplier.contact_name %}{{ po.supplier.contact_name }}{% endif %}
+          {% if po.supplier.phone %} ({{ po.supplier.phone }}){% endif %}
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Người lập phiếu:
+        <strong>
+          {% if po.created_by %}
+            {{ po.created_by.get_full_name|default:po.created_by.username }}
+          {% else %}
+            -
+          {% endif %}
+        </strong>
+      </td>
+    </tr>
+
+    {% if po.note %}
+    <tr>
+      <td>Ghi chú: <strong>{{ po.note }}</strong></td>
+    </tr>
+    {% endif %}
+  </table>
+
+  <!-- MAIN TABLE -->
+  <table style="margin-top:15px;">
+    <thead>
+      <tr>
+        <th style="width:6%;">STT</th>
+        <th style="width:14%;">Mã SP</th>
+        <th style="width:50%;">Tên sản phẩm</th>
+        <th style="width:10%;">ĐVT</th>
+        <th style="width:10%;">SL đặt</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for item in po.items.all %}
+      <tr>
+        <td class="text-center">{{ forloop.counter }}</td>
+        <td class="text-center">{{ item.product.product_code }}</td>
+        <td>{{ item.product.name }}</td>
+        <td class="text-center">{{ item.unit }}</td>
+        <td class="text-center">{{ item.quantity|intcomma }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="text-center">Không có sản phẩm trong đơn đặt hàng</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+<!--  <p style="margin-top:10px; text-align:right;">-->
+<!--    <strong>Tổng số dòng sản phẩm:</strong> {{ po.items.count }} mặt hàng-->
+<!--  </p>-->
+
+  <!-- SIGNATURE -->
+  <div class="signature-date">
+    Đà Nẵng, ngày {{ po.created_date|date:"d" }} tháng {{ po.created_date|date:"m" }} năm {{ po.created_date|date:"Y" }}
+  </div>
+
+  <table class="sign-table">
+    <tr>
+      <td>Người lập PO<br><em>(Ký, ghi rõ họ tên)</em></td>
+      <td>Quản lý cửa hàng<br><em>(Ký, ghi rõ họ tên)</em></td>
+    </tr>
+  </table>
+
+</body>
+</html>

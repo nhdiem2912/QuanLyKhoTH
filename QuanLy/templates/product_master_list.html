@@ -1,110 +1,196 @@
 {% extends "base.html" %}
-{% load humanize %}
-{% block title %}Quản lý hàng hóa - TH True Mart{% endblock %}
-{% block page_title %}Quản lý hàng hóa{% endblock %}
+{% block title %}Sản phẩm kinh doanh - TH True Mart{% endblock %}
+{% block page_title %}Sản phẩm kinh doanh{% endblock %}
+
+{% block extra_head %}
+<style>
+  .product-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .product-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+    .hero-card {
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0d6efd, #38bdf8);
+    color: #fff;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+    margin-bottom: 18px;
+  }
+  .hero-card h5 {
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  .hero-card p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.92;
+  }
+  .hero-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-
-  <!-- Thanh công cụ -->
-  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
-    <div class="row g-2 align-items-center">
-      <div class="col-md-4">
-        <input type="text" class="form-control" placeholder="🔍 Tìm kiếm sản phẩm...">
-      </div>
-      <div class="col-md-4">
-        <select class="form-select">
-          <option>Tất cả danh mục</option>
-          {% for c in categories %}
-          <option>{{ c.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-4 text-end">
-        <a href="{% url 'add_product_master' %}" class="btn btn-success">
-          <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm
-        </a>
-      </div>
-    </div>
+<div class="hero-card">
+  <div>
+    <h5>Quản lý sản phẩm kinh doanh</h5>
+    <p>Danh sách sản phẩm đang/đã kinh doanh, phục vụ cho nhập – xuất – tồn.</p>
   </div>
-
-  <!-- Danh sách sản phẩm -->
-  <div class="bg-white p-3 rounded-3 shadow-sm">
-    {% if products %}
-    <table class="table table-bordered table-hover align-middle mb-0">
-      <thead class="table-primary text-center">
-        <tr>
-          <th>Mã SP</th>
-          <th>Tên sản phẩm</th>
-          <th>Danh mục</th>
-          <th>Trạng thái</th>
-          <th>Thao tác</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in products %}
-        <tr class="align-middle text-center">
-          <td class="fw-semibold text-primary">{{ p.product_code }}</td>
-          <td class="text-start">{{ p.name }}</td>
-          <td>{{ p.category.name }}</td>
-          <td>
-            {% if p.status == "active" %}
-              <span class="badge bg-success px-3 py-2">Kinh doanh</span>
-            {% else %}
-              <span class="badge bg-secondary px-3 py-2">Ngừng KD</span>
-            {% endif %}
-          </td>
-          <td class="text-center">
-            <a href="{% url 'edit_product_master' p.product_code %}" class="btn btn-sm btn-outline-primary me-2">
-              <i class="fa-solid fa-pen"></i> Sửa
-            </a>
-            <a href="#" class="btn btn-sm btn-outline-danger btn-delete" data-id="{{ p.product_code }}" data-name="{{ p.name }}">
-              <i class="fa-solid fa-trash"></i> Xóa
-            </a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <div class="text-center text-muted py-5">
-        <i class="fa-regular fa-box-open fa-2x mb-3"></i>
-        <div>Chưa có sản phẩm nào trong danh sách kinh doanh</div>
-        <a href="{% url 'add_product_master' %}" class="btn btn-success mt-3">
-          <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm
-        </a>
-      </div>
-    {% endif %}
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'add_product_master' %}" class="btn btn-light btn-sm text-primary fw-semibold">
+      <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm mới
+    </a>
   </div>
 </div>
 
-<!-- STYLE -->
-<style>
-.table td, .table th { vertical-align: middle !important; }
-.badge { font-weight: 600; }
-.btn-outline-primary:hover { background-color: #0d6efd; color: #fff; }
-.btn-outline-danger:hover { background-color: #dc3545; color: #fff; }
-</style>
 
-<!-- SCRIPT -->
+<form method="get" class="row g-3 mb-4 bg-white p-3 rounded-3 shadow-sm">
+  <div class="col-md-4">
+    <input type="text" name="q" class="form-control"
+           placeholder="Tìm theo mã, tên, danh mục…" value="{{ q }}">
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100">
+      <i class="fa-solid fa-filter me-1"></i> Lọc
+    </button>
+  </div>
+  <div class="col-md-2">
+    <a href="{% url 'product_master_list' %}" class="btn btn-secondary w-100">
+      <i class="fa-solid fa-rotate-left me-1"></i> Reset
+    </a>
+  </div>
+</form>
+
+{# CSRF ẩn cho xoá bằng fetch nếu cần #}
+<form id="csrf-token-form" style="display:none;">
+  {% csrf_token %}
+</form>
+
+<div class="bg-white p-3 rounded-3 shadow-sm">
+  {% if products %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Mã SP</th>
+            <th>Ảnh</th>
+            <th>Tên sản phẩm</th>
+            <th>Danh mục</th>
+            <th>Trạng thái</th>
+            <th class="text-end">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          <tr>
+            <td class="fw-semibold">{{ p.product_code }}</td>
+
+            <td>
+              <div class="product-thumb">
+                {% if p.image %}
+                  <img src="{{ p.image.url }}" alt="{{ p.name }}">
+                {% else %}
+                  <i class="fa-solid fa-box-open text-muted"></i>
+                {% endif %}
+              </div>
+            </td>
+
+            <td>{{ p.name }}</td>
+            <td>{{ p.category.name }}</td>
+            <td>
+              {% if p.status == 'active' %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                  {{ p.get_status_display }}
+                </span>
+              {% else %}
+                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                  {{ p.get_status_display }}
+                </span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'edit_product_master' p.product_code %}" class="btn btn-sm btn-outline-primary me-1">
+                <i class="fa-solid fa-pen"></i>
+              </a>
+              {# Nếu bạn có view delete_product_master, dùng như dưới #}
+              <a href="#" class="btn btn-sm btn-outline-danger btn-delete-product"
+                 data-url="{% url 'delete_product_master' p.product_code %}"
+                 data-name="{{ p.name }}">
+                <i class="fa-solid fa-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="text-center text-muted py-4">
+      <i class="fa-regular fa-rectangle-list fa-2x mb-3"></i>
+      <div>Chưa có sản phẩm nào</div>
+      <a href="{% url 'add_product_master' %}" class="btn btn-success mt-2">
+        <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm
+      </a>
+    </div>
+  {% endif %}
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".btn-delete").forEach(btn => {
-    btn.addEventListener("click", function (e) {
+  const csrfInput = document.querySelector("#csrf-token-form [name=csrfmiddlewaretoken]");
+  const getCSRFToken = () => csrfInput ? csrfInput.value : "";
+
+  document.querySelectorAll(".btn-delete-product").forEach(btn => {
+    btn.addEventListener("click", e => {
       e.preventDefault();
-      const id = this.dataset.id;
-      const name = this.dataset.name;
-      if (confirm(`Bạn có chắc muốn xóa sản phẩm "${name}" không?`)) {
-        fetch(`/product-master/delete/${id}/`, {
+      const url = btn.dataset.url;
+      const name = btn.dataset.name;
+
+      if (!url) return;
+
+      if (confirm(`Bạn có chắc muốn xoá sản phẩm "${name}" không?`)) {
+        fetch(url, {
           method: "POST",
-          headers: { "X-CSRFToken": "{{ csrf_token }}" },
+          headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "X-Requested-With": "XMLHttpRequest"
+          }
         })
-        .then(res => res.ok ? location.reload() : alert("❌ Lỗi khi xóa!"))
-        .catch(() => alert("⚠️ Kết nối máy chủ thất bại!"));
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert(data.message || "Đã xoá sản phẩm.");
+            location.reload();
+          } else {
+            alert("❌ Không thể xoá sản phẩm!");
+          }
+        })
+        .catch(() => alert("⚠️ Lỗi máy chủ!"));
       }
     });
   });
 });
 </script>
-
 {% endblock %}

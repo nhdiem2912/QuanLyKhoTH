@@ -1,91 +1,383 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Báo cáo thống kê - TH True Mart{% endblock %}
+{% block title %}Báo cáo - TH True Mart{% endblock %}
 {% block page_title %}Báo cáo thống kê{% endblock %}
 
+{% block extra_head %}
+<style>
+  .hero-card {
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0d6efd, #38bdf8);
+    color: #fff;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+    margin-bottom: 18px;
+  }
+  .hero-card h5 { margin: 0 0 4px; font-weight: 600; }
+  .hero-card p { margin: 0; font-size: 14px; opacity: 0.9; }
+  .hero-icon { font-size: 36px; opacity: 0.9; }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 10px;
+  }
+
+  .stat-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 14px 14px 12px;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+    border: 1px solid #e5e7eb;
+  }
+  .stat-label { font-size: 13px; color: #64748b; margin-bottom: 6px; }
+  .stat-value { font-size: 20px; font-weight: 600; color: #0f172a; }
+  .stat-sub { font-size: 12px; color: #0f766e; }
+  .stat-icon { font-size: 24px; color: #0d6efd; }
+
+  .filter-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+    border: 1px solid #e5e7eb;
+    margin-bottom: 18px;
+  }
+
+  .chart-card {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+    border: 1px solid #e5e7eb;
+  }
+
+  /* === TOP 3 SẢN PHẨM BÁN CHẠY === */
+  .top-products-wrapper {
+    padding: 12px 16px 14px;
+  }
+
+  .top-products-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .top-products-table th,
+  .top-products-table td {
+    padding: 10px 14px;
+    vertical-align: middle;
+    font-size: 14px;
+  }
+
+  .top-products-table thead th {
+    background: #f8fafc;
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .top-products-table thead th:nth-child(3),
+  .top-products-table tbody td:nth-child(3) {
+    border-left: 1px solid #e5e7eb; /* đường kẻ dọc giữa 2 cột */
+  }
+
+  .top-products-table tbody tr + tr td {
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .top-products-table tbody td:nth-child(1) {
+    text-align: center;
+    width: 52px;
+  }
+
+  .top-products-table tbody td:nth-child(3) {
+    text-align: right;
+    white-space: nowrap;
+    width: 80px;
+  }
+
+  .top-products-name {
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .top-products-code {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+</style>
+{% endblock %}
+
+
 {% block content %}
-<div class="container-fluid">
-  <!-- Header -->
-  <div class="bg-primary bg-gradient text-white p-4 rounded-3 shadow-sm mb-4 d-flex justify-content-between align-items-center">
-    <div>
-      <h4 class="fw-bold mb-1">Báo cáo & Thống kê</h4>
-      <p class="mb-0">Phân tích dữ liệu kho hàng và hiệu suất</p>
-    </div>
-    <i class="fa-solid fa-chart-column fa-3x"></i>
+
+<!-- Hero giống index -->
+<div class="hero-card">
+  <div>
+    <h5>Báo cáo & thống kê kho hàng</h5>
+    <p>Quan sát doanh thu, luân chuyển kho và tình trạng tồn kho trong khoảng thời gian chọn.</p>
   </div>
-
-  <!-- Bộ lọc -->
-  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
-    <form method="get" class="row g-2 align-items-center">
-      <div class="col-md-3">
-        <select class="form-select" onchange="this.form.submit()">
-          <option selected>Tháng này</option>
-          <option>Tháng trước</option>
-          <option>Quý này</option>
-          <option>Quý trước</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
-      </div>
-      <div class="col-md-3">
-        <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
-      </div>
-      <div class="col-md-3 text-end">
-        <button type="submit" class="btn btn-success w-100">
-          <i class="fa-solid fa-rotate-right me-1"></i> Cập nhật báo cáo
-        </button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Thống kê tổng hợp -->
-  <div class="row g-3 mb-4">
-    <!-- Tổng doanh thu -->
-    <div class="col-md-3 col-sm-6">
-      <div class="card border-0 shadow-sm p-3">
-        <div class="text-muted small mb-1">Tổng doanh thu</div>
-        <h3 class="fw-bold text-success mb-0">{{ total_revenue|floatformat:0|intcomma }} <span class="fs-6">VNĐ</span></h3>
-      </div>
-    </div>
-
-    <!-- Tổng phiếu nhập -->
-    <div class="col-md-3 col-sm-6">
-      <div class="card border-0 shadow-sm p-3">
-        <div class="text-muted small mb-1">Tổng phiếu nhập</div>
-        <h3 class="fw-bold text-primary mb-0">{{ total_imports }}</h3>
-      </div>
-    </div>
-
-    <!-- Tổng phiếu xuất -->
-    <div class="col-md-3 col-sm-6">
-      <div class="card border-0 shadow-sm p-3">
-        <div class="text-muted small mb-1">Tổng phiếu xuất</div>
-        <h3 class="fw-bold text-info mb-0">{{ total_exports }}</h3>
-      </div>
-    </div>
-
-    <!-- Tỷ lệ hoàn hàng -->
-    <div class="col-md-3 col-sm-6">
-      <div class="card border-0 shadow-sm p-3">
-        <div class="text-muted small mb-1">Tỷ lệ hoàn hàng</div>
-        <h3 class="fw-bold text-danger mb-0">{{ return_rate }}%</h3>
-      </div>
-    </div>
-  </div>
-
-  <!-- Biểu đồ thống kê (placeholder) -->
-  <div class="bg-white p-5 rounded-3 shadow-sm text-center text-muted">
-    {% if total_revenue or total_imports or total_exports %}
-      <i class="fa-solid fa-chart-simple fa-2x mb-2 text-secondary"></i>
-      <div>Dữ liệu đã được thống kê cho giai đoạn từ
-        <strong>{{ start_date|date:"d/m/Y" }}</strong> đến
-        <strong>{{ end_date|date:"d/m/Y" }}</strong>.
-      </div>
-      <div class="small mt-2 text-muted">[Biểu đồ chi tiết đang được cập nhật]</div>
-    {% else %}
-      [Biểu đồ thống kê — chưa có dữ liệu]
-    {% endif %}
+  <div class="hero-icon">
+    <i class="fa-solid fa-chart-line"></i>
   </div>
 </div>
+
+<!-- Bộ lọc -->
+<div class="filter-card">
+  <div class="section-title mb-2">Bộ lọc thời gian</div>
+  <form method="get" class="row g-3 align-items-end">
+    <div class="col-md-3 col-sm-6">
+      <label class="form-label mb-1 small text-muted">Khoảng thời gian nhanh</label>
+      <!-- giữ select như cũ (không đặt name nếu backend chưa xử lý) -->
+      <select class="form-select form-select-sm" onchange="this.form.submit()">
+        <option selected>Tháng này</option>
+        <option>Tháng trước</option>
+        <option>Quý này</option>
+        <option>Quý trước</option>
+      </select>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <label class="form-label mb-1 small text-muted">Từ ngày</label>
+      <input type="date" name="start_date" class="form-control form-control-sm"
+             value="{{ start_date }}">
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <label class="form-label mb-1 small text-muted">Đến ngày</label>
+      <input type="date" name="end_date" class="form-control form-control-sm"
+             value="{{ end_date }}">
+    </div>
+    <div class="col-md-3 col-sm-6 text-md-end">
+      <button type="submit" class="btn btn-primary btn-sm w-100">
+        <i class="fa-solid fa-rotate-right me-1"></i> Cập nhật báo cáo
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Hàng 1: KPIs chính -->
+<div class="section-title mt-1">Tổng quan giai đoạn đã chọn</div>
+<div class="row g-3 mb-3">
+  <div class="col-md-3 col-sm-6">
+    <div class="stat-card d-flex justify-content-between align-items-center h-100">
+      <div>
+        <div class="stat-label">Tổng doanh thu</div>
+        <div class="stat-value text-success">
+          {{ total_revenue|default:0|floatformat:0|intcomma }}
+          <span class="fs-6">VNĐ</span>
+        </div>
+        <div class="stat-sub">Tổng tiền phiếu xuất</div>
+      </div>
+      <div class="stat-icon text-success">
+        <i class="fa-solid fa-sack-dollar"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-sm-6">
+    <div class="stat-card d-flex justify-content-between align-items-center h-100">
+      <div>
+        <div class="stat-label">Tổng phiếu nhập</div>
+        <div class="stat-value text-primary">{{ total_imports }}</div>
+        <div class="stat-sub text-success">Phiếu nhập hàng</div>
+      </div>
+      <div class="stat-icon text-success">
+        <i class="fa-solid fa-arrow-down-long"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-sm-6">
+    <div class="stat-card d-flex justify-content-between align-items-center h-100">
+      <div>
+        <div class="stat-label">Tổng phiếu xuất</div>
+        <div class="stat-value text-primary">{{ total_exports }}</div>
+        <div class="stat-sub text-primary">Phiếu xuất bán / chuyển</div>
+      </div>
+      <div class="stat-icon text-primary">
+        <i class="fa-solid fa-arrow-up-long"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-sm-6">
+    <div class="stat-card d-flex justify-content-between align-items-center h-100">
+      <div>
+        <div class="stat-label">Tổng phiếu hoàn hàng</div>
+        <div class="stat-value text-danger">{{ total_returns }}</div>
+        <div class="stat-sub text-warning">Phiếu hoàn / trả về kho</div>
+      </div>
+      <div class="stat-icon text-warning">
+        <i class="fa-solid fa-rotate-left"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hàng 2: Tồn kho & HSD -->
+<div class="section-title mt-3">Tình trạng tồn kho</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4 col-sm-6">
+    <div class="stat-card d-flex justify-content-between align-items-center h-100">
+      <div>
+        <div class="stat-label">Tổng tồn kho</div>
+        <div class="stat-value">{{ total_stock|default:0|intcomma }}</div>
+        <div class="stat-sub">Số lượng tồn tất cả sản phẩm</div>
+      </div>
+      <div class="stat-icon text-secondary">
+        <i class="fa-solid fa-boxes-stacked"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="stat-card d-flex justify-content-between align-items-center h-100">
+      <div>
+        <div class="stat-label">Số lô hết hạn</div>
+        <div class="stat-value text-danger">{{ expired }}</div>
+        <div class="stat-sub text-danger">Cần xử lý/hủy</div>
+      </div>
+      <div class="stat-icon text-danger">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-sm-6">
+    <div class="stat-card d-flex justify-content-between align-items-center h-100">
+      <div>
+        <div class="stat-label">Số lô cận hạn</div>
+        <div class="stat-value text-warning">{{ nearly }}</div>
+        <div class="stat-sub text-warning">Ưu tiên xuất trước (FEFO)</div>
+      </div>
+      <div class="stat-icon text-warning">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hàng 3: Biểu đồ + Top sản phẩm -->
+<div class="row g-3">
+  <!-- Biểu đồ doanh thu -->
+  <div class="col-lg-8">
+    <div class="chart-card h-100">
+      <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+        <div>
+          <div class="section-title mb-0">Doanh thu theo ngày</div>
+          <small class="text-muted">
+            Từ <strong>{{ start_date }}</strong> đến <strong>{{ end_date }}</strong>
+          </small>
+        </div>
+      </div>
+      <div class="p-3" style="min-height: 320px;">
+        <canvas id="revenueChart" style="max-height: 320px;"></canvas>
+        {% if not chart_data_json or chart_data_json == "[]" %}
+          <p class="text-muted small mt-2 mb-0 text-center">
+            Không có dữ liệu doanh thu trong giai đoạn này.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Top 3 sản phẩm bán chạy -->
+<div class="col-lg-4">
+  <div class="chart-card h-100">
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+      <div>
+        <div class="section-title mb-0">Top 3 sản phẩm bán chạy</div>
+        <small class="text-muted">Theo tổng số lượng xuất</small>
+      </div>
+    </div>
+    <div class="top-products-wrapper">
+      <table class="top-products-table">
+        <thead>
+          <tr>
+            <th class="text-center">#</th>
+            <th>Sản phẩm</th>
+            <th>SL xuất</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% if top_products %}
+          {% for p in top_products %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>
+                <div class="top-products-name">{{ p.name }}</div>
+                <div class="top-products-code">{{ p.code }}</div>
+              </td>
+              <td>{{ p.total_qty|intcomma }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="3" class="text-center text-muted small py-3">
+              Chưa có dữ liệu xuất hàng trong giai đoạn này.
+            </td>
+          </tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function () {
+    const labels = JSON.parse('{{ chart_labels_json|escapejs }}');
+    const data = JSON.parse('{{ chart_data_json|escapejs }}');
+
+    const ctx = document.getElementById('revenueChart');
+    if (!ctx || !labels.length) return;
+
+    new Chart(ctx, {
+      type: 'line', // biểu đồ đường + fill => giống biểu đồ miền
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Doanh thu (VNĐ)',
+          data: data,
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function (value) {
+                return value.toLocaleString('vi-VN');
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                const v = context.parsed.y || 0;
+                return 'Doanh thu: ' + v.toLocaleString('vi-VN') + ' VNĐ';
+              }
+            }
+          }
+        }
+      }
+    });
+  })();
+</script>
+
 {% endblock %}
