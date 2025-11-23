@@ -1,7 +1,6 @@
 from django.contrib import admin
 from .models import (
-    Category, Supplier,
-    ProductMaster, StockItem,
+    Category, Supplier, StockItem,
     ImportReceipt, ImportItem,
     ExportReceipt, ExportItem,
     ReturnReceipt, ReturnItem,
@@ -26,18 +25,14 @@ class SupplierAdmin(admin.ModelAdmin):
 
 
 # ===================== PRODUCT MASTER =====================
-@admin.register(ProductMaster)
-class ProductMasterAdmin(admin.ModelAdmin):
-    list_display = ("product_code", "name", "category", "status")
-    list_filter = ("status", "category")
-    search_fields = ("product_code", "name")
+
 
 
 # ===================== STOCK ITEM =====================
 @admin.register(StockItem)
 class StockItemAdmin(admin.ModelAdmin):
     list_display = (
-        "import_receipt", "product", "quantity", "unit", "location", "expiry_date", "status"
+        "import_receipt", "product", "quantity", "unit","unit_price", "location", "expiry_date", "status"
     )
     list_filter = ("status", "import_receipt__supplier", "product__category")
     search_fields = ("product__name", "import_receipt__import_code")

@@ -1,169 +1,415 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load humanize l10n custom_filters %}
+
 {% block title %}Tạo phiếu xuất - TH True Mart{% endblock %}
 {% block page_title %}Tạo phiếu xuất kho{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
 
-  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
-    <h5 class="fw-semibold text-primary mb-1">Tạo phiếu xuất kho</h5>
-    <small class="text-muted">Nhập thông tin phiếu và danh sách hàng xuất</small>
-  </div>
-
-  <form method="post" novalidate>
-    {% csrf_token %}
-
-    <div class="card p-3 mb-4 shadow-sm">
-      <h6 class="fw-semibold text-primary mb-2">Thông tin phiếu xuất</h6>
-      <div class="row g-3">
-        <div class="col-md-3">{{ form.export_code.label_tag }}{{ form.export_code }}</div>
-        <div class="col-md-3">{{ form.export_date.label_tag }}{{ form.export_date }}</div>
-        <div class="col-md-4">{{ form.destination.label_tag }}{{ form.destination }}</div>
-        <div class="col-md-12">{{ form.note.label_tag }}{{ form.note }}</div>
-      </div>
+    <!-- HEADER -->
+    <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
+        <h5 class="fw-semibold text-primary mb-1">Tạo phiếu xuất kho</h5>
+        <small class="text-muted">Nhập thông tin phiếu và danh sách hàng xuất khỏi kho</small>
     </div>
 
-    <div class="card p-3 shadow-sm">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h6 class="fw-semibold text-primary mb-0">Danh sách hàng xuất</h6>
-        <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
-          <i class="fa-solid fa-plus me-1"></i> Thêm dòng
-        </button>
-      </div>
+    <form method="post" novalidate>
+        {% csrf_token %}
 
-      {{ formset.management_form }}
+        <!-- THÔNG TIN PHIẾU XUẤT -->
+        <div class="card p-3 mb-4 shadow-sm">
+            <h6 class="fw-semibold text-primary mb-2">Thông tin phiếu xuất</h6>
 
-      <table class="table table-bordered align-middle text-center" id="export-table">
-        <thead class="table-primary">
-          <tr>
-            <th>Lô hàng (StockItem)</th>
-            <th style="width:90px;">Số lượng</th>
-            <th style="width:130px;">Đơn giá (₫)</th>
-            <th style="width:120px;">Chiết khấu (%)</th>
-            <th style="width:120px;">Đơn vị</th>
-            <th style="width:150px;">Thành tiền (₫)</th>
-            <th style="width:60px;">Xóa</th>
-          </tr>
-        </thead>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    {{ form.export_code.label_tag }}
+                    {{ form.export_code }}
+                </div>
 
-        <tbody id="item-body">
-          {% for f in formset.forms %}
-          <tr class="item-row align-middle">
+                <div class="col-md-3">
+                    {{ form.export_date.label_tag }}
+                    {{ form.export_date }}
+                </div>
 
-            <!-- ⚡⚡⚡ FIELD STOCK_ITEM (ĐÃ SỬA CHUẨN) -->
+                <div class="col-md-3">
+                    {{ form.destination.label_tag }}
+                    {{ form.destination }}
+                </div>
+
+                <div class="col-md-3">
+                    {{ form.receiver_name.label_tag }}
+                    {{ form.receiver_name }}
+                </div>
+
+                <div class="col-md-3">
+                    {{ form.receiver_phone.label_tag }}
+                    {{ form.receiver_phone }}
+                </div>
+
+                <div class="col-md-9">
+                    {{ form.note.label_tag }}
+                    {{ form.note }}
+                </div>
+            </div>
+
+            <small class="text-muted d-block mt-2">
+                * Đơn giá được tự động lấy từ <strong>giá nhập của lô hàng</strong>.
+            </small>
+        </div>
+
+        <!-- ================== DANH SÁCH SẢN PHẨM ================== -->
+        <div class="card p-3 shadow-sm">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-semibold text-primary mb-0">Danh sách hàng xuất</h6>
+                <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
+                    <i class="fa-solid fa-plus me-1"></i> Thêm dòng
+                </button>
+            </div>
+
+            {{ formset.management_form }}
+
+            <table class="table table-bordered align-middle text-center" id="export-table">
+                <thead class="table-primary">
+                    <tr>
+                        <th style="width:32%">Lô hàng</th>
+                        <th style="width:10%">SL</th>
+                        <th style="width:14%">Đơn giá</th>
+                        <th style="width:12%">CK (%)</th>
+                        <th style="width:12%">Đơn vị</th>
+                        <th style="width:14%">Thành tiền</th>
+                        <th style="width:6%">Xóa</th>
+                    </tr>
+                </thead>
+
+                <tbody id="item-body">
+                    {% for f in formset.forms %}
+                    <tr class="item-row">
+
+                        <!-- LÔ HÀNG -->
+                        <td>
+                            <select name="items-{{ forloop.counter0 }}-stock_item"
+                                    class="form-select stock-select">
+                                <option value="">--------</option>
+
+                                {% for s in f.fields.stock_item.queryset %}
+                                    <option value="{{ s.pk }}"
+                                        data-quantity="{{ s.quantity }}"
+                                        data-unit-price="{{ s.unit_price|unlocalize }}"
+                                        data-unit="{{ s.unit }}"
+                                        {% if f.stock_item.value == s.pk %}selected{% endif %}>
+
+                                        {{ s.product.name }}
+                                        {% if s.import_receipt %}
+                                            ({{ s.import_receipt.import_code }})
+                                        {% elif s.return_receipt %}
+                                            ({{ s.return_receipt.return_code }})
+                                        {% endif %}
+                                        - SL: {{ s.quantity }}
+                                        {% if s.expiry_date %}- HSD: {{ s.expiry_date|date:"d/m/Y" }}{% endif %}
+                                        [{{ s.get_status_display }}]
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+
+                        <!-- SỐ LƯỢNG -->
+                        <td>
+                            <input type="number"
+                                   name="{{ f.quantity.html_name }}"
+                                   class="form-control text-end quantity"
+                                   value="{{ f.quantity.value|default:0 }}"
+                                   min="1">
+                        </td>
+
+                        <!-- ĐƠN GIÁ -->
+                        <td>
+                            <input type="text"
+                                   name="{{ f.unit_price.html_name }}"
+                                   class="form-control text-end unit-price"
+                                   readonly
+                                   value="{{ f.unit_price.value|default:0 }}">
+                        </td>
+
+                        <!-- CHIẾT KHẤU -->
+                        <td>
+                            <input type="number"
+                                   name="{{ f.discount_percent.html_name }}"
+                                   class="form-control text-end discount"
+                                   value="{{ f.discount_percent.value|default:0 }}"
+                                   min="0" step="0.01">
+                        </td>
+
+                        <!-- ĐƠN VỊ -->
+                        <td>
+                            <input type="text"
+                                   name="{{ f.unit.html_name }}"
+                                   class="form-control unit-field"
+                                   value="{{ f.unit.value|default:'' }}"
+                                   readonly>
+                        </td>
+
+                        <!-- THÀNH TIỀN -->
+                        <td class="text-end total-cell text-primary fw-semibold">0</td>
+
+                        <!-- HIDDEN TOTAL -->
+                        <input type="hidden"
+                               name="{{ f.total.html_name }}"
+                               class="total-input"
+                               value="0">
+
+                        <!-- DELETE -->
+                        <td class="text-center">
+                            {{ f.DELETE }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+                <tfoot class="table-light fw-semibold">
+                    <tr>
+                        <td colspan="5" class="text-end">Tổng chiết khấu:</td>
+                        <td class="text-end text-danger" id="discount-total">0 ₫</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-end">Tổng cộng sau giảm:</td>
+                        <td class="text-end text-primary fs-6" id="grand-total">0 ₫</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+
+            </table>
+        </div>
+
+        <div class="text-end mt-4">
+            <a href="{% url 'export_list' %}" class="btn btn-secondary">
+                <i class="fa-solid fa-xmark me-1"></i> Hủy
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-save me-1"></i> Lưu phiếu xuất
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<!-- ========== TEMPLATE DÒNG TRỐNG CHO FORMSET ========== -->
+<table class="d-none">
+    <tbody id="empty-form-template">
+        <tr class="item-row">
+
+            <!-- LÔ HÀNG -->
             <td>
-              {{ f.stock_item.errors }}
-              <select name="items-{{ forloop.counter0 }}-stock_item"
-                      id="id_items-{{ forloop.counter0 }}-stock_item"
-                      class="form-select stock-select">
+                <select name="items-__prefix__-stock_item"
+                        class="form-select stock-select">
+                    <option value="">--------</option>
 
-                  <option value="">-- Chọn lô hàng --</option>
-
-                  {% for s in f.fields.stock_item.queryset %}
-                      <option value="{{ s.pk }}"
-                              data-quantity="{{ s.quantity }}"
-                              {% if f.stock_item.value == s.pk %}selected{% endif %}>
-
-                          {{ s.product.name }}
-
-                          {% if s.import_receipt %}
-                            ({{ s.import_receipt.import_code }})
-                          {% elif s.return_receipt %}
-                            ({{ s.return_receipt.return_code }})
-                          {% endif %}
-
-                          - SL: {{ s.quantity }}
-                          - HSD: {{ s.expiry_date|date:"d/m/Y" }}
-                          [{{ s.get_status_display }}]
-                      </option>
-                  {% endfor %}
-              </select>
+                    {% with first_form=formset.forms.0 %}
+                    {% for s in first_form.fields.stock_item.queryset %}
+                        <option value="{{ s.pk }}"
+                            data-quantity="{{ s.quantity }}"
+                            data-unit-price="{{ s.unit_price|unlocalize }}"
+                            data-unit="{{ s.unit }}">
+                            {{ s.product.name }}
+                            {% if s.import_receipt %}
+                                ({{ s.import_receipt.import_code }})
+                            {% elif s.return_receipt %}
+                                ({{ s.return_receipt.return_code }})
+                            {% endif %}
+                            - SL: {{ s.quantity }}
+                            {% if s.expiry_date %}- HSD: {{ s.expiry_date|date:"d/m/Y" }}{% endif %}
+                            [{{ s.get_status_display }}]
+                        </option>
+                    {% endfor %}
+                    {% endwith %}
+                </select>
             </td>
 
-            <td>{{ f.quantity }}</td>
-            <td>{{ f.unit_price }}</td>
-            <td>{{ f.discount_percent }}</td>
-            <td>{{ f.unit }}</td>
+            <!-- SỐ LƯỢNG -->
+            <td>
+                <input type="number"
+                       name="items-__prefix__-quantity"
+                       class="form-control text-end quantity"
+                       min="1" value="0">
+            </td>
+
+            <!-- ĐƠN GIÁ -->
+            <td>
+                <input type="text"
+                       name="items-__prefix__-unit_price"
+                       class="form-control text-end unit-price"
+                       readonly value="0">
+            </td>
+
+            <!-- CHIẾT KHẤU -->
+            <td>
+                <input type="number"
+                       name="items-__prefix__-discount_percent"
+                       class="form-control text-end discount"
+                       min="0" step="0.01" value="0">
+            </td>
+
+            <!-- ĐƠN VỊ -->
+            <td>
+                <input type="text"
+                       name="items-__prefix__-unit"
+                       class="form-control unit-field"
+                       value="" readonly>
+            </td>
+
+            <!-- THÀNH TIỀN -->
             <td class="text-end total-cell text-primary fw-semibold">0</td>
-            <td>{{ f.DELETE }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
 
-        <tfoot class="table-light fw-semibold">
-          <tr>
-            <td colspan="5" class="text-end">Tổng chiết khấu:</td>
-            <td class="text-end text-danger" id="discount-total">0 ₫</td>
-            <td></td>
-          </tr>
-          <tr>
-            <td colspan="5" class="text-end">Tổng cộng sau giảm:</td>
-            <td class="text-end text-primary fs-6" id="grand-total">0 ₫</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
+            <!-- HIDDEN TOTAL -->
+            <input type="hidden"
+                   name="items-__prefix__-total"
+                   class="total-input"
+                   value="0">
 
-    <div class="text-end mt-4">
-      <a href="{% url 'export_list' %}" class="btn btn-secondary">
-        <i class="fa-solid fa-xmark me-1"></i> Hủy
-      </a>
-      <button type="submit" class="btn btn-primary">
-        <i class="fa-solid fa-save me-1"></i> Lưu phiếu xuất
-      </button>
-    </div>
-  </form>
-</div>
+            <!-- DELETE -->
+            <td class="text-center">
+                <input type="checkbox" name="items-__prefix__-DELETE">
+            </td>
+
+        </tr>
+    </tbody>
+</table>
 
 <style>
 .table th, .table td { vertical-align: middle !important; }
-.total-cell { font-weight: 600; color: #0d6efd; }
-#discount-total { color: #dc3545; font-weight: 600; }
-#grand-total { color: #0d6efd; font-weight: 700; font-size: 15px; }
+.total-cell { font-weight: 600; color:#0d6efd; }
+#discount-total { color:#dc3545; font-weight:600; }
+#grand-total { font-weight:700; }
 </style>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
 
-  const addButton = document.getElementById("add-row");
-  const totalForms = document.getElementById("id_items-TOTAL_FORMS");
-  const tbody = document.getElementById("item-body");
-  const templateHTML = tbody.querySelector("tr").outerHTML;
+    //========= GẮN EVENT CHO 1 DÒNG ==========
+    function attachEvents(row) {
+        const stock      = row.querySelector(".stock-select");
+        const qtyInput   = row.querySelector(".quantity");
+        const priceInput = row.querySelector(".unit-price");
+        const unitField  = row.querySelector(".unit-field");
 
-  function attachEvents(row) {
-      row.querySelectorAll("input").forEach(el => {
-          el.addEventListener("input", calcAll);
-      });
-      const sel = row.querySelector(".stock-select");
-      if (sel) sel.addEventListener("change", calcAll);
-  }
+        if (stock) {
+    stock.addEventListener("change", function () {
+        const opt = stock.options[stock.selectedIndex];
+        if (!opt || !opt.value) {
+            priceInput.value = "";
+            priceInput.dataset.rawPrice = "0";
+            unitField.value = "";
+            if (qtyInput) qtyInput.value = "0";
+            calcAll();
+            return;
+        }
 
-  function calcAll() {
-      let baseSum = 0, discountedSum = 0;
+        // Lấy đơn giá thô (không định dạng)
+        const rawPrice = parseFloat(opt.dataset.unitPrice || 0) || 0;
 
-      document.querySelectorAll(".item-row").forEach(row => {
-          const qty = parseFloat(row.querySelector('[name$="quantity"]').value || 0);
-          const price = parseFloat(row.querySelector('[name$="unit_price"]').value || 0);
-          const discount = parseFloat(row.querySelector('[name$="discount_percent"]').value || 0);
-          const cell = row.querySelector(".total-cell");
-          const base = qty * price;
-          const total = base * (1 - discount / 100);
-          baseSum += base;
-          discountedSum += total;
-          cell.textContent = total.toLocaleString("vi-VN");
-      });
+        // Lưu rawPrice để dùng khi tính toán
+        priceInput.dataset.rawPrice = rawPrice.toString();
 
-      document.getElementById("discount-total").textContent =
-          (baseSum - discountedSum).toLocaleString("vi-VN") + " ₫";
+        // ⬇⬇⬇  CHỈ SỬA DÒNG NÀY  ⬇⬇⬇
+        // Hiển thị số nguyên, không dấu chấm, không thập phân
+        priceInput.value = String(Math.round(rawPrice));
 
-      document.getElementById("grand-total").textContent =
-          discountedSum.toLocaleString("vi-VN") + " ₫";
-  }
+        unitField.value = opt.dataset.unit || "";
+        if (qtyInput) {
+            qtyInput.max = opt.dataset.quantity || "";
+            if (!qtyInput.value || qtyInput.value === "0") {
+                qtyInput.value = 1;
+            }
+        }
 
-  document.querySelectorAll(".item-row").forEach(r => attachEvents(r));
-  calcAll();
+        calcAll();
+    });
+}
+
+
+        // mọi input trong dòng thay đổi -> tính lại
+        row.querySelectorAll("input").forEach(i =>
+            i.addEventListener("input", calcAll)
+        );
+    }
+
+    //========= TÍNH TỔNG ==========
+    function calcAll() {
+        let base = 0, discountSum = 0;
+
+        document.querySelectorAll(".item-row").forEach(row => {
+            const qtyEl       = row.querySelector(".quantity");
+            const priceEl     = row.querySelector(".unit-price");
+            const discountEl  = row.querySelector(".discount");
+            const totalCell   = row.querySelector(".total-cell");
+            const totalHidden = row.querySelector(".total-input");
+
+            if (!qtyEl || !priceEl || !discountEl || !totalCell || !totalHidden) return;
+
+            const qty      = parseFloat(qtyEl.value || 0) || 0;
+
+            // Ưu tiên lấy rawPrice từ dataset, nếu chưa có thì lấy từ value (bỏ dấu .)
+            let rawPrice = 0;
+            if (priceEl.dataset.rawPrice !== undefined) {
+                rawPrice = parseFloat(priceEl.dataset.rawPrice || 0) || 0;
+            } else {
+                const clean = (priceEl.value || "0").replace(/[^\d\-]/g, "");
+                rawPrice = parseFloat(clean || 0) || 0;
+            }
+
+            const discount = parseFloat(discountEl.value || 0) || 0;
+
+            const lineBase  = qty * rawPrice;
+            const lineTotal = lineBase * (1 - discount / 100);
+
+            totalCell.textContent = lineTotal.toLocaleString("vi-VN");
+            totalHidden.value     = lineTotal.toFixed(0);
+
+            base        += lineBase;
+            discountSum += (lineBase - lineTotal);
+        });
+
+        const discountTotalEl = document.getElementById("discount-total");
+        const grandTotalEl    = document.getElementById("grand-total");
+
+        if (discountTotalEl) {
+            discountTotalEl.textContent =
+                discountSum.toLocaleString("vi-VN") + " ₫";
+        }
+
+        if (grandTotalEl) {
+            grandTotalEl.textContent =
+                (base - discountSum).toLocaleString("vi-VN") + " ₫";
+        }
+    }
+
+    //========= GẮN EVENT CHO CÁC DÒNG CÓ SẴN ==========
+    document.querySelectorAll(".item-row").forEach(r => attachEvents(r));
+    calcAll();
+
+    //========= NÚT THÊM DÒNG ==========
+    const addRowBtn     = document.getElementById("add-row");
+    const totalFormsInp = document.getElementById("id_items-TOTAL_FORMS");
+    const tmplRow       = document.querySelector("#empty-form-template tr");
+
+    if (addRowBtn && totalFormsInp && tmplRow) {
+        addRowBtn.addEventListener("click", function () {
+            const index = parseInt(totalFormsInp.value || "0");
+            const newRow = tmplRow.cloneNode(true);
+
+            // thay __prefix__ -> index
+            newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, index);
+
+            document.getElementById("item-body").appendChild(newRow);
+
+            // gắn event cho dòng mới
+            attachEvents(newRow);
+            calcAll();
+
+            totalFormsInp.value = index + 1;
+        });
+    }
 });
 </script>
 

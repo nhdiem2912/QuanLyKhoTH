@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Danh mục - TH True Mart{% endblock %}
 {% block page_title %}Danh mục{% endblock %}
-
+{% load humanize %}
 {# CSS riêng cho trang danh mục #}
 {% block extra_head %}
 <style>
@@ -131,11 +131,20 @@
 
           <div class="mt-3 d-flex justify-content-between align-items-center">
             <div>
-              <a href="{% url 'edit_category' c.category_code %}" class="text-primary me-3">
+              <button class="btn btn-outline-primary btn-sm me-2"
+                      data-bs-toggle="modal"
+                      data-bs-target="#categoryDetail{{ c.category_code }}"
+                      title="Xem chi tiết">
+                <i class="fa-solid fa-eye"></i> Xem chi tiết
+              </button>
+              <a href="{% url 'edit_category' c.category_code %}" class="text-primary me-3" title="Chỉnh sửa">
                 <i class="fa-solid fa-pen"></i> Sửa
               </a>
               <a href="#" class="text-danger btn-delete-category"
-                 data-id="{{ c.category_code }}" data-name="{{ c.name }}">
+                 data-id="{{ c.category_code }}"
+                 data-name="{{ c.name }}"
+                 data-url="{% url 'delete_category' c.category_code %}"
+                 title="Xóa">
                 <i class="fa-solid fa-trash"></i> Xóa
               </a>
             </div>
@@ -155,6 +164,68 @@
     </div>
   {% endif %}
 </div>
+
+<!-- ✅ MODAL CHI TIẾT DANH MỤC - CHỈ HIỂN THỊ KHI BẤM XEM CHI TIẾT -->
+{% for c in categories %}
+<div class="modal fade" id="categoryDetail{{ c.category_code }}" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold">
+          Chi tiết danh mục – {{ c.category_code }} | {{ c.name }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <h6 class="fw-semibold text-primary mb-3">Thông tin chung</h6>
+        <div class="row mb-3">
+          <div class="col-md-6"><strong>Mã danh mục:</strong> {{ c.category_code }}</div>
+          <div class="col-md-6"><strong>Tên danh mục:</strong> {{ c.name }}</div>
+          <div class="col-12 mt-2"><strong>Mô tả:</strong> {{ c.description|default:"Không có mô tả" }}</div>
+        </div>
+
+        <hr>
+
+        {# ✅ YÊU CẦU: Danh sách sản phẩm từ phiếu nhập (không trùng mã) #}
+        <h6 class="fw-semibold text-primary mb-3">Sản phẩm đã nhập kho trong danh mục này</h6>
+        {% if c.products_from_imports %}
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-bordered table-hover text-center">
+            <thead class="table-light">
+              <tr>
+                <th style="width:20%">Mã SP</th>
+                <th class="text-start" style="width:50%">Tên sản phẩm</th>
+                <th class="text-end" style="width:30%">Đơn giá (₫)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in c.products_from_imports %}
+              <tr>
+                <td class="fw-semibold">{{ p.product_code }}</td>
+                <td class="text-start">{{ p.name }}</td>
+                <td class="text-end fw-semibold text-primary">{{ p.unit_price|floatformat:0|intcomma }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-0">
+          <i class="fa-solid fa-info-circle me-2"></i>
+          Chưa có sản phẩm nào được nhập kho trong danh mục này.
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {

@@ -9,7 +9,9 @@
   <!-- HEADER -->
   <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
     <h5 class="fw-semibold text-primary mb-1">Tạo phiếu nhập kho</h5>
-    <small class="text-muted">Nhập thông tin phiếu và danh sách sản phẩm cần nhập</small>
+    <small class="text-muted">
+      Chọn phiếu ASN để hệ thống tự động điền danh sách sản phẩm, số lượng, đơn giá, đơn vị và hạn sử dụng.
+    </small>
   </div>
 
   <form method="post" novalidate>
@@ -19,64 +21,162 @@
     <div class="card p-3 mb-4 shadow-sm">
       <h6 class="fw-semibold text-primary mb-2">Thông tin phiếu nhập</h6>
       <div class="row g-3">
-        <div class="col-md-3">{{ form.import_code.label_tag }}{{ form.import_code }}</div>
-        <div class="col-md-4">{{ form.supplier.label_tag }}{{ form.supplier }}</div>
-        <div class="col-md-3">{{ form.import_date.label_tag }}{{ form.import_date }}</div>
-        <div class="col-md-12">{{ form.note.label_tag }}{{ form.note }}</div>
+        <div class="col-md-3">
+          {{ form.import_code.label_tag }}
+          {{ form.import_code }}
+          <div class="text-muted small mt-1">
+            Nếu bỏ trống, hệ thống sẽ tự sinh mã dạng <strong>PN0001</strong>, <strong>PN0002</strong>, ...
+          </div>
+          {% if form.import_code.errors %}
+            <div class="text-danger small">{{ form.import_code.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-3">
+          {{ form.supplier.label_tag }}
+          {{ form.supplier }}
+          <div class="text-muted small mt-1">
+            Khi chọn ASN, nhà cung ứng sẽ được tự động đồng bộ theo ASN.
+          </div>
+          {% if form.supplier.errors %}
+            <div class="text-danger small">{{ form.supplier.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-3">
+          {{ form.asn.label_tag }}
+          {{ form.asn }}
+          {% if form.asn.errors %}
+            <div class="text-danger small">{{ form.asn.errors }}</div>
+          {% endif %}
+          <small class="text-muted d-block mt-1">
+            Khi chọn ASN, trang sẽ tự tải lại và hiển thị sẵn các dòng sản phẩm.
+          </small>
+        </div>
+
+        <div class="col-md-3">
+          {{ form.import_date.label_tag }}
+          {{ form.import_date }}
+          {% if form.import_date.errors %}
+            <div class="text-danger small">{{ form.import_date.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-12">
+          {{ form.note.label_tag }}
+          {{ form.note }}
+          {% if form.note.errors %}
+            <div class="text-danger small">{{ form.note.errors }}</div>
+          {% endif %}
+        </div>
       </div>
+
+      {% if asn %}
+      <hr class="my-3">
+      <div class="row g-3 small text-muted">
+        <div class="col-md-4">
+          <strong>ASN:</strong> {{ asn.asn_code }}<br>
+          <strong>Nhà cung ứng:</strong> {{ asn.supplier.company_name }}
+        </div>
+        <div class="col-md-4">
+          <strong>Ngày dự kiến giao:</strong> {{ asn.expected_date|date:"d/m/Y" }}<br>
+          <strong>Tổng số dòng sản phẩm:</strong> {{ asn_items|length }}
+        </div>
+        <div class="col-md-4">
+          <strong>Tổng số lượng ASN:</strong>
+          {{ asn.total_quantity|default:"0" }} {{ asn_items.0.unit }}
+        </div>
+      </div>
+      {% endif %}
     </div>
 
     <!-- Danh sách sản phẩm -->
     <div class="card p-3 shadow-sm">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h6 class="fw-semibold text-primary mb-0">Danh sách sản phẩm nhập</h6>
-        <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
-          <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm
-        </button>
+        {# Nếu muốn cho nhập tay thêm dòng, có thể thêm nút ở đây #}
       </div>
 
       {{ formset.management_form }}
 
-      <table class="table table-bordered align-middle text-center" id="import-table">
+      <table class="table table-bordered align-middle text-center">
         <thead class="table-primary">
           <tr>
-            <th>Sản phẩm</th>
-            <th style="width:100px;">Số lượng</th>
-            <th style="width:130px;">Đơn giá (₫)</th>
-            <th style="width:120px;">Chiết khấu (%)</th>
-            <th style="width:120px;">Đơn vị</th>
-            <th style="width:120px;">Vị trí</th>
+            <th class="d-none">ASN item</th>
+            <th style="width:22%">Sản phẩm</th>
+            <th style="width:90px;">SL</th>
+            <th style="width:120px;">Đơn giá (₫)</th>
+            <th style="width:110px;">Đơn vị</th>
             <th style="width:130px;">Hạn sử dụng</th>
-            <th style="width:150px;">Thành tiền (₫)</th>
+            <th style="width:140px;">Vị trí</th>
+            <th style="width:160px;">Thành tiền (₫)</th>
             <th style="width:60px;">Xóa</th>
           </tr>
         </thead>
-
         <tbody id="item-body">
           {% for f in formset.forms %}
           <tr class="item-row align-middle">
-            <td>{{ f.product }}</td>
-            <td>{{ f.quantity }}</td>
-            <td>{{ f.unit_price }}</td>
-            <td>{{ f.discount_percent }}</td>
-            <td>{{ f.unit }}</td>
-            <td>{{ f.location }}</td>
-            <td>{{ f.expiry_date }}</td>
+            <!-- Ẩn trường ASN item nhưng vẫn submit -->
+            <td class="d-none">
+              {{ f.asn_item }}
+            </td>
+
+            <td>
+              {{ f.product }}
+              {% if f.product.errors %}
+                <div class="text-danger small">{{ f.product.errors }}</div>
+              {% endif %}
+            </td>
+
+            <td>
+              {{ f.quantity }}
+              {% if f.quantity.errors %}
+                <div class="text-danger small">{{ f.quantity.errors }}</div>
+              {% endif %}
+            </td>
+
+            <td>
+              {{ f.unit_price }}
+              {% if f.unit_price.errors %}
+                <div class="text-danger small">{{ f.unit_price.errors }}</div>
+              {% endif %}
+            </td>
+
+            <td>
+              {{ f.unit }}
+              {% if f.unit.errors %}
+                <div class="text-danger small">{{ f.unit.errors }}</div>
+              {% endif %}
+            </td>
+
+            <td>
+              {{ f.expiry_date }}
+              {% if f.expiry_date.errors %}
+                <div class="text-danger small">{{ f.expiry_date.errors }}</div>
+              {% endif %}
+            </td>
+
+            <td>
+              {{ f.location }}
+              {% if f.location.errors %}
+                <div class="text-danger small">{{ f.location.errors }}</div>
+              {% endif %}
+            </td>
+
             <td class="text-end total-cell text-primary fw-semibold">0</td>
-            <td class="text-center">{{ f.DELETE }}</td>
+
+            <td class="text-center">
+              {% if formset.can_delete %}
+                {{ f.DELETE }}
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>
 
-        <!-- ✅ Tổng cộng -->
         <tfoot class="table-light fw-semibold">
           <tr>
-            <td colspan="7" class="text-end">Tổng chiết khấu:</td>
-            <td class="text-end text-danger" id="discount-total">0 ₫</td>
-            <td></td>
-          </tr>
-          <tr>
-            <td colspan="7" class="text-end">Tổng cộng sau giảm:</td>
+            <td colspan="7" class="text-end">Tổng cộng:</td>
             <td class="text-end text-primary fs-6" id="grand-total">0 ₫</td>
             <td></td>
           </tr>
@@ -96,107 +196,72 @@
   </form>
 </div>
 
-<!-- Hidden empty form template -->
-<table class="d-none">
-  <tbody id="empty-form-template">
-    <tr class="item-row align-middle">
-      <td>
-        <select name="items-__prefix__-product" class="form-select" required>
-          {% for p in formset.forms.0.fields.product.queryset %}
-            <option value="{{ p.pk }}">{{ p.product_code }} - {{ p.name }}</option>
-          {% endfor %}
-        </select>
-      </td>
-      <td><input type="number" name="items-__prefix__-quantity" class="form-control text-end quantity" min="1" value="1" required></td>
-      <td><input type="number" name="items-__prefix__-unit_price" class="form-control text-end unit-price" min="0" step="0.01" required></td>
-      <td><input type="number" name="items-__prefix__-discount_percent" class="form-control text-end discount" min="0" step="0.01" value="0"></td>
-      <td><input type="text" name="items-__prefix__-unit" class="form-control" placeholder="VD: Thùng"></td>
-      <td><input type="text" name="items-__prefix__-location" class="form-control" placeholder="VD: Kệ A1"></td>
-      <td><input type="date" name="items-__prefix__-expiry_date" class="form-control"></td>
-      <td class="text-end total-cell text-primary fw-semibold">0</td>
-      <td class="text-center"><input type="checkbox" name="items-__prefix__-DELETE"></td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- STYLE -->
 <style>
 .table th, .table td { vertical-align: middle !important; }
 .table th { font-weight: 600; }
-.table input, .table select { height: 38px; font-size: 14px; }
+.table input, .table select { height: 36px; font-size: 14px; }
 .item-row td { vertical-align: middle !important; }
 td label { display: none; }
 .total-cell { font-weight: 600; color: #0d6efd; }
-#discount-total { color: #dc3545; font-weight: 600; }
-#grand-total { color: #0d6efd; font-weight: 700; font-size: 15px; }
 </style>
 
-<!-- SCRIPT -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  const addButton = document.getElementById("add-row");
-  const totalForms = document.getElementById("id_items-TOTAL_FORMS");
-  const tbody = document.getElementById("item-body");
-  const template = document.getElementById("empty-form-template").innerHTML.trim();
+  const asnSelect = document.getElementById("id_asn");
   const grandTotalCell = document.getElementById("grand-total");
-  const discountTotalCell = document.getElementById("discount-total");
 
-  // ✅ Thêm class cần thiết cho các input đã render từ Django
-  document.querySelectorAll('[name$="-quantity"]').forEach(i => i.classList.add('quantity'));
-  document.querySelectorAll('[name$="-unit_price"]').forEach(i => i.classList.add('unit-price'));
-  document.querySelectorAll('[name$="-discount_percent"]').forEach(i => i.classList.add('discount'));
-
-  // ✅ Tính từng dòng
-  function calculateRow(row) {
-    const qty = parseFloat(row.querySelector(".quantity")?.value || 0);
-    const price = parseFloat(row.querySelector(".unit-price")?.value || 0);
-    const discount = parseFloat(row.querySelector(".discount")?.value || 0);
-    const totalCell = row.querySelector(".total-cell");
-    const base = qty * price;
-    const discounted = base * (1 - discount / 100);
-    totalCell.textContent = discounted ? discounted.toLocaleString("vi-VN") : "0";
-    return { base, discounted };
-  }
-
-  // ✅ Tính tổng toàn bảng
-  function calculateTotals() {
-    let totalBase = 0, totalDiscounted = 0;
-    document.querySelectorAll(".item-row").forEach(row => {
-      const { base, discounted } = calculateRow(row);
-      totalBase += base;
-      totalDiscounted += discounted;
-    });
-    const totalDiscount = totalBase - totalDiscounted;
-    discountTotalCell.textContent = totalDiscount.toLocaleString("vi-VN") + " ₫";
-    grandTotalCell.textContent = totalDiscounted.toLocaleString("vi-VN") + " ₫";
-  }
-
-  // ✅ Gắn sự kiện cho từng input
-  function attachEvents(row) {
-    ["quantity", "unit-price", "discount"].forEach(cls => {
-      const input = row.querySelector("." + cls);
-      if (input) input.addEventListener("input", calculateTotals);
+  // 🔁 Khi đổi ASN → reload trang với ?asn=...
+  if (asnSelect) {
+    asnSelect.addEventListener("change", function() {
+      const value = this.value;
+      const url = new URL(window.location.href);
+      if (value) {
+        url.searchParams.set("asn", value);
+      } else {
+        url.searchParams.delete("asn");
+      }
+      window.location.href = url.toString();
     });
   }
 
-  // Gắn sự kiện cho các dòng đã render
-  document.querySelectorAll(".item-row").forEach(row => attachEvents(row));
+  // Gắn class để tính tổng
+  document.querySelectorAll('input[name$="-quantity"]').forEach(i => i.classList.add("quantity"));
+  document.querySelectorAll('input[name$="-unit_price"]').forEach(i => {
+    i.classList.add("unit-price");
 
-  // Khi thêm dòng mới
-  addButton.addEventListener("click", e => {
-    e.preventDefault();
-    const index = parseInt(totalForms.value);
-    const newRow = template.replace(/__prefix__/g, index);
-    tbody.insertAdjacentHTML("beforeend", newRow);
-    totalForms.value = index + 1;
-    const newRowElement = tbody.lastElementChild;
-    attachEvents(newRowElement);
-    calculateTotals();
+    // ✅ Bỏ .00: convert về số nguyên nếu có giá trị
+    if (i.value) {
+      const v = parseFloat(i.value);
+      if (!isNaN(v)) {
+        i.value = parseInt(v);
+      }
+    }
+    // ✅ Chỉ cho nhập bước 1 (không số lẻ)
+    i.step = "1";
   });
 
-  // ✅ Tính ngay khi load (fix hàng đầu tiên bị 0)
+  function calculateTotals() {
+    let grand = 0;
+    document.querySelectorAll(".item-row").forEach(row => {
+      const qty = parseFloat(row.querySelector(".quantity")?.value || 0);
+      const price = parseFloat(row.querySelector(".unit-price")?.value || 0);
+      const total = qty * price;
+      const cell = row.querySelector(".total-cell");
+      if (cell) {
+        cell.textContent = total ? total.toLocaleString("vi-VN") + " ₫" : "0 ₫";
+      }
+      grand += total;
+    });
+    if (grandTotalCell) {
+      grandTotalCell.textContent = grand.toLocaleString("vi-VN") + " ₫";
+    }
+  }
+
+  document.querySelectorAll(".quantity, .unit-price").forEach(i => {
+    i.addEventListener("input", calculateTotals);
+  });
+
   setTimeout(calculateTotals, 200);
 });
 </script>
-
 {% endblock %}

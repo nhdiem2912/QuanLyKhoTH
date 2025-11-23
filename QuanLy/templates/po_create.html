@@ -3,14 +3,69 @@
 {% block title %}Tạo đơn đặt hàng (PO) - TH True Mart{% endblock %}
 {% block page_title %}Tạo đơn đặt hàng (PO){% endblock %}
 
+{% block extra_head %}
+<style>
+  .hero-card {
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0d6efd, #38bdf8);
+    color: #fff;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+    margin-bottom: 18px;
+  }
+  .hero-card h5 {
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  .hero-card p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.92;
+  }
+  .hero-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .table th, .table td {
+    vertical-align: middle !important;
+  }
+  .table input, .table select {
+    height: 38px;
+    font-size: 14px;
+  }
+  td label { display: none; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
 
-  <!-- HEADER -->
-  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
-    <h5 class="fw-semibold text-primary mb-1">Tạo đơn đặt hàng (PO)</h5>
-    <small class="text-muted">Nhập thông tin đơn hàng và sản phẩm cần đặt</small>
+  <!-- HERO -->
+  <div class="hero-card">
+    <div>
+      <h5>Tạo đơn đặt hàng (PO)</h5>
+      <p>Chọn nhà cung ứng, sau đó thêm các sản phẩm thuộc nhà cung ứng đó.</p>
+    </div>
+    <div class="hero-icon">
+      <i class="fa-solid fa-file-invoice-dollar"></i>
+    </div>
   </div>
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+  {% endif %}
+  {% if formset.non_field_errors %}
+    <div class="alert alert-danger">{{ formset.non_field_errors }}</div>
+  {% endif %}
 
   <form method="post">
     {% csrf_token %}
@@ -19,17 +74,28 @@
     <div class="card p-3 mb-4 shadow-sm">
       <h6 class="fw-semibold text-primary mb-3">Thông tin đơn đặt hàng</h6>
       <div class="row g-3">
-        <div class="col-md-4">
-          {{ form.po_code.label_tag }}{{ form.po_code }}
+        <div class="col-md-3">
+          {{ form.po_code.label_tag }}
+          {{ form.po_code }}
+          {{ form.po_code.errors }}
         </div>
         <div class="col-md-4">
-          {{ form.supplier.label_tag }}{{ form.supplier }}
+          {{ form.supplier.label_tag }}
+          {{ form.supplier }}
+          {{ form.supplier.errors }}
+          <small class="text-muted fst-italic">
+            * Chỉ nên chọn sản phẩm thuộc nhà cung ứng này (hệ thống sẽ kiểm tra lại).
+          </small>
         </div>
-        <div class="col-md-4">
-          {{ form.status.label_tag }}{{ form.status }}
+        <div class="col-md-3">
+          {{ form.status.label_tag }}
+          {{ form.status }}
+          {{ form.status.errors }}
         </div>
         <div class="col-md-12">
-          {{ form.note.label_tag }}{{ form.note }}
+          {{ form.note.label_tag }}
+          {{ form.note }}
+          {{ form.note.errors }}
         </div>
       </div>
     </div>
@@ -44,80 +110,201 @@
       </div>
 
       {{ formset.management_form }}
-      <table class="table table-bordered align-middle text-center">
-        <thead class="table-primary">
+      <table class="table table-bordered align-middle text-center mb-0">
+        <thead class="table-light">
           <tr>
-            <th>Sản phẩm</th>
-            <th style="width:140px;">Số lượng</th>
-            <th style="width:150px;">Đơn vị</th>
-            <th style="width:60px;">Xóa</th>
+            <th style="width:30%">Sản phẩm</th>
+            <th style="width:12%">Số lượng</th>
+            <th style="width:16%">Đơn vị</th>
+            <th style="width:16%">Đơn giá NCC (₫)</th>
+            <th style="width:16%">Thành tiền (₫)</th>
+            <th style="width:6%">Xóa</th>
           </tr>
         </thead>
         <tbody id="item-body">
           {% for f in formset.forms %}
           <tr class="item-row align-middle">
-            <td>{{ f.product }}</td>
-            <td>{{ f.quantity }}</td>
-            <td>{{ f.unit }}</td>
-            <td class="text-center">{{ f.DELETE }}</td>
+            <td>
+              {{ f.product }}
+              {{ f.product.errors }}
+            </td>
+            <td>
+              {{ f.quantity }}
+              {{ f.quantity.errors }}
+            </td>
+            <td>
+              {{ f.unit }}
+              {{ f.unit.errors }}
+            </td>
+            <td>
+              {{ f.unit_price }}
+              {{ f.unit_price.errors }}
+              <small class="text-muted d-block" style="font-size:11px;">
+                Tự động từ nhà cung ứng.
+              </small>
+            </td>
+            <td class="text-end fw-semibold text-primary">
+              <span class="line-total">0 ₫</span>
+            </td>
+            <td class="text-center">
+              {% if formset.can_delete %}
+                {{ f.DELETE }}
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>
+        <tfoot class="table-light fw-semibold">
+          <tr>
+            <td colspan="4" class="text-end">Tổng cộng:</td>
+            <td class="text-end text-primary fs-5" id="grand-total">0 ₫</td>
+            <td></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
 
     <!-- NÚT LƯU -->
     <div class="text-end mt-4">
       <a href="{% url 'po_list' %}" class="btn btn-secondary">
-        <i class="fa-solid fa-xmark me-1"></i> Hủy
+        <i class="fa-solid fa-arrow-left-long me-1"></i> Quay lại
       </a>
       <button type="submit" class="btn btn-primary">
-        <i class="fa-solid fa-save me-1"></i> Lưu đơn đặt hàng
+        <i class="fa-solid fa-floppy-disk me-1"></i> Lưu đơn đặt hàng
       </button>
     </div>
   </form>
 </div>
 
-<!-- MẪU TRỐNG (thêm dòng mới) -->
-<table class="d-none">
-  <tbody id="empty-form-template">
-    <tr class="item-row align-middle">
-      <td>
-        <select name="items-__prefix__-product" class="form-select">
-          {% for p in formset.forms.0.fields.product.queryset %}
-          <option value="{{ p.pk }}">{{ p.product_code }} - {{ p.name }}</option>
-          {% endfor %}
-        </select>
-      </td>
-      <td><input type="number" name="items-__prefix__-quantity" class="form-control text-end" min="1" required></td>
-      <td><input type="text" name="items-__prefix__-unit" class="form-control" placeholder="VD: Thùng"></td>
-      <td class="text-center"><input type="checkbox" name="items-__prefix__-DELETE"></td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- STYLE -->
-<style>
-.table th, .table td { vertical-align: middle !important; }
-.table input, .table select { height: 38px; font-size: 14px; }
-td label { display: none; }
-</style>
-
-<!-- SCRIPT -->
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
   const addButton = document.getElementById("add-row");
   const totalForms = document.getElementById("id_items-TOTAL_FORMS");
   const tbody = document.getElementById("item-body");
-  const template = document.getElementById("empty-form-template").innerHTML.trim();
+  const supplierSelect = document.getElementById("id_supplier");
+  const firstRow = tbody.querySelector("tr");
+  const grandTotalCell = document.getElementById("grand-total");
 
-  addButton.addEventListener("click", function(e) {
+  if (!firstRow) return;
+
+  // ✅ Lấy danh sách sản phẩm theo nhà cung cấp từ server
+  let supplierProducts = {};
+  
+  // ✅ Khi chọn nhà cung cấp, filter sản phẩm và set đơn giá
+  if (supplierSelect) {
+    supplierSelect.addEventListener("change", function() {
+      const supplierId = this.value;
+      if (!supplierId) {
+        // Nếu chưa chọn nhà cung cấp, xóa tất cả options
+        tbody.querySelectorAll('.product-select').forEach(select => {
+          select.innerHTML = '<option value="">-- Chọn nhà cung cấp trước --</option>';
+        });
+        // Reset đơn giá
+        tbody.querySelectorAll('.unit-price').forEach(input => input.value = '');
+        updateLineTotals();
+        return;
+      }
+
+      // Fetch sản phẩm của nhà cung cấp
+      fetch(`/api/supplier-products/${supplierId}/`)
+        .then(res => res.json())
+        .then(data => {
+          supplierProducts = data.products || {};
+          // Cập nhật tất cả select sản phẩm
+          tbody.querySelectorAll('.product-select').forEach(select => {
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">-- Chọn sản phẩm --</option>';
+            Object.keys(supplierProducts).forEach(productId => {
+              const product = supplierProducts[productId];
+              const option = document.createElement('option');
+              option.value = productId;
+              option.textContent = `${product.code} - ${product.name}`;
+              option.dataset.price = product.unit_price;
+              if (productId === currentValue) option.selected = true;
+              select.appendChild(option);
+            });
+          });
+        })
+        .catch(err => {
+          console.error('Error loading products:', err);
+          alert('Không thể tải danh sách sản phẩm. Vui lòng thử lại.');
+        });
+    });
+  }
+
+  // ✅ Khi chọn sản phẩm, tự động set đơn giá
+  tbody.addEventListener("change", function(e) {
+    if (e.target.classList.contains('product-select')) {
+      const row = e.target.closest('tr');
+      const priceInput = row.querySelector('.unit-price');
+      const selectedOption = e.target.options[e.target.selectedIndex];
+      
+      if (selectedOption && selectedOption.dataset.price) {
+        priceInput.value = parseInt(selectedOption.dataset.price);
+
+        updateLineTotals();
+      }
+    }
+  });
+
+  function updateLineTotals() {
+    let grandTotal = 0;
+    tbody.querySelectorAll("tr").forEach(function (row) {
+      const qtyInput = row.querySelector('input[name$="-quantity"]');
+      const priceInput = row.querySelector('input[name$="-unit_price"]');
+      const totalCell = row.querySelector(".line-total");
+      if (!qtyInput || !priceInput || !totalCell) return;
+
+      const qty = parseFloat(qtyInput.value || 0);
+      const price = parseFloat(priceInput.value || 0);
+      const total = qty * price;
+      totalCell.textContent = isNaN(total)
+        ? "0"
+        : total.toLocaleString("vi-VN") + " ₫";
+      grandTotal += total;
+    });
+    
+    if (grandTotalCell) {
+      grandTotalCell.textContent = grandTotal.toLocaleString("vi-VN") + " ₫";
+    }
+  }
+
+  // thêm dòng
+  addButton.addEventListener("click", function (e) {
     e.preventDefault();
     const formIndex = parseInt(totalForms.value);
-    const newRow = template.replace(/__prefix__/g, formIndex);
-    tbody.insertAdjacentHTML("beforeend", newRow);
+    const newRow = firstRow.cloneNode(true);
+
+    // thay chỉ số index
+    newRow.innerHTML = newRow.innerHTML.replace(/items-\d+/g, "items-" + formIndex);
+
+    // reset value
+    newRow.querySelectorAll("input, select").forEach(function (el) {
+      if (el.type === "checkbox") {
+        el.checked = false;
+      } else {
+        el.value = "";
+      }
+    });
+
+    // ✅ Cập nhật select sản phẩm nếu đã chọn nhà cung cấp
+    if (supplierSelect.value) {
+      supplierSelect.dispatchEvent(new Event('change'));
+    }
+
+    tbody.appendChild(newRow);
     totalForms.value = formIndex + 1;
+    updateLineTotals();
   });
+
+  // cập nhật thành tiền khi sửa số lượng hoặc đơn giá
+  tbody.addEventListener("input", function (e) {
+    if (e.target.name && (e.target.name.indexOf("-quantity") !== -1 || e.target.name.indexOf("-unit_price") !== -1)) {
+      updateLineTotals();
+    }
+  });
+
+  updateLineTotals();
 });
 </script>
 {% endblock %}

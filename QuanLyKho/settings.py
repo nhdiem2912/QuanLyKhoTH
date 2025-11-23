@@ -128,3 +128,14 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# ============ EMAIL RESET MẬT KHẨU ============
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = "thtruemartnuithanhdanang@gmail.com"       # Gmail dùng để GỬI
+EMAIL_HOST_PASSWORD = "fivw tiaw ppit iphq"       # App Password 16 ký tự
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+

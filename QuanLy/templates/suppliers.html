@@ -3,19 +3,18 @@
 {% block title %}Nhà cung ứng - TH True Mart{% endblock %}
 {% block page_title %}Nhà cung ứng{% endblock %}
 
-{% block content %}
 {% block extra_head %}
 <style>
   .hero-card {
     border-radius: 16px;
     background: linear-gradient(135deg, #0d6efd, #38bdf8);
     color: #fff;
-    padding: 16px 18px;
+    padding: 16px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
-    margin-bottom: 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(15,23,42,0.18);
   }
   .hero-card h5 {
     margin: 0 0 4px;
@@ -24,72 +23,53 @@
   .hero-card p {
     margin: 0;
     font-size: 14px;
-    opacity: 0.92;
+    opacity: .95;
   }
   .hero-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.18);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex; justify-content: center; align-items: center;
+    font-size: 22px;
   }
+  .table td, .table th { vertical-align: middle !important; }
+  .btn-group .btn { padding: 6px 8px; border-radius: 6px !important; }
 </style>
 {% endblock %}
 
+{% block content %}
 <div class="container-fluid">
 
-    <!-- HERO -->
+  <!-- HERO -->
   <div class="hero-card">
     <div>
       <h5>Quản lý nhà cung ứng</h5>
-      <p>Lưu trữ và cập nhật thông tin các nhà cung cấp của TH True Mart.</p>
+      <p>Quản lý thông tin các nhà cung ứng đang hợp tác với cửa hàng.</p>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <a href="{% url 'add_supplier' %}" class="btn btn-light btn-sm text-primary fw-semibold">
-        <i class="fa-solid fa-plus me-1"></i> Thêm nhà cung ứng
-      </a>
-    </div>
+    <div class="hero-icon"><i class="fa-solid fa-building"></i></div>
   </div>
 
- <!-- FILTERS -->
-  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
-    <form method="get" class="row g-3 align-items-end">
-
-      <div class="col-md-4">
-        <label class="form-label">Tìm kiếm</label>
-        <input type="text" name="q" value="{{ q }}" class="form-control"
-               placeholder="Tên công ty, mã NCC, người liên hệ...">
-      </div>
-
-      <div class="col-md-4">
-        <label class="form-label">Thành phố</label>
-        <input type="text" name="city" value="{{ city_filter }}" class="form-control"
-               placeholder="Ví dụ: Đà Nẵng">
-      </div>
-
-      <div class="col-md-4 ">
-        <button class="btn btn-primary"><i class="fa-solid fa-filter"></i> Lọc</button>
-          <a href="{% url 'suppliers' %}" class="btn btn-secondary">Reset</a>
-      </div>
-
-    </form>
-  </div>
-  <!-- DANH SÁCH NHÀ CUNG ỨNG -->
+  <!-- DANH SÁCH NCC -->
   <div class="bg-white p-3 rounded-3 shadow-sm">
-    {% if suppliers %}
-    <table class="table align-middle table-hover mb-0">
+    <div class="d-flex justify-content-end mb-3">
+  {% if can_add_supplier %}
+<a href="{% url 'add_supplier' %}" class="btn btn-light btn-sm text-primary fw-semibold">
+  <i class="fa-solid fa-plus me-1"></i> Thêm nhà cung ứng
+</a>
+{% endif %}
+
+</div>
+
+
+    <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
-          <th>Mã NCC</th>
-          <th>Tên công ty</th>
-          <th>Người liên hệ</th>
-          <th>Số điện thoại</th>
-          <th>Email</th>
-          <th>Trạng thái</th>
-          <th class="text-center">Thao tác</th>
+          <th style="width:12%">Mã NCC</th>
+          <th style="width:28%">Tên công ty</th>
+          <th style="width:15%">Mã số thuế</th>
+          <th style="width:18%">Người liên hệ</th>
+          <th style="width:15%">SĐT</th>
+          <th style="width:12%">Trạng thái</th>
+          <th class="text-center" style="width:10%">Hành động</th>
         </tr>
       </thead>
       <tbody>
@@ -97,9 +77,9 @@
         <tr>
           <td class="fw-semibold">{{ s.supplier_code }}</td>
           <td>{{ s.company_name }}</td>
-          <td>{{ s.contact_name }}</td>
+          <td>{{ s.tax_code|default:"-" }}</td>
+          <td>{{ s.contact_name|default:"-" }}</td>
           <td>{{ s.phone }}</td>
-          <td>{{ s.email|default:"-" }}</td>
           <td>
             {% if s.status == "active" %}
               <span class="badge bg-success">Hoạt động</span>
@@ -107,120 +87,164 @@
               <span class="badge bg-secondary">Tạm dừng</span>
             {% endif %}
           </td>
+
           <td class="text-center">
-            <div class="btn-group btn-group-sm" role="group">
-              <!-- Xem -->
-              <button class="btn btn-outline-primary" title="Xem chi tiết"
-                      data-bs-toggle="modal" data-bs-target="#viewModal{{ s.supplier_code }}">
-                <i class="fa-solid fa-eye"></i>
-              </button>
+  <div class="btn-group btn-group-sm">
+    <!-- Xem: ai vào được trang này đều xem được -->
+    <button class="btn btn-outline-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#supplierDetail{{ s.supplier_code }}"
+            title="Xem chi tiết">
+      <i class="fa-solid fa-eye"></i>
+    </button>
 
-              <!-- Sửa -->
-              <a href="{% url 'edit_supplier' s.supplier_code %}" class="btn btn-outline-warning" title="Chỉnh sửa">
-                <i class="fa-solid fa-pen"></i>
-              </a>
+      {% if is_manager or is_employee or is_supplier %}
+<a href="{% url 'supplier_history' s.supplier_code %}" class="btn btn-outline-info btn-sm">
+    <i class="fa-solid fa-clock-rotate-left"></i>
+</a>
+{% endif %}
 
-              <!-- Xóa -->
-              <button class="btn btn-outline-danger" title="Xóa nhà cung ứng"
-                      onclick="confirmDelete('{{ s.supplier_code }}')">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </div>
+    <!-- Sửa: chỉ Cửa hàng trưởng + Nhà cung ứng -->
+    {% if can_edit_supplier %}
+    <a href="{% url 'edit_supplier' s.supplier_code %}"
+       class="btn btn-outline-warning"
+       title="Chỉnh sửa">
+      <i class="fa-solid fa-pen"></i>
+    </a>
+    {% endif %}
+
+    <!-- Xóa: chỉ Cửa hàng trưởng -->
+    {% if can_delete_supplier %}
+    <button class="btn btn-outline-danger"
+            onclick="deleteSupplier('{{ s.supplier_code }}')"
+            title="Xóa">
+      <i class="fa-solid fa-trash"></i>
+    </button>
+    {% endif %}
+  </div>
+</td>
+
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">
+            <i class="fa-solid fa-building fa-2x d-block mb-2"></i>
+            Chưa có nhà cung ứng nào
           </td>
         </tr>
-
-        <!-- POPUP CHI TIẾT -->
-        <div class="modal fade" id="viewModal{{ s.supplier_code }}" tabindex="-1">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header bg-light">
-                <h5 class="modal-title fw-bold">Thông tin chi tiết {{ s.company_name }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body">
-                <ul class="list-group list-group-flush">
-                  <li class="list-group-item"><strong>Mã NCC:</strong> {{ s.supplier_code }}</li>
-                  <li class="list-group-item"><strong>Tên công ty:</strong> {{ s.company_name }}</li>
-                  <li class="list-group-item"><strong>Người liên hệ:</strong> {{ s.contact_name }}</li>
-                  <li class="list-group-item"><strong>Số điện thoại:</strong> {{ s.phone }}</li>
-                  <li class="list-group-item"><strong>Email:</strong> {{ s.email|default:"-" }}</li>
-                  <li class="list-group-item">
-                    <strong>Trạng thái:</strong>
-                    {% if s.status == "active" %}
-                      <span class="text-success fw-semibold">Hoạt động</span>
-                    {% else %}
-                      <span class="text-muted fw-semibold">Tạm dừng</span>
-                    {% endif %}
-                  </li>
-                </ul>
-              </div>
-              <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-              </div>
-            </div>
-          </div>
-        </div>
         {% endfor %}
       </tbody>
     </table>
-
-    {% else %}
-    <div class="text-center text-muted py-5">
-      <i class="fa-regular fa-user fa-2x mb-3"></i>
-      <div>Chưa có nhà cung ứng nào</div>
-    </div>
-    {% endif %}
   </div>
+
+  <!-- MODAL CHI TIẾT NCC -->
+  {% for s in suppliers %}
+  <div class="modal fade" id="supplierDetail{{ s.supplier_code }}" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold">
+            Chi tiết nhà cung ứng – {{ s.company_name }}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <!-- THÔNG TIN NCC -->
+          <h6 class="fw-semibold mb-3 text-primary">Thông tin chung</h6>
+          <div class="row mb-3">
+            <div class="col-md-6"><strong>Mã NCC:</strong> {{ s.supplier_code }}</div>
+            <div class="col-md-6"><strong>Mã số thuế:</strong> {{ s.tax_code|default:"-" }}</div>
+            <div class="col-md-6 mt-2"><strong>Liên hệ:</strong> {{ s.contact_name|default:"-" }}</div>
+            <div class="col-md-6 mt-2"><strong>SĐT:</strong> {{ s.phone }}</div>
+            <div class="col-12 mt-2"><strong>Địa chỉ:</strong> {{ s.address|default:"-" }}</div>
+          </div>
+
+          <hr>
+
+          <!-- DANH SÁCH SẢN PHẨM -->
+          <h6 class="fw-semibold mb-3 text-primary">Sản phẩm đang cung cấp</h6>
+          {% with s.products.all as sp_list %}
+          {% if sp_list %}
+          <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-bordered table-hover text-center mb-0">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th style="width:15%">Mã SP NCC</th>
+                  <th class="text-start" style="width:35%">Tên sản phẩm</th>
+                  <th style="width:20%">Danh mục</th>
+                  <th class="text-end" style="width:15%">Đơn giá NCC (₫)</th>
+                  <th style="width:15%">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for sp in sp_list %}
+                <tr>
+                  <td class="fw-semibold">{{ sp.product_code }}</td>
+                  <td class="text-start">{{ sp.name }}</td>
+                  <td>
+                    {% if sp.category %}
+                      {{ sp.category.name }}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td class="text-end fw-semibold text-primary">
+                    {{ sp.unit_price|floatformat:0|intcomma }}
+                  </td>
+                  <td>
+                    {% if sp.is_active %}
+                      <span class="badge bg-success">Đang cung cấp</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Tạm dừng</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="alert alert-info mb-0">
+            <i class="fa-solid fa-info-circle me-2"></i>
+            Chưa có sản phẩm nào được cung cấp bởi nhà cung ứng này.
+          </div>
+          {% endif %}
+          {% endwith %}
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 
-<!-- SCRIPT -->
 <script>
-function confirmDelete(code){
-  if(confirm("Bạn có chắc muốn xóa nhà cung ứng " + code + " ?")){
-    fetch(`/suppliers/delete/${code}/`, {
+function deleteSupplier(id){
+  if(confirm("Bạn có chắc muốn xóa nhà cung ứng này?")){
+    fetch(`/suppliers/delete/${id}/`, {
       method: "POST",
-      headers: { "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value },
-    })
-    .then(res => res.json())
-    .then(data => {
-      if(data.success){
-        alert(data.message);
-        location.reload();
-      }else{
-        alert("❌ Không thể xóa nhà cung ứng!");
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/json"
       }
     })
-    .catch(() => alert("⚠️ Lỗi máy chủ!"));
+    .then(r => r.json())
+    .then(data => {
+      if(data.success){
+        location.reload();
+      } else {
+        alert("❌ Lỗi: " + (data.error || "Không thể xóa nhà cung ứng này."));
+      }
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("❌ Lỗi khi xóa nhà cung ứng.");
+    });
   }
 }
 </script>
-
-<!-- STYLE -->
-<style>
-.btn-group .btn {
-  min-width: 36px;
-  padding: 6px 8px;
-  border-radius: 6px !important;
-}
-.btn-outline-primary i,
-.btn-outline-danger i,
-.btn-outline-warning i {
-  font-size: 14px;
-}
-.btn-outline-primary:hover {
-  background-color: #0d6efd;
-  color: #fff;
-}
-.btn-outline-warning:hover {
-  background-color: #ffc107;
-  color: #000;
-}
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  color: #fff;
-}
-.table td, .table th {
-  vertical-align: middle;
-}
-</style>
 {% endblock %}

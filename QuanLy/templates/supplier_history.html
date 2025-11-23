@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Lịch sử cung cấp – {{ supplier.company_name }}{% endblock %}
+{% block page_title %}Lịch sử cung cấp sản phẩm{% endblock %}
+
+{% block extra_head %}
+<style>
+  .hero-card {
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0d6efd, #38bdf8);
+    color: #fff;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(15,23,42,0.18);
+  }
+  .hero-card h5 { margin: 0 0 4px; font-weight: 600; }
+  .hero-card p { margin: 0; font-size: 14px; opacity: .95; }
+  .hero-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex; justify-content: center; align-items: center;
+    font-size: 22px;
+  }
+
+  .stat-card {
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 5px 15px rgba(15,23,42,0.06);
+  }
+  .stat-label { font-size: 13px; color: #6b7280; }
+  .stat-value { font-size: 18px; font-weight: 600; }
+
+  .table td, .table th {
+    vertical-align: middle !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+  <!-- HERO -->
+  <div class="hero-card">
+    <div>
+      <h5>Lịch sử cung cấp – {{ supplier.company_name }}</h5>
+      <p>
+        Mã NCC: <strong>{{ supplier.supplier_code }}</strong> •
+        Liên hệ: {{ supplier.contact_name|default:"-" }} – {{ supplier.phone }}
+      </p>
+    </div>
+    <div class="hero-icon">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+    </div>
+  </div>
+
+  <!-- NÚT QUAY LẠI & SỬA -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <a href="{% url 'suppliers' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left-long me-1"></i> Quay lại danh sách NCC
+      </a>
+    </div>
+    <div>
+      <a href="{% url 'edit_supplier' supplier.supplier_code %}" class="btn btn-outline-primary btn-sm">
+        <i class="fa-solid fa-pen me-1"></i> Chỉnh sửa NCC
+      </a>
+    </div>
+  </div>
+
+  <!-- THỐNG KÊ TỔNG QUAN -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-label">Tổng số sản phẩm đã cung cấp (mã SP)</div>
+        <div class="stat-value text-primary">
+          {{ aggregates.total_products|default:0 }}
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-label">Tổng số lượng đã nhập từ NCC</div>
+        <div class="stat-value text-success">
+          {{ aggregates.total_quantity|default:0|intcomma }}
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="stat-card">
+        <div class="stat-label">Tổng giá trị đã nhập (VNĐ)</div>
+        <div class="stat-value text-danger">
+          {{ aggregates.total_value|default:0|floatformat:0|intcomma }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BẢNG TỔNG HỢP THEO SẢN PHẨM -->
+  <div class="bg-white rounded-3 shadow-sm p-3 mb-4">
+    <h6 class="fw-semibold mb-3 text-primary">
+      <i class="fa-solid fa-boxes-stacked me-2"></i>
+      Tổng hợp theo từng sản phẩm
+    </h6>
+
+    {% if product_stats %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:14%">Mã SP NCC</th>
+            <th style="width:30%">Tên sản phẩm</th>
+            <th style="width:20%">Danh mục</th>
+            <th class="text-end" style="width:12%">Tổng SL</th>
+            <th class="text-end" style="width:14%">Tổng tiền (₫)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in product_stats %}
+          <tr>
+            <td class="fw-semibold">{{ p.product__product_code }}</td>
+            <td>{{ p.product__name }}</td>
+            <td>{{ p.product__category__name|default:"-" }}</td>
+            <td class="text-end fw-semibold">
+              {{ p.total_quantity|intcomma }}
+            </td>
+            <td class="text-end fw-semibold text-danger">
+              {{ p.total_value|floatformat:0|intcomma }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info mb-0">
+      <i class="fa-solid fa-circle-info me-2"></i>
+      Chưa có phiếu nhập nào từ nhà cung ứng này.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- BẢNG CHI TIẾT TỪNG PHIẾU NHẬP (OPTIONAL) -->
+  <div class="bg-white rounded-3 shadow-sm p-3">
+    <h6 class="fw-semibold mb-3 text-secondary">
+      <i class="fa-solid fa-file-invoice me-2"></i>
+      Chi tiết từng lần nhập hàng
+    </h6>
+
+    {% if items %}
+    <div class="table-responsive" style="max-height: 420px; overflow-y:auto;">
+      <table class="table table-sm table-striped align-middle mb-0">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th style="width:12%">Mã phiếu nhập</th>
+            <th style="width:13%">Ngày nhập</th>
+            <th style="width:22%">Sản phẩm</th>
+            <th class="text-end" style="width:10%">SL</th>
+            <th class="text-end" style="width:13%">Đơn giá (₫)</th>
+            <th class="text-end" style="width:13%">Thành tiền (₫)</th>
+            <th style="width:17%">Ghi chú</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in items %}
+          <tr>
+            <td>{{ it.import_receipt.import_code }}</td>
+            <td>{{ it.import_receipt.import_date|date:"d/m/Y" }}</td>
+            <td>{{ it.product.name }}</td>
+            <td class="text-end">{{ it.quantity|intcomma }}</td>
+            <td class="text-end">{{ it.unit_price|floatformat:0|intcomma }}</td>
+            <td class="text-end">
+              {{ it.total|floatformat:0|intcomma }}
+            </td>
+            <td>{{ it.import_receipt.note|default:"-" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-light border mb-0">
+      Không có dữ liệu chi tiết.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

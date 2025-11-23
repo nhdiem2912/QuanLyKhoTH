@@ -4,30 +4,56 @@
 {% block page_title %}Tạo phiếu hoàn hàng{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid px-4 py-3">
 
-  <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
-    <h5 class="fw-semibold text-primary mb-1">Tạo phiếu hoàn hàng</h5>
-    <small class="text-muted">Khách hàng hoàn trả → nhập vào kho</small>
+  <!-- HEADER -->
+  <div class="bg-white p-4 rounded-3 shadow-sm mb-4">
+    <h5 class="fw-semibold text-primary mb-2">Tạo phiếu hoàn hàng</h5>
+    <small class="text-muted">Khách hàng hoàn trả → Nhập vào kho</small>
   </div>
 
   <form method="post" novalidate>
     {% csrf_token %}
 
-    <!-- Thông tin chung -->
-    <div class="card p-3 mb-4 shadow-sm">
-      <h6 class="fw-semibold text-primary mb-2">Thông tin phiếu hoàn</h6>
-      <div class="row g-3">
-        <div class="col-md-3">{{ form.return_code.label_tag }}{{ form.return_code }}</div>
-        <div class="col-md-3">{{ form.return_date.label_tag }}{{ form.return_date }}</div>
-        <div class="col-md-12">{{ form.note.label_tag }}{{ form.note }}</div>
+    <!-- THÔNG TIN PHIẾU HOÀN -->
+    <div class="card p-4 mb-4 shadow-sm">
+      <h6 class="fw-semibold text-primary mb-3">
+        <i class="fa-solid fa-file-invoice me-2"></i>Thông tin phiếu hoàn
+      </h6>
+
+      <div class="row g-4">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Mã phiếu hoàn</label>
+          {{ form.return_code }}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Ngày hoàn</label>
+          {{ form.return_date }}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Phiếu xuất liên quan</label>
+          {{ form.export_receipt }}
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label fw-semibold">Ghi chú</label>
+          {{ form.note }}
+        </div>
       </div>
+
+      <small class="text-muted mt-2 d-block">
+        Chọn phiếu xuất → tự đồng bộ sản phẩm, đơn giá, đơn vị, hạn sử dụng.
+      </small>
     </div>
 
-    <!-- Formset -->
-    <div class="card p-3 shadow-sm">
-      <div class="d-flex justify-content-between mb-2">
-        <h6 class="fw-semibold text-primary">Danh sách sản phẩm hoàn</h6>
+    <!-- DANH SÁCH SẢN PHẨM -->
+    <div class="card p-4 shadow-sm">
+      <div class="d-flex justify-content-between mb-3">
+        <h6 class="fw-semibold text-primary mb-0">
+          <i class="fa-solid fa-boxes me-2"></i>Danh sách sản phẩm hoàn
+        </h6>
         <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
           + Thêm dòng
         </button>
@@ -35,45 +61,73 @@
 
       {{ formset.management_form }}
 
-      <table class="table table-bordered text-center align-middle">
-        <thead class="table-primary">
-          <tr>
-            <th>Sản phẩm</th>
-            <th style="width:120px;">SL</th>
-            <th style="width:140px;">Đơn giá</th>
-            <th style="width:120px;">Đơn vị</th>
-            <th style="width:120px;">Vị trí</th>
-            <th style="width:160px;">Hạn sử dụng</th>
-            <th>Lý do</th>
-            <th>Thành tiền</th>
-            <th>Xóa</th>
-          </tr>
-        </thead>
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead class="table-primary">
+            <tr>
+              <th style="width: 22%">Dòng phiếu xuất</th>
+              <th style="width: 8%">SL</th>
+              <th style="width: 12%">Đơn giá (₫)</th>
+              <th style="width: 10%">Đơn vị</th>
+              <th style="width: 14%">Hạn sử dụng</th>
+              <th style="width: 18%">Lý do</th>
+              <th style="width: 12%" class="text-end">Thành tiền</th>
+              <th style="width: 4%" class="text-center">Xóa</th>
+            </tr>
+          </thead>
 
-        <tbody id="item-body">
-          {% for f in formset.forms %}
-          <tr>
-            <td>{{ f.product }}</td>
-            <td>{{ f.quantity }}</td>
-            <td>{{ f.unit_price }}</td>
-            <td>{{ f.unit }}</td>
-            <td>{{ f.location }}</td>
-            <td>{{ f.expiry_date }}</td>
-            <td>{{ f.reason }}</td>
-            <td class="total-cell text-primary text-end fw-bold">0</td>
-            <td>{{ f.DELETE }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
+          <tbody id="item-body">
+            {% for f in formset.forms %}
+            <tr class="item-row">
 
-        <tfoot>
-          <tr>
-            <td colspan="7" class="text-end fw-semibold">Tổng cộng:</td>
-            <td id="grand-total" class="text-end text-success fw-bold">0 ₫</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
+              <!-- Dòng phiếu xuất -->
+              <td>
+                {{ f.export_item }}
+                <input type="hidden" name="{{ f.product.html_name }}">
+                <input type="hidden" name="{{ f.location.html_name }}">
+              </td>
+
+              <!-- SL -->
+              <td>{{ f.quantity }}</td>
+
+              <!-- ĐƠN GIÁ -->
+              <td>
+                <input type="text" class="form-control text-end unit-price"
+                       name="{{ f.unit_price.html_name }}" readonly>
+              </td>
+
+              <!-- ĐƠN VỊ -->
+              <td>
+                <input type="text" class="form-control unit-field"
+                       name="{{ f.unit.html_name }}" readonly>
+              </td>
+
+              <!-- HẠN SD -->
+              <td>{{ f.expiry_date }}</td>
+
+              <!-- LÝ DO -->
+              <td>{{ f.reason }}</td>
+
+              <!-- THÀNH TIỀN -->
+              <td class="total-cell text-end fw-bold text-primary">0 ₫</td>
+              <input type="hidden" class="total-input" name="{{ f.total.html_name }}" value="0">
+
+              <!-- DELETE -->
+              <td class="text-center">{{ f.DELETE }}</td>
+
+            </tr>
+            {% endfor %}
+          </tbody>
+
+          <tfoot>
+            <tr class="table-light">
+              <td colspan="6" class="text-end fw-semibold">Tổng cộng:</td>
+              <td id="grand-total" class="text-end text-success fw-bold fs-5">0 ₫</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
 
     <div class="text-end mt-4">
@@ -84,30 +138,215 @@
   </form>
 </div>
 
+<!-- ---------------- TEMPLATE ROW (HIDDEN) ---------------- -->
+<table style="display:none;">
+  <tbody id="empty-form-template">
+    <tr class="item-row">
+
+      <td>
+        <select class="form-select export-item-select" name="items-__prefix__-export_item">
+          <option value="">-------</option>
+        </select>
+        <input type="hidden" name="items-__prefix__-product">
+        <input type="hidden" name="items-__prefix__-location">
+      </td>
+
+      <td>
+        <input type="number" min="1" class="form-control"
+               name="items-__prefix__-quantity">
+      </td>
+
+      <td>
+        <input type="text" class="form-control text-end unit-price"
+               name="items-__prefix__-unit_price" readonly>
+      </td>
+
+      <td>
+        <input type="text" class="form-control unit-field"
+               name="items-__prefix__-unit" readonly>
+      </td>
+
+      <td>
+        <input type="date" class="form-control"
+               name="items-__prefix__-expiry_date">
+      </td>
+
+      <td>
+        <input type="text" class="form-control"
+               name="items-__prefix__-reason">
+      </td>
+
+      <td class="total-cell text-end fw-bold text-primary">0 ₫</td>
+      <input type="hidden" class="total-input" name="items-__prefix__-total" value="0">
+
+      <td class="text-center">
+        <input type="checkbox" name="items-__prefix__-DELETE">
+      </td>
+
+    </tr>
+  </tbody>
+</table>
+
 <style>
-.table input, .table select { height: 38px; }
-.total-cell { color:#0d6efd; font-size:15px; }
+.table input[readonly] { background-color: #f8f9fa; }
 </style>
 
+
+<!-- ====================== SCRIPT ====================== -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  function calcTotals() {
-    let grand = 0;
-    document.querySelectorAll("#item-body tr").forEach(row => {
-      let qty = parseFloat(row.querySelector("[name*='quantity']").value) || 0;
-      let price = parseFloat(row.querySelector("[name*='unit_price']").value) || 0;
-      let total = qty * price;
-      row.querySelector(".total-cell").innerText = total.toLocaleString("vi-VN");
-      grand += total;
+
+  // ---------------- VAR ----------------
+  const tbody = document.getElementById("item-body");
+  const exportReceiptSelect = document.getElementById("id_export_receipt");
+  const emptyForm = document.getElementById("empty-form-template").innerHTML;
+  const totalFormsInput = document.getElementById("id_items-TOTAL_FORMS");
+  let exportItems = {};
+
+  // ---------------- LOAD EXPORT ITEMS ----------------
+  if (exportReceiptSelect) {
+    exportReceiptSelect.addEventListener("change", () => {
+      const code = exportReceiptSelect.value;
+      if (!code) {
+        clearRows();
+        return;
+      }
+
+      fetch(`/api/export-items/${code}/`)
+        .then(res => res.json())
+        .then(data => {
+          exportItems = data.items || {};
+          refillAllSelects();
+        });
     });
-    document.getElementById("grand-total").innerText = grand.toLocaleString("vi-VN") + " ₫";
   }
 
-  document.querySelectorAll("[name*='quantity'], [name*='unit_price']").forEach(
-    el => el.addEventListener("input", calcTotals)
-  );
+  function clearRows() {
+    tbody.querySelectorAll("tr").forEach(row => {
+      row.querySelector(".export-item-select").innerHTML =
+        `<option value="">-------</option>`;
+      row.querySelector(".unit-price").value = "";
+      row.querySelector(".unit-field").value = "";
+      row.querySelector(".total-cell").textContent = "0 ₫";
+    });
+    calcTotals();
+  }
 
-  calcTotals();
+  function refillAllSelects() {
+    tbody.querySelectorAll(".export-item-select").forEach(select => {
+      fillExportItemSelect(select);
+    });
+  }
+
+  function fillExportItemSelect(select) {
+    select.innerHTML = `<option value="">-------</option>`;
+    Object.keys(exportItems).forEach(id => {
+      const it = exportItems[id];
+
+      const op = document.createElement("option");
+      op.value = id;
+      op.textContent = `${it.product_code} - ${it.product_name} (SL: ${it.max_quantity})`;
+
+      op.dataset.unitPrice = it.unit_price;
+      op.dataset.unit = it.unit;
+      op.dataset.productId = it.product_id;
+      op.dataset.expiryDate = it.expiry_date;
+      op.dataset.location = it.location;
+      op.dataset.maxQty = it.max_quantity;
+
+      select.appendChild(op);
+    });
+  }
+
+  // ---------------- ON SELECT CHANGE ----------------
+  tbody.addEventListener("change", function (e) {
+    if (!e.target.classList.contains("export-item-select")) return;
+
+    const row = e.target.closest("tr");
+    const op = e.target.options[e.target.selectedIndex];
+
+    const price = row.querySelector(".unit-price");
+    const unit = row.querySelector(".unit-field");
+    const qty = row.querySelector('input[name*="-quantity"]');
+    const exp = row.querySelector('input[name*="-expiry_date"]');
+    const loc = row.querySelector('input[name*="-location"]');
+    const prod = row.querySelector('input[name*="-product"]');
+
+    if (!op.value) {
+      price.value = "";
+      unit.value = "";
+      qty.value = "";
+      exp.value = "";
+      loc.value = "";
+      prod.value = "";
+      calcTotals();
+      return;
+    }
+
+    price.value = parseFloat(op.dataset.unitPrice);
+    unit.value = op.dataset.unit;
+    qty.max = op.dataset.maxQty;
+    qty.placeholder = `Tối đa: ${op.dataset.maxQty}`;
+    exp.value = op.dataset.expiryDate;
+    loc.value = op.dataset.location;
+    prod.value = op.dataset.productId;
+
+    calcTotals();
+  });
+
+  // ---------------- AUTO CALC ----------------
+  tbody.addEventListener("input", function (e) {
+    if (e.target.name.includes("-quantity") ||
+        e.target.name.includes("-unit_price")) {
+      calcTotals();
+    }
+  });
+
+ function calcTotals() {
+  let grand = 0;
+
+  tbody.querySelectorAll("tr").forEach(row => {
+    const qty = parseFloat(row.querySelector('input[name*="-quantity"]').value) || 0;
+
+    // làm sạch đơn giá: bỏ dấu . , nếu có
+    const priceRaw = row.querySelector(".unit-price").value
+                      .toString()
+                      .replace(/\./g, "")
+                      .replace(/,/g, "");
+    const price = parseFloat(priceRaw) || 0;
+
+    const total = qty * price;
+
+    row.querySelector(".total-cell").textContent =
+      total.toLocaleString("vi-VN") + " ₫";
+    row.querySelector(".total-input").value = total;
+
+    grand += total;
+  });
+
+  document.getElementById("grand-total").textContent =
+    grand.toLocaleString("vi-VN") + " ₫";
+}
+
+
+  // ---------------- ADD ROW ----------------
+  document.getElementById("add-row").addEventListener("click", function () {
+    let index = parseInt(totalFormsInput.value);
+
+    let newHTML = emptyForm.replace(/__prefix__/g, index);
+    let temp = document.createElement("tbody");
+    temp.innerHTML = newHTML;
+    let newRow = temp.querySelector("tr");
+
+    tbody.appendChild(newRow);
+    totalFormsInput.value = index + 1;
+
+    // fill dropdown nếu đã chọn phiếu xuất
+    if (Object.keys(exportItems).length > 0) {
+      fillExportItemSelect(newRow.querySelector(".export-item-select"));
+    }
+  });
+
 });
 </script>
 

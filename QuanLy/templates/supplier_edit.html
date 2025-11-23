@@ -1,80 +1,259 @@
 {% extends "base.html" %}
-{% block title %}Sửa nhà cung ứng{% endblock %}
+{% block title %}Chỉnh sửa nhà cung ứng{% endblock %}
 {% block page_title %}Chỉnh sửa nhà cung ứng{% endblock %}
+
+{% block extra_head %}
+<style>
+    .hero-card {
+        border-radius: 16px;
+        background: linear-gradient(135deg, #0d6efd, #38bdf8);
+        color: #fff;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+        margin-bottom: 20px;
+    }
+    .hero-card h5 { margin: 0; font-weight: 600; }
+    .hero-card p { margin: 0; opacity: .92; }
+    .hero-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+    label {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    .section-title {
+        font-weight: 600;
+        font-size: 17px;
+        color: #0d6efd;
+        margin-bottom: 14px;
+    }
+    .table td, .table th { vertical-align: middle !important; }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-  <div class="card p-4 shadow-sm">
-    <h5 class="text-primary fw-bold mb-3">Cập nhật thông tin nhà cung ứng</h5>
+
+    <!-- HERO -->
+    <div class="hero-card">
+        <div>
+            <h5>Cập nhật thông tin nhà cung ứng</h5>
+            <p>Sửa thông tin NCC và quản lý sản phẩm NCC đang cung cấp.</p>
+        </div>
+        <div class="hero-icon">
+            <i class="fa-solid fa-pen-to-square"></i>
+        </div>
+    </div>
 
     <form method="post">
-      {% csrf_token %}
-      <div class="row g-3">
+        {% csrf_token %}
 
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">{{ form.supplier_code.label }}</label>
-          {{ form.supplier_code }}
-          {% if form.supplier_code.errors %}
-            <div class="text-danger small">{{ form.supplier_code.errors|join:", " }}</div>
-          {% endif %}
+        <!-- THÔNG TIN NCC -->
+        <div class="card p-4 shadow-sm mb-4">
+            <div class="section-title">Thông tin nhà cung ứng</div>
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <label>{{ form.supplier_code.label }}</label>
+                    {{ form.supplier_code }}
+                    <div class="text-danger small">{{ form.supplier_code.errors }}</div>
+                </div>
+
+                <div class="col-md-8">
+                    <label>{{ form.company_name.label }}</label>
+                    {{ form.company_name }}
+                    <div class="text-danger small">{{ form.company_name.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>{{ form.tax_code.label }}</label>
+                    {{ form.tax_code }}
+                    <div class="text-danger small">{{ form.tax_code.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>{{ form.contact_name.label }}</label>
+                    {{ form.contact_name }}
+                    <div class="text-danger small">{{ form.contact_name.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>{{ form.phone.label }}</label>
+                    {{ form.phone }}
+                    <div class="text-danger small">{{ form.phone.errors }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>{{ form.email.label }}</label>
+                    {{ form.email }}
+                    <div class="text-danger small">{{ form.email.errors }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>{{ form.status.label }}</label>
+                    {{ form.status }}
+                    <div class="text-danger small">{{ form.status.errors }}</div>
+                </div>
+
+                <div class="col-12">
+                    <label>{{ form.address.label }}</label>
+                    {{ form.address }}
+                    <div class="text-danger small">{{ form.address.errors }}</div>
+                </div>
+
+            </div>
         </div>
 
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">{{ form.company_name.label }}</label>
-          {{ form.company_name }}
-          {% if form.company_name.errors %}
-            <div class="text-danger small">{{ form.company_name.errors|join:", " }}</div>
-          {% endif %}
+        <!-- SẢN PHẨM CUNG CẤP (FORMSET) -->
+        {% if formset %}
+        <div class="card p-4 shadow-sm mb-4">
+            <div class="section-title">Sản phẩm nhà cung ứng đang cung cấp</div>
+
+            {{ formset.management_form }}
+
+            <table class="table table-bordered text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:15%">Mã SP NCC</th>
+                        <th style="width:30%">Tên sản phẩm NCC</th>
+                        <th style="width:20%">Danh mục</th>
+                        <th style="width:15%">Đơn giá NCC (₫)</th>
+                        <th style="width:10%">Đang cung cấp</th>
+                        <th style="width:10%">Xóa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in formset.forms %}
+                    <tr>
+                        {{ f.id }} {# hidden id field để edit đúng record #}
+                        <td>
+                            {{ f.product_code }}
+                            {% if f.product_code.errors %}
+                                <div class="text-danger small">{{ f.product_code.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ f.name }}
+                            {% if f.name.errors %}
+                                <div class="text-danger small">{{ f.name.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ f.category }}
+                            {% if f.category.errors %}
+                                <div class="text-danger small">{{ f.category.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ f.unit_price }}
+                            {% if f.unit_price.errors %}
+                                <div class="text-danger small">{{ f.unit_price.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ f.is_active }}</td>
+                        <td>
+                            {% if formset.can_delete %}
+                                {{ f.DELETE }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if f.non_field_errors %}
+                    <tr>
+                        <td colspan="6" class="text-danger small">
+                            {{ f.non_field_errors }}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+                {% if formset.non_form_errors %}
+                <tfoot>
+                    <tr>
+                        <td colspan="6" class="text-danger">
+                            {{ formset.non_form_errors }}
+                        </td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-semibold">Danh sách sản phẩm cung cấp</span>
+                <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
+                    <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm
+                </button>
+            </div>
+
+            <small class="text-muted fst-italic">
+                * Bạn có thể thêm nhiều sản phẩm NCC cung cấp bằng cách tăng số dòng.
+            </small>
         </div>
+        {% endif %}
 
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">{{ form.contact_name.label }}</label>
-          {{ form.contact_name }}
-          {% if form.contact_name.errors %}
-            <div class="text-danger small">{{ form.contact_name.errors|join:", " }}</div>
-          {% endif %}
+        <div class="text-end">
+            <a href="{% url 'suppliers' %}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left-long me-1"></i> Hủy
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk me-1"></i> Lưu thay đổi
+            </button>
         </div>
-
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">{{ form.phone.label }}</label>
-          {{ form.phone }}
-          {% if form.phone.errors %}
-            <div class="text-danger small">{{ form.phone.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">{{ form.email.label }}</label>
-          {{ form.email }}
-          {% if form.email.errors %}
-            <div class="text-danger small">{{ form.email.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-
-        {# ĐỊA CHỈ: full width #}
-        <div class="col-12">
-          <label class="form-label fw-semibold">{{ form.address.label }}</label>
-          {{ form.address }}
-          {% if form.address.errors %}
-            <div class="text-danger small">{{ form.address.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">{{ form.status.label }}</label>
-          {{ form.status }}
-          {% if form.status.errors %}
-            <div class="text-danger small">{{ form.status.errors|join:", " }}</div>
-          {% endif %}
-        </div>
-
-      </div>
-
-      <div class="text-end mt-4">
-        <a href="{% url 'suppliers' %}" class="btn btn-secondary">Hủy</a>
-        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-      </div>
     </form>
-  </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const addButton = document.getElementById("add-row");
+    const totalForms = document.querySelector("#id_supplier_products-TOTAL_FORMS");
+    const tableBody = document.querySelector("table tbody");
+
+    if (!addButton || !totalForms || !tableBody) return;
+
+    addButton.addEventListener("click", function(e) {
+        e.preventDefault();
+
+        let currentIndex = parseInt(totalForms.value);
+        let firstRow = tableBody.querySelector("tr");
+
+        if (!firstRow) return;
+
+        let newRow = firstRow.cloneNode(true);
+
+        // cập nhật index formset
+        newRow.innerHTML = newRow.innerHTML.replace(/supplier_products-\d+/g, `supplier_products-${currentIndex}`);
+
+        // reset dữ liệu trong form mới
+        newRow.querySelectorAll("input, select").forEach(el => {
+            // giữ nguyên hidden id rỗng cho form mới
+            if (el.type === "hidden" && el.name.endsWith("-id")) {
+                el.value = "";
+                return;
+            }
+            if (el.type === "checkbox") {
+                el.checked = false;
+            } else {
+                el.value = "";
+            }
+        });
+
+        // thêm dòng vào bảng
+        tableBody.appendChild(newRow);
+
+        // tăng tổng số forms
+        totalForms.value = currentIndex + 1;
+    });
+});
+</script>
+
 {% endblock %}

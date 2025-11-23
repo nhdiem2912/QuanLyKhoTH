@@ -113,6 +113,16 @@
     <tr>
       <td>Người lập phiếu: <strong>{{ receipt.created_by.username }}</strong></td>
     </tr>
+
+    {% if receipt.export_receipt %}
+    <tr>
+      <td>
+        Phiếu xuất liên quan:
+        <strong>{{ receipt.export_receipt.export_code }}</strong>
+        – Ngày: <strong>{{ receipt.export_receipt.export_date|date:"d/m/Y" }}</strong>
+      </td>
+    </tr>
+    {% endif %}
   </table>
 
   <!-- MAIN TABLE -->

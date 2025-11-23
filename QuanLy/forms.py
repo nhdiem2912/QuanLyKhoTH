@@ -1,8 +1,10 @@
 from django import forms
 from django.forms import inlineformset_factory
+from django.db.models import Sum
+
 from .models import (
-    Category, Supplier,
-    ProductMaster, StockItem,
+    Category, Supplier, SupplierProduct,
+    StockItem,
     ImportReceipt, ImportItem,
     ExportReceipt, ExportItem,
     ReturnReceipt, ReturnItem,
@@ -14,7 +16,7 @@ from .models import (
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ["category_code", "name", "description","image"]
+        fields = ["category_code", "name", "description", "image"]
         labels = {
             "category_code": "Mã danh mục",
             "name": "Tên danh mục",
@@ -33,10 +35,12 @@ class CategoryForm(forms.ModelForm):
 class SupplierForm(forms.ModelForm):
     class Meta:
         model = Supplier
-        fields = ["supplier_code", "company_name", "contact_name", "phone", "email","address", "status"]
+        fields = ["supplier_code", "company_name", "tax_code",
+                  "contact_name", "phone", "email", "address", "status"]
         labels = {
             "supplier_code": "Mã nhà cung ứng",
             "company_name": "Tên công ty",
+            "tax_code": "Mã số thuế",
             "contact_name": "Người liên hệ",
             "phone": "Số điện thoại",
             "email": "Email",
@@ -46,6 +50,7 @@ class SupplierForm(forms.ModelForm):
         widgets = {
             "supplier_code": forms.TextInput(attrs={"class": "form-control"}),
             "company_name": forms.TextInput(attrs={"class": "form-control"}),
+            "tax_code": forms.TextInput(attrs={"class": "form-control"}),
             "contact_name": forms.TextInput(attrs={"class": "form-control"}),
             "phone": forms.TextInput(attrs={"class": "form-control"}),
             "email": forms.EmailInput(attrs={"class": "form-control"}),
@@ -54,25 +59,64 @@ class SupplierForm(forms.ModelForm):
         }
 
 
-# ===================== PRODUCT MASTER =====================
-class ProductMasterForm(forms.ModelForm):
+# ===================== SUPPLIER PRODUCT =====================
+class SupplierProductForm(forms.ModelForm):
     class Meta:
-        model = ProductMaster
-        fields = ["product_code", "name", "category", "status","image"]
+        model = SupplierProduct
+        fields = ["product_code", "name", "category", "unit_price", "is_active"]
         labels = {
-            "product_code": "Mã sản phẩm",
-            "name": "Tên sản phẩm",
+            "product_code": "Mã sản phẩm NCC",
+            "name": "Tên sản phẩm NCC",
             "category": "Danh mục",
-            "status": "Trạng thái",
-            "image": "Ảnh sản phẩm",
+            "unit_price": "Đơn giá NCC (₫)",
+            "is_active": "Đang cung cấp",
         }
         widgets = {
             "product_code": forms.TextInput(attrs={"class": "form-control"}),
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "category": forms.Select(attrs={"class": "form-select"}),
-            "status": forms.Select(attrs={"class": "form-select"}),
-            "image": forms.ClearableFileInput(attrs={"class": "form-control"}),
+            "unit_price": forms.NumberInput(
+                attrs={"class": "form-control text-end", "min": "0", "step": "0.01"}
+            ),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Cho phép để trống để coi như dòng trắng
+        self.fields["product_code"].required = False
+        self.fields["name"].required = False
+        self.fields["category"].required = False
+        self.fields["unit_price"].required = False
+
+    def clean(self):
+        cleaned = super().clean()
+        code = cleaned.get("product_code")
+        name = cleaned.get("name")
+        price = cleaned.get("unit_price")
+
+        # DÒNG TRẮNG → bỏ qua (không validate lỗi)
+        if not code and not name and (price is None or price == 0):
+            return cleaned
+
+        # Ngược lại: đã nhập thì phải đủ
+        if not code:
+            self.add_error("product_code", "Vui lòng nhập mã sản phẩm NCC.")
+        if not name:
+            self.add_error("name", "Vui lòng nhập tên sản phẩm NCC.")
+        if not price or price <= 0:
+            self.add_error("unit_price", "Đơn giá phải lớn hơn 0.")
+
+        return cleaned
+
+
+SupplierProductFormSet = inlineformset_factory(
+    Supplier,
+    SupplierProduct,
+    form=SupplierProductForm,
+    extra=1,
+    can_delete=True,
+)
 
 
 # ===================== STOCK ITEM =====================
@@ -94,18 +138,25 @@ class StockItemForm(forms.ModelForm):
         }
 
 
-from django import forms
-from django.forms import inlineformset_factory
-from .models import ImportReceipt, ImportItem
-
-# -------------------- PHIẾU NHẬP KHO --------------------
+# ===================== PHIẾU NHẬP KHO =====================
 class ImportReceiptForm(forms.ModelForm):
     class Meta:
         model = ImportReceipt
-        fields = ["import_code", "supplier", "import_date", "note"]
+        fields = ["import_code", "supplier", "asn", "import_date", "note"]
+        labels = {
+            "import_code": "Mã phiếu nhập",
+            "supplier": "Nhà cung ứng",
+            "asn": "Phiếu ASN",
+            "import_date": "Ngày nhập",
+            "note": "Ghi chú",
+        }
         widgets = {
-            "import_code": forms.TextInput(attrs={"class": "form-control"}),
+            "import_code": forms.TextInput(attrs={
+                "class": "form-control",
+                "readonly": "readonly",
+            }),
             "supplier": forms.Select(attrs={"class": "form-select"}),
+            "asn": forms.Select(attrs={"class": "form-select asn-select"}),
             "import_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
             "note": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
@@ -114,82 +165,180 @@ class ImportReceiptForm(forms.ModelForm):
 class ImportItemForm(forms.ModelForm):
     class Meta:
         model = ImportItem
-        fields = ["product", "quantity", "unit_price","discount_percent", "unit", "location", "expiry_date"]
+        fields = [
+            "asn_item", "product", "quantity", "unit_price",
+            "unit", "location", "expiry_date"
+        ]
+        labels = {
+            "asn_item": "Dòng ASN",
+            "product": "Sản phẩm",
+            "quantity": "Số lượng",
+            "unit_price": "Đơn giá",
+            "unit": "Đơn vị",
+            "location": "Vị trí",
+            "expiry_date": "Hạn sử dụng",
+        }
         widgets = {
-            "product": forms.Select(attrs={"class": "form-select"}),
-            "quantity": forms.NumberInput(attrs={"class": "form-control text-end", "min": 1}),
-            "unit_price": forms.NumberInput(attrs={"class": "form-control text-end", "min": 0, "step": "0.01"}),
-            "unit": forms.TextInput(attrs={"class": "form-control", "placeholder": "VD: Thùng"}),
-            "location": forms.TextInput(attrs={"class": "form-control", "placeholder": "VD: Kệ A1"}),  # ✅ vị trí
-            "expiry_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
-            "discount_percent": forms.NumberInput(attrs={
-                "class": "form-control text-end discount",
-                "min": 0,
-                "step": "0.01",
-                "value": "0",
-            }),
+            "asn_item": forms.HiddenInput(),
+            "product": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "quantity": forms.NumberInput(
+                attrs={"class": "form-control text-end quantity", "min": 1}
+            ),
+            "unit_price": forms.NumberInput(
+                attrs={
+                    "class": "form-control text-end unit-price",
+                    "min": 0,
+                    "step": "0.01",
+                    "readonly": "readonly",
+                }
+            ),
+            "unit": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "VD: Thùng",
+                    "readonly": "readonly",
+                }
+            ),
+            "location": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "VD: Kệ A1"}
+            ),
+            "expiry_date": forms.DateInput(
+                attrs={"class": "form-control", "type": "date", "readonly": "readonly"}
+            ),
+
         }
 
     def __init__(self, *args, **kwargs):
+        # nhận thêm asn và supplier từ form_kwargs
+        asn = kwargs.pop("asn", None)
+        supplier = kwargs.pop("supplier", None)
         super().__init__(*args, **kwargs)
-        self.fields["discount_percent"].required = False
+
+        qs = SupplierProduct.objects.all()
+
+        # Nếu có ASN → chỉ cho chọn các sản phẩm có trong ASN đó
+        if asn is not None:
+            qs = SupplierProduct.objects.filter(
+                pk__in=asn.items.values_list("product_id", flat=True)
+            )
+        # Nếu không có ASN nhưng có NCC → lọc theo NCC
+        elif supplier is not None:
+            qs = SupplierProduct.objects.filter(
+                supplier=supplier,
+                is_active=True
+            )
+
+        self.fields["product"].queryset = qs.order_by("name")
+        self.fields["product"].empty_label = "---------"
+
+    def clean(self):
+        cleaned = super().clean()
+        asn_item = cleaned.get("asn_item")
+        product = cleaned.get("product")
+        quantity = cleaned.get("quantity")
+
+        # Dòng hoàn toàn trống → bỏ qua
+        if not asn_item and not product and not quantity:
+            return cleaned
+
+        # Nếu đã chọn ASNItem mà chưa chọn product → tự set product = ASNItem.product
+        if asn_item and not product:
+            cleaned["product"] = asn_item.product
+
+        # Nếu đã chọn ASNItem mà chưa nhập quantity → lấy mặc định từ ASN
+        if asn_item and (not quantity or quantity <= 0):
+            cleaned["quantity"] = asn_item.quantity
+
+        return cleaned
+
 
 ImportItemFormSet = inlineformset_factory(
     ImportReceipt,
     ImportItem,
     form=ImportItemForm,
-    extra=1,
+    extra=0,
     can_delete=True
 )
 
-# ===================== EXPORT RECEIPT =====================
-from django import forms
-from django.forms import inlineformset_factory
-from .models import ExportReceipt, ExportItem, StockItem
 
+# ===================== EXPORT RECEIPT =====================
 class ExportReceiptForm(forms.ModelForm):
     class Meta:
         model = ExportReceipt
-        fields = ["export_code", "export_date", "destination", "note"]
+        fields = ["export_code", "export_date", "destination",
+                  "receiver_name", "receiver_phone", "note"]
+        widgets = {
+            "export_code": forms.TextInput(attrs={
+                "class": "form-control",
+                "readonly": "readonly",
+            }),
+            "export_date": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date"
+            }),
+            "destination": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "VD: Cửa hàng Nguyễn Văn Linh, chi nhánh Hà Nội,…"
+            }),
+            "receiver_name": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Người chịu trách nhiệm ký nhận hàng"
+            }),
+            "receiver_phone": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "SĐT liên hệ khi giao hàng"
+            }),
+            "note": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Ghi chú thêm (nếu có)…"
+            }),
+        }
         labels = {
             "export_code": "Mã phiếu xuất",
             "export_date": "Ngày xuất",
-            "destination": "Nơi nhận hàng",
+            "destination": "Nơi nhận",
+            "receiver_name": "Người nhận",
+            "receiver_phone": "SĐT người nhận",
             "note": "Ghi chú",
-        }
-        widgets = {
-            "export_code": forms.TextInput(attrs={"class": "form-control"}),
-            "export_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
-            "destination": forms.TextInput(attrs={"class": "form-control"}),
-            "note": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
 
 
 class ExportItemForm(forms.ModelForm):
-    stock_item = forms.ModelChoiceField(
-        queryset=StockItem.objects.filter(quantity__gt=0).order_by("expiry_date"),
-        label="Lô hàng (FEFO)",
-        widget=forms.Select(attrs={"class": "form-select"})
-    )
-
     class Meta:
         model = ExportItem
-        fields = ["stock_item", "quantity", "unit_price", "discount_percent", "unit"]
-        labels = {
-            "stock_item": "Lô hàng",
-            "quantity": "Số lượng xuất",
-            "unit_price": "Đơn giá (₫)",
-            "discount_percent": "Chiết khấu (%)",
-            "unit": "Đơn vị",
-        }
+        fields = ["stock_item", "quantity", "unit_price",
+                  "discount_percent", "unit", "total"]
         widgets = {
-            "quantity": forms.NumberInput(attrs={"class": "form-control text-end quantity", "min": 1}),
-            "unit_price": forms.NumberInput(attrs={"class": "form-control text-end unit-price", "min": 0, "step": 0.01}),
-            "discount_percent": forms.NumberInput(attrs={"class": "form-control text-end discount", "min": 0, "step": 0.01, "value": "0"}),
-            "unit": forms.TextInput(attrs={"class": "form-control"}),
+            "stock_item": forms.Select(attrs={"class": "form-select stock-select"}),
+            "quantity": forms.NumberInput(attrs={
+                "class": "form-control text-end quantity",
+                "min": 1
+            }),
+            "unit_price": forms.NumberInput(attrs={
+                "class": "form-control text-end unit-price",
+                "step": "0.01",
+                "readonly": True,   # đơn giá auto theo lô
+            }),
+            "discount_percent": forms.NumberInput(attrs={
+                "class": "form-control text-end discount",
+                "step": "0.01",
+                "min": 0
+            }),
+            "unit": forms.TextInput(attrs={
+                "class": "form-control unit-field",
+            }),
+            "total": forms.NumberInput(attrs={
+                "class": "form-control text-end total-input",
+                "readonly": True,
+            }),
         }
 
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["unit_price"].widget.attrs["readonly"] = "readonly"
 
 
 ExportItemFormSet = inlineformset_factory(
@@ -201,51 +350,119 @@ ExportItemFormSet = inlineformset_factory(
 )
 
 
-
 # ===================== RETURN RECEIPT =====================
 class ReturnReceiptForm(forms.ModelForm):
     class Meta:
         model = ReturnReceipt
-        fields = ["return_code", "return_date", "note"]  # bỏ return_type
+        fields = ["return_code", "return_date", "export_receipt", "note"]
         labels = {
             "return_code": "Mã phiếu hoàn",
             "return_date": "Ngày hoàn",
+            "export_receipt": "Phiếu xuất liên quan",
             "note": "Ghi chú",
         }
         widgets = {
-            "return_code": forms.TextInput(attrs={"class": "form-control"}),
+            "return_code": forms.TextInput(attrs={
+                "class": "form-control",
+                "readonly": "readonly",
+            }),
             "return_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "export_receipt": forms.Select(attrs={"class": "form-select"}),
             "note": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
 
 
-
 class ReturnItemForm(forms.ModelForm):
+    export_item = forms.ModelChoiceField(
+        queryset=ExportItem.objects.select_related("stock_item__product", "receipt"),
+        label="Dòng phiếu xuất",
+        widget=forms.Select(attrs={"class": "form-select export-item-select"}),
+        required=False
+    )
+
     class Meta:
         model = ReturnItem
-        fields = ["product", "quantity", "unit", "unit_price", "expiry_date","location", "reason", "detail_note"]
+        fields = ["export_item", "product", "quantity", "unit",
+                  "unit_price", "expiry_date", "location", "reason", "detail_note"]
         labels = {
+            "export_item": "Dòng phiếu xuất",
             "product": "Sản phẩm hoàn",
             "quantity": "Số lượng hoàn",
             "unit": "Đơn vị",
+            "unit_price": "Đơn giá",
             "location": "Vị trí",
+            "expiry_date": "Hạn sử dụng",
             "reason": "Lý do hoàn hàng",
             "detail_note": "Ghi chú chi tiết",
         }
         widgets = {
-            "product": forms.Select(attrs={"class": "form-select"}),
+            "product": forms.Select(attrs={"class": "form-select product-select"}),
             "quantity": forms.NumberInput(attrs={
                 "class": "form-control quantity text-end",
                 "min": 1
             }),
             "unit_price": forms.NumberInput(attrs={
                 "class": "form-control unit-price text-end",
-                "min": 0
+                "min": 0,
+                "readonly": "readonly"
             }),
-            "unit": forms.TextInput(attrs={"class": "form-control"}),
-            "location": forms.TextInput(attrs={"class": "form-control"}),
-            "expiry_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "unit": forms.TextInput(attrs={"class": "form-control", "readonly": "readonly"}),
+            "location": forms.TextInput(attrs={"class": "form-control", "readonly": "readonly"}),
+            "expiry_date": forms.DateInput(attrs={"class": "form-control", "type": "date", "readonly": "readonly"}),
+            "reason": forms.TextInput(attrs={"class": "form-control"}),
+            "detail_note": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
+
+    def __init__(self, *args, **kwargs):
+        export_receipt = kwargs.pop("export_receipt", None)
+        super().__init__(*args, **kwargs)
+
+        # cho phép dòng trống
+        self.fields["product"].required = False
+        self.fields["quantity"].required = False
+        self.fields["unit"].required = False
+        self.fields["unit_price"].required = False
+        self.fields["location"].required = False
+        self.fields["expiry_date"].required = False
+        self.fields["reason"].required = False
+        self.fields["detail_note"].required = False
+
+        if export_receipt:
+            self.fields["export_item"].queryset = ExportItem.objects.filter(
+                receipt=export_receipt
+            ).select_related("stock_item__product")
+
+    def clean(self):
+        cleaned = super().clean()
+        export_item = cleaned.get("export_item")
+        quantity = cleaned.get("quantity")
+        product = cleaned.get("product")
+
+        # hoàn toàn trống → bỏ qua
+        if not export_item and not product and not quantity:
+            return cleaned
+
+        # có dữ liệu nhưng không chọn dòng xuất → lỗi
+        if not export_item:
+            raise forms.ValidationError("Vui lòng chọn dòng phiếu xuất.")
+
+        # validate SL hoàn không vượt SL còn lại
+        if export_item and quantity:
+            exported_qty = export_item.quantity
+            returned_qty = ReturnItem.objects.filter(
+                export_item=export_item
+            ).exclude(
+                pk=self.instance.pk if self.instance and self.instance.pk else None
+            ).aggregate(total=Sum("quantity"))["total"] or 0
+
+            max_qty = exported_qty - returned_qty
+            if quantity > max_qty:
+                raise forms.ValidationError(
+                    f"Số lượng hoàn tối đa cho dòng này là {max_qty}."
+                )
+
+        return cleaned
+
 
 ReturnItemFormSet = inlineformset_factory(
     ReturnReceipt, ReturnItem,
@@ -255,54 +472,62 @@ ReturnItemFormSet = inlineformset_factory(
 )
 
 
-# ===================== FORM ĐƠN ĐẶT HÀNG =====================
-from django import forms
-from django.forms import inlineformset_factory
-from .models import PurchaseOrder, PurchaseOrderItem
-
+# ===================== PURCHASE ORDER (PO) =====================
 class PurchaseOrderForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrder
-        fields = ["po_code", "supplier", "note", "status"]
+        fields = ["po_code", "supplier", "status", "note"]
         labels = {
             "po_code": "Mã PO",
             "supplier": "Nhà cung ứng",
-            "note": "Ghi chú",
             "status": "Trạng thái",
+            "note": "Ghi chú",
         }
         widgets = {
-            "po_code": forms.TextInput(attrs={"class": "form-control"}),
+            "po_code": forms.TextInput(attrs={
+                "class": "form-control",
+                "readonly": "readonly",
+            }),
             "supplier": forms.Select(attrs={"class": "form-select"}),
-            "note": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
             "status": forms.Select(attrs={"class": "form-select"}),
+            "note": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.fields["po_code"].widget.attrs.update({
-                "readonly": True,
-                "class": "form-control bg-light"
-            })
-            self.fields["supplier"].widget.attrs.update({"class": "form-select"})
-            self.fields["status"].widget.attrs.update({"class": "form-select"})
-            self.fields["note"].widget.attrs.update({"class": "form-control", "rows": 3})
 
 class PurchaseOrderItemForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrderItem
-        fields = ["product", "quantity", "unit"]
+        fields = ["product", "quantity", "unit", "unit_price"]
         labels = {
             "product": "Sản phẩm",
             "quantity": "Số lượng",
             "unit": "Đơn vị",
+            "unit_price": "Đơn giá NCC (₫)",
         }
         widgets = {
-            "product": forms.Select(attrs={"class": "form-select"}),
-            "quantity": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+            "product": forms.Select(attrs={"class": "form-select product-select"}),
+            "quantity": forms.NumberInput(attrs={"class": "form-control quantity", "min": "1"}),
             "unit": forms.TextInput(attrs={"class": "form-control", "placeholder": "VD: Thùng"}),
+            "unit_price": forms.NumberInput(
+                attrs={
+                    "class": "form-control text-end unit-price",
+                    "readonly": "readonly"
+                }),
         }
 
-# Inline formset gắn item vào PO
+    def __init__(self, *args, **kwargs):
+        supplier = kwargs.pop("supplier", None)
+        super().__init__(*args, **kwargs)
+
+        if supplier is not None:
+            self.fields["product"].queryset = SupplierProduct.objects.filter(
+                supplier=supplier,
+                is_active=True
+            ).order_by("product_code")
+        else:
+            self.fields["product"].queryset = SupplierProduct.objects.none()
+
+
 PurchaseOrderItemFormSet = inlineformset_factory(
     PurchaseOrder, PurchaseOrderItem,
     form=PurchaseOrderItemForm,
@@ -315,7 +540,8 @@ PurchaseOrderItemFormSet = inlineformset_factory(
 class ASNForm(forms.ModelForm):
     class Meta:
         model = ASN
-        fields = ["asn_code", "po", "supplier", "deliverer_name", "deliverer_phone", "expected_date"]
+        fields = ["asn_code", "po", "supplier",
+                  "deliverer_name", "deliverer_phone", "expected_date", "status"]
         labels = {
             "asn_code": "Mã ASN",
             "po": "Đơn đặt hàng (PO)",
@@ -323,15 +549,33 @@ class ASNForm(forms.ModelForm):
             "deliverer_name": "Người giao hàng",
             "deliverer_phone": "Số điện thoại",
             "expected_date": "Ngày dự kiến giao",
+            "status": "Trạng thái giao",
         }
         widgets = {
-            "asn_code": forms.TextInput(attrs={"class": "form-control"}),
+            "asn_code": forms.TextInput(attrs={
+                "class": "form-control",
+                "readonly": "readonly",
+            }),
             "po": forms.Select(attrs={"class": "form-select"}),
             "supplier": forms.Select(attrs={"class": "form-select"}),
             "deliverer_name": forms.TextInput(attrs={"class": "form-control"}),
             "deliverer_phone": forms.TextInput(attrs={"class": "form-control"}),
             "expected_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "status": forms.Select(attrs={"class": "form-select"}),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        po = cleaned.get("po")
+        supplier = cleaned.get("supplier")
+
+        if po and not supplier:
+            cleaned["supplier"] = po.supplier
+            supplier = po.supplier
+
+        if po and supplier and po.supplier != supplier:
+            raise forms.ValidationError("Nhà cung ứng của ASN phải trùng với nhà cung ứng của PO.")
+        return cleaned
 
 
 class ASNItemForm(forms.ModelForm):
@@ -346,12 +590,71 @@ class ASNItemForm(forms.ModelForm):
             "expiry_date": "Hạn sử dụng",
         }
         widgets = {
-            "product": forms.Select(attrs={"class": "form-select"}),
-            "quantity": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
+            "product": forms.Select(attrs={"class": "form-select product-select"}),
+            "quantity": forms.NumberInput(attrs={"class": "form-control quantity", "min": 1}),
             "unit": forms.TextInput(attrs={"class": "form-control"}),
-            "unit_price": forms.NumberInput(attrs={"class": "form-control", "min": 0}),
+            "unit_price": forms.NumberInput(attrs={"class": "form-control","step":1, "min": 0}),
             "expiry_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        po = kwargs.pop("po", None)
+        super().__init__(*args, **kwargs)
+        self._po = po
+        if po is not None:
+            self.fields["product"].queryset = SupplierProduct.objects.filter(
+                purchaseorderitem__po=po
+            ).distinct().order_by("product_code")
+        else:
+            self.fields["product"].queryset = SupplierProduct.objects.none()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        product = cleaned_data.get("product")
+        quantity = cleaned_data.get("quantity")
+
+        if not product or not quantity:
+            return cleaned_data
+
+        # Lấy asn / po hiện tại
+        asn = getattr(self.instance, "asn", None)
+        po = None
+        if asn and asn.po_id:
+            po = asn.po
+        elif hasattr(self, "_po") and self._po:
+            po = self._po
+
+        if po:
+            from .models import PurchaseOrderItem, ASNItem
+
+            po_item = PurchaseOrderItem.objects.filter(
+                po=po,
+                product=product
+            ).first()
+
+            if not po_item:
+                raise forms.ValidationError(
+                    f"Sản phẩm '{product.name}' không có trong PO đã chọn."
+                )
+
+            ordered_qty = po_item.quantity
+
+            delivered_qty = ASNItem.objects.filter(
+                asn__po=po,
+                product=product
+            ).exclude(
+                pk=self.instance.pk if self.instance and self.instance.pk else None
+            ).aggregate(total=Sum("quantity"))["total"] or 0
+
+            max_qty = ordered_qty - delivered_qty
+
+            if quantity > max_qty:
+                raise forms.ValidationError(
+                    f"Số lượng giao ({quantity}) vượt quá số lượng còn lại trong PO ({max_qty})."
+                )
+
+        return cleaned_data
+
 
 ASNItemFormSet = inlineformset_factory(
     ASN, ASNItem,
@@ -359,3 +662,11 @@ ASNItemFormSet = inlineformset_factory(
     extra=1,
     can_delete=True
 )
+class ASNStatusForm(forms.ModelForm):
+    class Meta:
+        model = ASN
+        fields = ["status"]
+        labels = {"status": "Trạng thái giao hàng"}
+        widgets = {
+            "status": forms.Select(attrs={"class": "form-select"})
+        }

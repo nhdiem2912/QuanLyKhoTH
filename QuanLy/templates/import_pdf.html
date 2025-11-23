@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load humanize custom_filters %}
+{% load humanize %}
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
@@ -87,12 +88,35 @@
 
   <!-- INFO -->
   <table class="info-table">
-    <tr><td>Ngày nhập: <strong>{{ receipt.import_date|date:"d/m/Y" }}</strong></td></tr>
-    <tr><td>Nhà cung cấp: <strong>{{ receipt.supplier.company_name }}</strong></td></tr>
+
     <tr>
-      <td>Nhập tại kho: <strong>Kho TH True Mart chi nhánh 397 Núi Thành - Đà Nẵng</strong>
-      &nbsp;&nbsp;&nbsp; Người nhận: <strong>{{ receipt.created_by.username }}</strong></td>
+      <td>Ngày nhập: <strong>{{ receipt.import_date|date:"d/m/Y" }}</strong></td>
     </tr>
+
+    <tr>
+      <td>Nhà cung cấp: <strong>{{ receipt.supplier.company_name }}</strong></td>
+    </tr>
+
+    {% if receipt.asn %}
+    <tr>
+      <td>
+        Phiếu ASN liên quan:
+        <strong>{{ receipt.asn.asn_code }}</strong>
+        – Ngày giao: <strong>{{ receipt.asn.expected_date|date:"d/m/Y" }}</strong>
+      </td>
+    </tr>
+    {% endif %}
+
+    <tr>
+      <td>
+        Nhập tại kho:
+        <strong>Kho TH True Mart chi nhánh 397 Núi Thành - Đà Nẵng</strong>
+        &nbsp;&nbsp;&nbsp;
+        Người nhận:
+        <strong>{{ receipt.created_by.username }}</strong>
+      </td>
+    </tr>
+
   </table>
 
   <!-- MAIN TABLE -->
@@ -108,6 +132,7 @@
         <th style="width:15%;">THÀNH TIỀN (₫)</th>
       </tr>
     </thead>
+
     <tbody>
       {% for item in receipt.items.all %}
       <tr>
@@ -125,19 +150,13 @@
     </tbody>
 
     <tfoot>
-  <tr>
-    <td colspan="6" class="text-right fw-bold">Tổng chiết khấu:</td>
-    <td class="text-right fw-bold text-danger">
-      {{ receipt.items.all|total_discount|floatformat:0|intcomma }} ₫
-    </td>
-  </tr>
-  <tr>
-    <td colspan="6" class="text-right fw-bold">Tổng cộng sau giảm:</td>
-    <td class="text-right fw-bold text-primary">
-      {{ receipt.total_price|floatformat:0|intcomma }} ₫
-    </td>
-  </tr>
-</tfoot>
+      <tr>
+        <td colspan="6" class="text-right fw-bold">Tổng cộng:</td>
+        <td class="text-right fw-bold text-primary">
+          {{ receipt.total_price|floatformat:0|intcomma }} ₫
+        </td>
+      </tr>
+    </tfoot>
 
   </table>
 

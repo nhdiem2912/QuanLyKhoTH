@@ -26,7 +26,7 @@
       inset: 0;
       background: url("{% static 'QuanLy/images/anh-nen-login.jpg' %}") center/cover no-repeat;
       filter: blur(4px);
-      transform: scale(1.05); /* tránh viền blur bị lộ */
+      transform: scale(1.05);
       z-index: -2;
     }
 
@@ -137,6 +137,31 @@
       max-width: 140px;
       height: auto;
     }
+
+    /* ----- Ẩn/hiện mật khẩu ----- */
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper .form-control {
+      padding-right: 40px; /* chừa chỗ cho icon mắt */
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #6c757d;
+      font-size: 14px;
+      /* luôn hiển thị, không cần opacity */
+    }
+
+    .password-toggle:hover {
+      color: #0d6efd;
+    }
+
   </style>
 </head>
 <body>
@@ -146,7 +171,6 @@
 
   <div class="login-container">
     <div class="text-center mb-3">
-      {# logo, nếu chưa có file QuanLy/images/logo.png thì đổi lại đường dẫn bạn đang dùng #}
       <img src="{% static 'QuanLy/images/logo.png' %}"
            alt="TH True Mart" class="login-logo">
       <p class="text-muted mt-2 mb-0">Đăng nhập hệ thống quản lý kho</p>
@@ -158,7 +182,7 @@
       <div class="error-msg">Tên đăng nhập hoặc mật khẩu không đúng.</div>
     {% endif %}
 
-    <form method="post" action="">
+    <form method="post" action="{% url 'login' %}">
       {% csrf_token %}
       <div class="mb-3 text-start">
         <label for="username" class="form-label fw-semibold">Tên đăng nhập</label>
@@ -168,18 +192,46 @@
 
       <div class="mb-3 text-start">
         <label for="password" class="form-label fw-semibold">Mật khẩu</label>
-        <input type="password" id="password" name="password" class="form-control"
-               placeholder="Nhập mật khẩu" required>
+        <div class="password-wrapper">
+          <input type="password" id="password" name="password" class="form-control"
+                 placeholder="Nhập mật khẩu" required>
+          <span class="password-toggle" id="togglePassword" aria-label="Hiện/ẩn mật khẩu">
+            <i class="fa-regular fa-eye"></i>
+          </span>
+        </div>
       </div>
 
       <button type="submit" class="btn-login">Đăng nhập</button>
 
-      <a href="#" class="forgot-password">
+      <!-- Link quên mật khẩu -->
+      <a href="{% url 'forgot_password' %}" class="forgot-password">
         <i class="fa-regular fa-circle-question me-1"></i> Quên mật khẩu?
       </a>
     </form>
 
     <div class="footer">© 2025 – Hệ thống <span>TH True Mart</span></div>
   </div>
+
+  <script>
+    // Toggle ẩn/hiện mật khẩu
+    document.addEventListener("DOMContentLoaded", function () {
+      const passwordInput = document.getElementById("password");
+      const togglePassword = document.getElementById("togglePassword");
+
+      if (passwordInput && togglePassword) {
+        togglePassword.addEventListener("click", function () {
+          const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+          passwordInput.setAttribute("type", type);
+
+          const icon = this.querySelector("i");
+          if (icon) {
+            // Đổi icon mắt / mắt gạch
+            icon.classList.toggle("fa-eye");
+            icon.classList.toggle("fa-eye-slash");
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>

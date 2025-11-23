@@ -3,7 +3,6 @@
 {% block title %}Quản lý đơn đặt hàng (PO) - TH True Mart{% endblock %}
 {% block page_title %}Quản lý đơn đặt hàng (PO){% endblock %}
 
-{% block content %}
 {% block extra_head %}
 <style>
   .hero-card {
@@ -36,25 +35,43 @@
     justify-content: center;
     font-size: 20px;
   }
+  .table td, .table th {
+    vertical-align: middle !important;
+  }
+  .btn-group .btn {
+    min-width: 36px;
+    padding: 6px 8px;
+    border-radius: 6px !important;
+  }
+  .btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: #fff;
+  }
+  .btn-outline-danger:hover {
+    background-color: #dc3545;
+    color: #fff;
+  }
 </style>
 {% endblock %}
 
+{% block content %}
 <div class="container-fluid">
 
-   <!-- HERO -->
+  <!-- HERO -->
   <div class="hero-card">
     <div>
       <h5>Quản lý đơn đặt hàng (PO)</h5>
-      <p>Theo dõi trạng thái các PO và khởi tạo đơn đặt hàng mới cho nhà cung ứng.</p>
+      <p>Theo dõi trạng thái, tổng số lượng và tổng giá trị từng đơn đặt hàng.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
-      <a href="{% url 'create_po' %}" class="btn btn-light btn-sm text-primary fw-semibold">
-        <i class="fa-solid fa-plus me-1"></i> Tạo đơn đặt hàng
-      </a>
+      {% if can_create_po %}
+<a href="{% url 'po_create' %}" class="btn btn-light btn-sm text-primary fw-semibold"><i class="fa-solid fa-plus me-1"></i> Tạo đơn đặt hàng</a>
+{% endif %}
+
     </div>
   </div>
 
-<!-- FILTERS -->
+  <!-- FILTERS -->
   <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
     <form method="get" class="row g-3 align-items-end">
 
@@ -64,17 +81,17 @@
                placeholder="Mã PO, NCC, sản phẩm...">
       </div>
 
-      <div class="col-md-3">
-        <label class="form-label">Nhà cung cấp</label>
-        <select name="supplier" class="form-select">
-          <option value="">Tất cả</option>
-          {% for s in suppliers %}
-            <option value="{{ s.id }}" {% if supplier_id|default:'' == s.id|stringformat:"s" %}selected{% endif %}>
-              {{ s.company_name }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+<!--      <div class="col-md-3">-->
+<!--        <label class="form-label">Nhà cung cấp</label>-->
+<!--        <select name="supplier" class="form-select">-->
+<!--          <option value="">Tất cả</option>-->
+<!--          {% for s in suppliers %}-->
+<!--            <option value="{{ s.id }}" {% if supplier_id|default:'' == s.id|stringformat:"s" %}selected{% endif %}>-->
+<!--              {{ s.company_name }}-->
+<!--            </option>-->
+<!--          {% endfor %}-->
+<!--        </select>-->
+<!--      </div>-->
 
       <div class="col-md-2">
         <label class="form-label">Từ ngày</label>
@@ -86,13 +103,16 @@
         <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
       </div>
 
-      <div class="col-md-2">
-        <button class="btn btn-primary"><i class="fa-solid fa-filter"></i> Lọc</button>
-        <a href="{% url 'po_list' %}" class="btn btn-secondary">Reset</a>
+      <div class="col-md-2 text-end">
+        <button class="btn btn-primary">
+          <i class="fa-solid fa-filter me-1"></i> Lọc
+        </button>
+        <a href="{% url 'po_list' %}" class="btn btn-secondary ms-1">Reset</a>
       </div>
 
     </form>
   </div>
+
   <!-- DANH SÁCH PO -->
   <div class="bg-white p-3 rounded-3 shadow-sm">
     {% if pos %}
@@ -102,7 +122,9 @@
           <th>Mã PO</th>
           <th>Ngày tạo</th>
           <th>Nhà cung ứng</th>
-          <th class="text-end">Tổng sản phẩm</th>
+          <th class="text-end">Tổng dòng SP</th>
+          <th class="text-end">Tổng SL</th>
+          <th class="text-end">Tổng tiền (₫)</th>
           <th>Trạng thái</th>
           <th class="text-center">Thao tác</th>
         </tr>
@@ -110,10 +132,14 @@
       <tbody>
         {% for p in pos %}
         <tr>
-          <td class="fw-semibold text-primary">{{ p.po_code }}</td>
-          <td>{{ p.created_date|date:"d/m/Y" }}</td>
-          <td>{{ p.supplier.company_name }}</td>
-          <td class="text-end">{{ p.items.count }}</td>
+          <td class="fw-semibold text-primary text-center">{{ p.po_code }}</td>
+          <td class="text-center">{{ p.created_date|date:"d/m/Y" }}</td>
+          <td class="text-center">{{ p.supplier.company_name }}</td>
+          <td class="text-end">{{ p.items.count|intcomma }}</td>
+          <td class="text-end">{{ p.total_quantity|default:0|intcomma }}</td>
+          <td class="text-success text-end fw-semibold">
+            {{ p.total_amount|default:0|floatformat:0|intcomma }} ₫
+          </td>
           <td class="text-center">
             {% if p.status == 'approved' %}
               <span class="badge bg-success px-3 py-2">Đã duyệt</span>
@@ -124,25 +150,38 @@
             {% endif %}
           </td>
           <td class="text-center">
-            <div class="btn-group btn-group-sm" role="group">
-              <!-- Xem -->
-              <button class="btn btn-outline-primary" title="Xem chi tiết"
-                      data-bs-toggle="modal" data-bs-target="#viewModal{{ p.po_code }}">
-                <i class="fa-solid fa-eye"></i>
-              </button>
-                <!-- In PDF -->
-    <a href="{% url 'po_export_pdf' p.po_code %}"
-   class="btn btn-sm btn-outline-secondary" title="In phiếu PDF" target="_blank">
-  <i class="fa-solid fa-file-pdf"></i>
-</a>
+  <div class="btn-group btn-group-sm">
 
-              <!-- Xóa -->
-              <button class="btn btn-outline-danger" title="Xóa đơn hàng"
-                      onclick="confirmDelete('{{ p.po_code }}')">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </div>
-          </td>
+    <!-- Xem chi tiết bằng modal -->
+    <button class="btn btn-outline-primary btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#viewModal{{ p.po_code }}"
+            title="Xem chi tiết">
+      <i class="fa-solid fa-eye"></i>
+    </button>
+
+    <!-- Sửa PO: chỉ Cửa hàng trưởng -->
+    {% if can_edit_po %}
+    <a href="{% url 'po_edit' p.po_code %}"
+       class="btn btn-outline-warning btn-sm"
+       title="Chỉnh sửa">
+      <i class="fa-solid fa-pen"></i>
+    </a>
+    {% endif %}
+
+    <!-- In PDF: Cửa hàng trưởng + Nhân viên + NCC -->
+    {% if can_view_po %}
+    <a href="{% url 'po_export_pdf' p.po_code %}"
+       class="btn btn-outline-secondary btn-sm"
+       title="Xuất PDF">
+      <i class="fa-solid fa-file-pdf"></i>
+    </a>
+    {% endif %}
+
+  </div>
+</td>
+
+
         </tr>
         {% endfor %}
       </tbody>
@@ -163,9 +202,21 @@
             <div class="row mb-3">
               <div class="col-md-6"><strong>Nhà cung ứng:</strong> {{ p.supplier.company_name }}</div>
               <div class="col-md-6"><strong>Ngày tạo:</strong> {{ p.created_date|date:"d/m/Y" }}</div>
-              <div class="col-md-6"><strong>Người tạo:</strong> {{ p.created_by.username|default:"-" }}</div>
+              <div class="col-md-6 mt-2"><strong>Người tạo:</strong> {{ p.created_by.username|default:"-" }}</div>
+              <div class="col-md-6 mt-2">
+                <strong>Trạng thái:</strong>
+                {% if p.status == 'approved' %}
+                  Đã duyệt
+                {% elif p.status == 'closed' %}
+                  Đã đóng
+                {% else %}
+                  Chờ duyệt
+                {% endif %}
+              </div>
               {% if p.note %}
-              <div class="col-md-12 mt-2"><strong>Ghi chú:</strong> <span class="text-muted">{{ p.note }}</span></div>
+              <div class="col-md-12 mt-2">
+                <strong>Ghi chú:</strong> <span class="text-muted">{{ p.note }}</span>
+              </div>
               {% endif %}
             </div>
 
@@ -174,9 +225,11 @@
               <thead class="table-light">
                 <tr>
                   <th>Mã SP</th>
-                  <th>Tên sản phẩm</th>
+                  <th class="text-start">Tên sản phẩm</th>
                   <th class="text-end">Số lượng</th>
                   <th>Đơn vị</th>
+                  <th class="text-end">Đơn giá (₫)</th>
+                  <th class="text-end">Thành tiền (₫)</th>
                 </tr>
               </thead>
               <tbody>
@@ -186,18 +239,34 @@
                   <td class="text-start">{{ item.product.name }}</td>
                   <td class="text-end">{{ item.quantity|intcomma }}</td>
                   <td>{{ item.unit }}</td>
+                  <td class="text-end">{{ item.unit_price|floatformat:0|intcomma }}</td>
+                  <td class="text-success text-end fw-semibold">
+                    {{ item.total|floatformat:0|intcomma }}
+                  </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="4" class="text-muted">Không có sản phẩm nào</td></tr>
+                <tr><td colspan="6" class="text-muted">Không có sản phẩm nào</td></tr>
                 {% endfor %}
               </tbody>
             </table>
 
-            <div class="text-end mt-3">
-              <a href="{% url 'po_edit' p.po_code %}" class="btn btn-primary btn-sm">
-                <i class="fa-solid fa-pen me-1"></i> Cập nhật
-              </a>
+            <div class="text-end mt-2">
+              <strong>Tổng số lượng:</strong>
+              {{ p.total_quantity|default:0|intcomma }}<br>
+              <strong>Tổng tiền:</strong>
+              <span class="text-success fw-semibold">
+                {{ p.total_amount|default:0|floatformat:0|intcomma }} ₫
+              </span>
             </div>
+
+            {% if can_edit_po %}
+<div class="text-end mt-3">
+  <a href="{% url 'po_edit' p.po_code %}" class="btn btn-primary btn-sm">
+    <i class="fa-solid fa-pen me-1"></i> Cập nhật
+  </a>
+</div>
+{% endif %}
+
           </div>
           <div class="modal-footer">
             <button class="btn btn-secondary" data-bs-dismiss="modal">
@@ -218,7 +287,6 @@
   </div>
 </div>
 
-<!-- SCRIPT -->
 <script>
 function confirmDelete(code) {
   if (confirm("Bạn có chắc muốn xóa đơn đặt hàng " + code + " ?")) {
@@ -226,27 +294,4 @@ function confirmDelete(code) {
   }
 }
 </script>
-
-<!-- STYLE -->
-<style>
-.table td, .table th {
-  vertical-align: middle !important;
-}
-.btn-group .btn {
-  min-width: 36px;
-  padding: 6px 8px;
-  border-radius: 6px !important;
-}
-.btn-outline-primary:hover {
-  background-color: #0d6efd;
-  color: #fff;
-}
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  color: #fff;
-}
-.text-warning { color: #f59e0b !important; }
-.text-success { color: #16a34a !important; }
-.text-danger { color: #dc2626 !important; }
-</style>
 {% endblock %}

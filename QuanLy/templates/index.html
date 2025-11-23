@@ -4,38 +4,80 @@
 
 {% block extra_head %}
 <style>
+  /* HERO */
   .hero-card {
     border-radius: 16px;
     background: linear-gradient(135deg, #0d6efd, #38bdf8);
     color: #fff;
-    padding: 18px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 16px 20px;
     box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
     margin-bottom: 18px;
   }
-  .hero-card h5 {
+  .hero-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .hero-left h5 {
     margin: 0 0 4px;
     font-weight: 600;
+    font-size: 18px;
   }
-  .hero-card p {
+  .hero-left p {
     margin: 0;
-    font-size: 14px;
+    font-size: 13px;
     opacity: 0.9;
+  }
+  .hero-divider {
+    width: 1px;
+    align-self: stretch;
+    background: rgba(255, 255, 255, 0.35);
+  }
+  .hero-right {
+    text-align: right;
+    font-size: 13px;
+  }
+  .hero-right .hero-date {
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .hero-right .hero-stock {
+    font-size: 13px;
+    opacity: 0.95;
   }
   .hero-icon {
-    font-size: 36px;
+    font-size: 26px;
     opacity: 0.9;
+    margin-left: 10px;
   }
 
+  @media (max-width: 768px) {
+    .hero-inner {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .hero-divider {
+      display: none;
+    }
+    .hero-right {
+      text-align: left;
+      width: 100%;
+    }
+    .hero-icon {
+      display: none;
+    }
+  }
+
+  /* TITLES */
   .section-title {
     font-size: 15px;
     font-weight: 600;
     color: #0f172a;
-    margin-bottom: 10px;
+    margin: 4px 0 10px;
   }
 
+  /* QUICK ACTION CARDS */
   .quick-card {
     background: #ffffff;
     border-radius: 14px;
@@ -43,15 +85,17 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 6px;
     box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
-    border: 5px solid #e2e8f0;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
     cursor: pointer;
+    min-height: 90px;
   }
   .quick-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    border-color: #cbd5f5;
   }
   .quick-icon {
     width: 32px;
@@ -72,12 +116,14 @@
     color: #94a3b8;
   }
 
+  /* SUMMARY CARDS */
   .stat-card {
     background: #ffffff;
     border-radius: 14px;
-    padding: 14px 14px 12px;
+    padding: 12px 14px;
     box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
     border: 1px solid #e5e7eb;
+    height: 100%;
   }
   .stat-label {
     font-size: 13px;
@@ -88,6 +134,7 @@
     font-size: 20px;
     font-weight: 600;
     color: #0f172a;
+    margin-bottom: 3px;
   }
   .stat-sub {
     font-size: 12px;
@@ -95,150 +142,188 @@
   }
   .stat-icon {
     font-size: 24px;
-    color: #0d6efd;
   }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="container-fluid">
 
-<div class="hero-card">
-  <div>
-    <h5>Chào mừng trở lại, {{ request.user.username }}!</h5>
-    <p>Hệ thống quản lý kho TH True Mart – tổng quan hoạt động trong ngày.</p>
-  </div>
-  <div class="hero-icon">
-    <i class="fa-solid fa-cubes"></i>
-  </div>
-</div>
-
-<div class="mb-3">
-  <div class="section-title">Thao tác nhanh</div>
-  <div class="row g-5">
-    <div class="col-sm-6 col-lg-5 col-xl-2">
-      <a href="{% url 'product_master_list' %}" class="text-decoration-none text-reset">
-        <div class="quick-card">
-          <div class="quick-icon bg-primary-subtle text-primary">
-            <i class="fa-solid fa-box-archive"></i>
-          </div>
-          <div class="quick-label">Quản lý hàng hóa</div>
-          <div class="quick-desc">Sản phẩm kinh doanh & tồn kho</div>
+  <!-- HERO -->
+  <div class="hero-card">
+    <div class="hero-inner">
+      <div class="hero-left d-flex align-items-center">
+        <div>
+          <h5>Chào mừng trở lại, {{ request.user.username }}!</h5>
+          <p>Hệ thống quản lý kho TH True Mart – tổng quan hoạt động trong ngày.</p>
         </div>
-      </a>
+        <div class="hero-icon ms-3 d-none d-md-block">
+          <i class="fa-solid fa-cubes"></i>
+        </div>
+      </div>
+
+      <div class="hero-divider d-none d-md-block"></div>
+
+      <div class="hero-right">
+        <div class="hero-date">
+          <i class="fa-regular fa-calendar"></i>
+          <span>Hôm nay: {{ today }}</span>
+        </div>
+        <div class="hero-stock">
+          <i class="fa-solid fa-box-open me-1"></i>
+          Tồn kho hiện tại: <strong>{{ stock_total|default:"0" }}</strong> đơn vị
+        </div>
+      </div>
     </div>
-    <div class="col-sm-6 col-lg-4 col-xl-2">
-      <a href="{% url 'import_list' %}" class="text-decoration-none text-reset">
-        <div class="quick-card">
-          <div class="quick-icon bg-success-subtle text-success">
+  </div>
+
+  <!-- QUICK ACTIONS -->
+  <div class="mb-3">
+    <div class="section-title">Thao tác nhanh</div>
+    <div class="row g-3">
+      <div class="col-sm-6 col-lg-4 col-xl-3">
+        <a href="{% url 'stock_list' %}" class="text-decoration-none text-reset">
+          <div class="quick-card">
+            <div class="quick-icon bg-primary-subtle text-primary">
+              <i class="fa-solid fa-box-archive"></i>
+            </div>
+            <div class="quick-label">Quản lý hàng hóa</div>
+            <div class="quick-desc">Hàng hóa & lô tồn kho</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-sm-6 col-lg-4 col-xl-3">
+        <a href="{% url 'import_list' %}" class="text-decoration-none text-reset">
+          <div class="quick-card">
+            <div class="quick-icon bg-success-subtle text-success">
+              <i class="fa-solid fa-arrow-down-long"></i>
+            </div>
+            <div class="quick-label">Nhập kho</div>
+            <div class="quick-desc">Tạo & quản lý phiếu nhập</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-sm-6 col-lg-4 col-xl-3">
+        <a href="{% url 'export_list' %}" class="text-decoration-none text-reset">
+          <div class="quick-card">
+            <div class="quick-icon bg-danger-subtle text-danger">
+              <i class="fa-solid fa-arrow-up-long"></i>
+            </div>
+            <div class="quick-label">Xuất kho</div>
+            <div class="quick-desc">Phiếu xuất bán / chuyển kho</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-sm-6 col-lg-4 col-xl-3">
+        <a href="{% url 'po_list' %}" class="text-decoration-none text-reset">
+          <div class="quick-card">
+            <div class="quick-icon bg-warning-subtle text-warning">
+              <i class="fa-solid fa-file-pen"></i>
+            </div>
+            <div class="quick-label">Đặt hàng (PO)</div>
+            <div class="quick-desc">Đơn đặt hàng tới nhà cung ứng</div>
+          </div>
+        </a>
+      </div>
+
+        <div class="col-sm-6 col-lg-4 col-xl-3">
+        <a href="{% url 'asn_list' %}" class="text-decoration-none text-reset">
+          <div class="quick-card">
+            <div class="quick-icon bg-info-subtle text-info">
+              <i class="fa-solid fa-truck me-1"></i>
+            </div>
+            <div class="quick-label">Giao hàng (ASN)</div>
+            <div class="quick-desc">Giao hàng từ nhà cung ứng</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-sm-6 col-lg-4 col-xl-3">
+        <a href="{% url 'suppliers' %}" class="text-decoration-none text-reset">
+          <div class="quick-card">
+            <div class="quick-icon bg-info-subtle text-info">
+              <i class="fa-solid fa-building-user"></i>
+            </div>
+            <div class="quick-label">Nhà cung ứng</div>
+            <div class="quick-desc">Danh sách & thông tin NCC</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="col-sm-6 col-lg-4 col-xl-3">
+        <a href="{% url 'reports' %}" class="text-decoration-none text-reset">
+          <div class="quick-card">
+            <div class="quick-icon bg-secondary-subtle text-secondary">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="quick-label">Báo cáo</div>
+            <div class="quick-desc">Thống kê tồn kho & luân chuyển</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY SUMMARY -->
+  <div class="mt-3">
+    <div class="section-title">Tổng quan hôm nay</div>
+    <div class="row g-3">
+      <div class="col-md-6 col-xl-3">
+        <div class="stat-card d-flex justify-content-between align-items-center h-100">
+          <div>
+            <div class="stat-label">Tồn kho hiện tại</div>
+            <div class="stat-value">{{ stock_total|default:"—" }}</div>
+            <div class="stat-sub">Số lượng hàng đang lưu kho</div>
+          </div>
+          <div class="stat-icon text-primary">
+            <i class="fa-solid fa-box-open"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-xl-3">
+        <div class="stat-card d-flex justify-content-between align-items-center h-100">
+          <div>
+            <div class="stat-label">Phiếu nhập hôm nay</div>
+            <div class="stat-value">{{ import_count_today|default:"0" }}</div>
+            <div class="stat-sub text-success">Phiếu nhập đã ghi nhận</div>
+          </div>
+          <div class="stat-icon text-success">
             <i class="fa-solid fa-arrow-down-long"></i>
           </div>
-          <div class="quick-label">Nhập kho</div>
-          <div class="quick-desc">Tạo & quản lý phiếu nhập</div>
         </div>
-      </a>
-    </div>
-    <div class="col-sm-6 col-lg-4 col-xl-2">
-      <a href="{% url 'export_list' %}" class="text-decoration-none text-reset">
-        <div class="quick-card">
-          <div class="quick-icon bg-danger-subtle text-danger">
+      </div>
+
+      <div class="col-md-6 col-xl-3">
+        <div class="stat-card d-flex justify-content-between align-items-center h-100">
+          <div>
+            <div class="stat-label">Phiếu xuất hôm nay</div>
+            <div class="stat-value">{{ export_count_today|default:"0" }}</div>
+            <div class="stat-sub text-primary">Đơn giao hàng / bán</div>
+          </div>
+          <div class="stat-icon text-primary">
             <i class="fa-solid fa-arrow-up-long"></i>
           </div>
-          <div class="quick-label">Xuất kho</div>
-          <div class="quick-desc">Phiếu xuất bán / chuyển kho</div>
-        </div>
-      </a>
-    </div>
-    <div class="col-sm-6 col-lg-4 col-xl-2">
-      <a href="{% url 'po_list' %}" class="text-decoration-none text-reset">
-        <div class="quick-card">
-          <div class="quick-icon bg-warning-subtle text-warning">
-            <i class="fa-solid fa-file-pen"></i>
-          </div>
-          <div class="quick-label">Đặt hàng (PO)</div>
-          <div class="quick-desc">Đơn đặt hàng tới nhà cung ứng</div>
-        </div>
-      </a>
-    </div>
-    <div class="col-sm-6 col-lg-4 col-xl-2">
-      <a href="{% url 'suppliers' %}" class="text-decoration-none text-reset">
-        <div class="quick-card">
-          <div class="quick-icon bg-info-subtle text-info">
-            <i class="fa-solid fa-building-user"></i>
-          </div>
-          <div class="quick-label">Nhà cung ứng</div>
-          <div class="quick-desc">Danh sách & thông tin NCC</div>
-        </div>
-      </a>
-    </div>
-    <div class="col-sm-6 col-lg-4 col-xl-2">
-      <a href="{% url 'reports' %}" class="text-decoration-none text-reset">
-        <div class="quick-card">
-          <div class="quick-icon bg-secondary-subtle text-secondary">
-            <i class="fa-solid fa-chart-line"></i>
-          </div>
-          <div class="quick-label">Báo cáo</div>
-          <div class="quick-desc">Thống kê tồn kho & luân chuyển</div>
-        </div>
-      </a>
-    </div>
-  </div>
-</div>
-
-<div class="mt-4">
-  <div class="section-title">Tổng quan hôm nay</div>
-  <div class="row g-3">
-    <div class="col-md-6 col-xl-3">
-      <div class="stat-card d-flex justify-content-between align-items-center">
-        <div>
-          <div class="stat-label">Tồn kho hiện tại</div>
-          <div class="stat-value">{{ stock_total|default:"—" }}</div>
-          <div class="stat-sub">Sản phẩm đang lưu kho</div>
-        </div>
-        <div class="stat-icon">
-          <i class="fa-solid fa-box-open"></i>
         </div>
       </div>
-    </div>
 
-    <div class="col-md-6 col-xl-3">
-      <div class="stat-card d-flex justify-content-between align-items-center">
-        <div>
-          <div class="stat-label">Phiếu nhập hôm nay</div>
-          <div class="stat-value">{{ import_count_today|default:"0" }}</div>
-          <div class="stat-sub text-success">Phiếu đã ghi nhận</div>
-        </div>
-        <div class="stat-icon text-success">
-          <i class="fa-solid fa-arrow-down-long"></i>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-6 col-xl-3">
-      <div class="stat-card d-flex justify-content-between align-items-center">
-        <div>
-          <div class="stat-label">Phiếu xuất hôm nay</div>
-          <div class="stat-value">{{ export_count_today|default:"0" }}</div>
-          <div class="stat-sub text-primary">Đơn giao hàng / bán</div>
-        </div>
-        <div class="stat-icon text-primary">
-          <i class="fa-solid fa-arrow-up-long"></i>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-6 col-xl-3">
-      <div class="stat-card d-flex justify-content-between align-items-center">
-        <div>
-          <div class="stat-label">Phiếu hoàn hàng hôm nay</div>
-          <div class="stat-value">{{ return_count_today|default:"0" }}</div>
-          <div class="stat-sub text-warning">Phiếu xử lý hoàn trả</div>
-        </div>
-        <div class="stat-icon text-warning">
-          <i class="fa-solid fa-rotate-left"></i>
+      <div class="col-md-6 col-xl-3">
+        <div class="stat-card d-flex justify-content-between align-items-center h-100">
+          <div>
+            <div class="stat-label">Phiếu hoàn hàng hôm nay</div>
+            <div class="stat-value">{{ return_count_today|default:"0" }}</div>
+            <div class="stat-sub text-warning">Phiếu xử lý hoàn trả</div>
+          </div>
+          <div class="stat-icon text-warning">
+            <i class="fa-solid fa-rotate-left"></i>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
+</div>
 {% endblock %}

@@ -3,24 +3,128 @@
 {% block title %}Tạo phiếu giao hàng (ASN) - TH True Mart{% endblock %}
 {% block page_title %}Tạo phiếu giao hàng (ASN){% endblock %}
 
+{% block extra_head %}
+<style>
+  .hero-card {
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0d6efd, #38bdf8);
+    color: #fff;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+    margin-bottom: 18px;
+  }
+  .hero-card h5 {
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  .hero-card p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.92;
+  }
+  .hero-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .table th, .table td {
+    vertical-align: middle !important;
+  }
+  .table input, .table select {
+    height: 38px;
+    font-size: 14px;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-  <h4 class="fw-bold mb-3 text-primary">Tạo phiếu giao hàng (ASN)</h4>
+
+  <!-- HERO -->
+  <div class="hero-card">
+    <div>
+      <h5>Tạo phiếu giao hàng (ASN)</h5>
+      <p>Liên kết với PO, kiểm soát số lượng giao ≤ số lượng đặt.</p>
+    </div>
+    <div class="hero-icon">
+      <i class="fa-solid fa-truck"></i>
+    </div>
+  </div>
+
+  <!-- THÔNG BÁO LỖI FORM CHUNG -->
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+  {% if formset.non_field_errors %}
+    <div class="alert alert-danger">
+      {{ formset.non_field_errors }}
+    </div>
+  {% endif %}
 
   <form method="post">
     {% csrf_token %}
 
     <!-- Thông tin chung -->
     <div class="card p-3 mb-3 shadow-sm">
-      <h6 class="fw-semibold text-primary mb-2">Thông tin phiếu giao hàng</h6>
+      <h6 class="fw-semibold text-primary mb-3">Thông tin phiếu giao hàng</h6>
       <div class="row g-3">
-        <div class="col-md-3">{{ form.asn_code.label_tag }}{{ form.asn_code }}</div>
-        <div class="col-md-3">{{ form.po.label_tag }}{{ form.po }}</div>
-        <div class="col-md-3">{{ form.supplier.label_tag }}{{ form.supplier }}</div>
-        <div class="col-md-3">{{ form.expected_date.label_tag }}{{ form.expected_date }}</div>
-        <div class="col-md-3">{{ form.deliverer_name.label_tag }}{{ form.deliverer_name }}</div>
-        <div class="col-md-3">{{ form.deliverer_phone.label_tag }}{{ form.deliverer_phone }}</div>
-        <div class="col-md-6">{{ form.note.label_tag }}{{ form.note }}</div>
+        <div class="col-md-3">
+          {{ form.asn_code.label_tag }}
+          {{ form.asn_code }}
+          {{ form.asn_code.errors }}
+        </div>
+        <div class="col-md-3">
+          {{ form.po.label_tag }}
+          {{ form.po }}
+          {{ form.po.errors }}
+          <small class="text-muted d-block" style="font-size:11px;">
+            * Nhà cung ứng sẽ tự động set theo PO.
+          </small>
+        </div>
+        <div class="col-md-3">
+          {{ form.supplier.label_tag }}
+          {{ form.supplier }}
+          {{ form.supplier.errors }}
+          <small class="text-muted d-block" style="font-size:11px;">
+            * Tự động từ PO.
+          </small>
+        </div>
+        <div class="col-md-3">
+          {{ form.expected_date.label_tag }}
+          {{ form.expected_date }}
+          {{ form.expected_date.errors }}
+        </div>
+
+        <div class="col-md-3">
+          {{ form.deliverer_name.label_tag }}
+          {{ form.deliverer_name }}
+          {{ form.deliverer_name.errors }}
+        </div>
+        <div class="col-md-3">
+          {{ form.deliverer_phone.label_tag }}
+          {{ form.deliverer_phone }}
+          {{ form.deliverer_phone.errors }}
+        </div>
+        <div class="col-md-3">
+          {{ form.status.label_tag }}
+          {{ form.status }}
+          {{ form.status.errors }}
+        </div>
+        <div class="col-md-3">
+          {{ form.note.label_tag }}
+          {{ form.note }}
+          {{ form.note.errors }}
+        </div>
       </div>
     </div>
 
@@ -34,59 +138,251 @@
       </div>
 
       {{ formset.management_form }}
-      <table class="table table-bordered align-middle text-center">
+      <table class="table table-bordered align-middle text-center mb-0">
         <thead class="table-light">
           <tr>
-            <th>Sản phẩm</th>
-            <th>Số lượng</th>
-            <th>Đơn vị</th>
-            <th>Đơn giá (₫)</th>
-            <th>Hạn sử dụng</th>
-            <th>Xóa</th>
+            <th style="width: 25%">Sản phẩm</th>
+            <th style="width: 10%">Số lượng</th>
+            <th style="width: 10%">Đơn vị</th>
+            <th style="width: 15%">Đơn giá (₫)</th>
+            <th style="width: 15%">Thành tiền (₫)</th>
+            <th style="width: 15%">Hạn sử dụng</th>
+            <th style="width: 5%">Xóa</th>
           </tr>
         </thead>
         <tbody id="item-body">
           {% for f in formset.forms %}
           <tr class="align-middle">
-            <td>{{ f.product }}</td>
-            <td>{{ f.quantity }}</td>
-            <td>{{ f.unit }}</td>
-            <td>{{ f.unit_price }}</td>
-            <td>{{ f.expiry_date }}</td>
-            <td>{{ f.DELETE }}</td>
+            <td>
+              {{ f.product }}
+              {{ f.product.errors }}
+              <small class="text-muted d-block" style="font-size:11px;">
+                Chỉ từ PO đã chọn.
+              </small>
+            </td>
+            <td>
+              {{ f.quantity }}
+              {{ f.quantity.errors }}
+              <small class="text-muted d-block" style="font-size:11px;">
+                ≤ SL trong PO.
+              </small>
+            </td>
+            <td>
+              {{ f.unit }}
+              {{ f.unit.errors }}
+            </td>
+            <td>
+              {{ f.unit_price }}
+              {{ f.unit_price.errors }}
+              <small class="text-muted d-block" style="font-size:11px;">
+                Tự động từ PO.
+              </small>
+            </td>
+            <td class="text-end fw-semibold text-primary">
+              <span class="line-total">0 ₫</span>
+            </td>
+            <td>
+              {{ f.expiry_date }}
+              {{ f.expiry_date.errors }}
+            </td>
+            <td>
+              {% if formset.can_delete %}
+                {{ f.DELETE }}
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>
+        <tfoot class="table-light fw-semibold">
+          <tr>
+            <td colspan="4" class="text-end">Tổng cộng:</td>
+            <td class="text-end text-primary fs-5" id="grand-total">0 ₫</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
 
     <div class="text-end mt-3">
-      <a href="{% url 'asn_list' %}" class="btn btn-secondary">Hủy</a>
-      <button type="submit" class="btn btn-primary">Lưu phiếu giao hàng</button>
+      <a href="{% url 'asn_list' %}" class="btn btn-secondary">
+        <i class="fa-solid fa-arrow-left-long me-1"></i> Quay lại
+      </a>
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-floppy-disk me-1"></i> Lưu phiếu giao hàng
+      </button>
     </div>
   </form>
 </div>
-
-<style>
-.table th, .table td { vertical-align: middle !important; }
-.table input, .table select { height: 38px; font-size: 14px; }
-</style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const addButton = document.getElementById("add-row");
   const totalForms = document.getElementById("id_items-TOTAL_FORMS");
   const tbody = document.getElementById("item-body");
+  const poSelect = document.getElementById("id_po");
+  const supplierSelect = document.getElementById("id_supplier");
   const firstRow = tbody.querySelector("tr");
+  const grandTotalCell = document.getElementById("grand-total");
+
+  if (!firstRow) return;
+
+  let poProducts = {}; // Sản phẩm và số lượng trong PO
+
+  // ✅ Khi chọn PO, tự động set nhà cung cấp và filter sản phẩm
+  poSelect.addEventListener("change", function() {
+    const poId = this.value;
+    if (!poId) {
+      tbody.querySelectorAll('.product-select').forEach(select => {
+        select.innerHTML = '<option value="">-- Chọn PO trước --</option>';
+      });
+      if (supplierSelect) {
+        supplierSelect.value = '';
+        supplierSelect.style.backgroundColor = '';
+        supplierSelect.removeAttribute('readonly');
+        supplierSelect.removeAttribute('onfocus');
+      }
+      return;
+    }
+
+    // Fetch thông tin PO
+    fetch(`/api/po-details/${poId}/`)
+      .then(res => res.json())
+      .then(data => {
+        // ✅ Tự động set nhà cung cấp từ PO
+        if (data.supplier_id && supplierSelect) {
+          supplierSelect.value = data.supplier_id;
+          // ✅ Không disable vì disabled field không được gửi trong POST
+          // Thay vào đó, thêm readonly style và trigger change event
+          supplierSelect.style.backgroundColor = '#e9ecef';
+          supplierSelect.setAttribute('readonly', 'readonly');
+          supplierSelect.setAttribute('onfocus', 'this.blur()');
+        }
+
+        poProducts = data.products || {};
+        
+        // Cập nhật select sản phẩm
+        tbody.querySelectorAll('.product-select').forEach(select => {
+          const currentValue = select.value;
+          select.innerHTML = '<option value="">-- Chọn sản phẩm --</option>';
+          Object.keys(poProducts).forEach(productId => {
+            const product = poProducts[productId];
+            const option = document.createElement('option');
+            option.value = productId;
+            option.textContent = `${product.code} - ${product.name} (Còn lại: ${product.max_quantity})`;
+            option.dataset.price = product.unit_price;
+            option.dataset.maxQty = product.max_quantity; // Số lượng còn lại trong PO
+            if (productId === currentValue) option.selected = true;
+            select.appendChild(option);
+          });
+        });
+      })
+      .catch(err => {
+        console.error('Error loading PO:', err);
+        alert('Không thể tải thông tin PO. Vui lòng thử lại.');
+      });
+  });
+
+  // ✅ Khi chọn sản phẩm, set đơn giá và giới hạn số lượng
+  tbody.addEventListener("change", function(e) {
+    if (e.target.classList.contains('product-select')) {
+      const row = e.target.closest('tr');
+      const priceInput = row.querySelector('input[name$="-unit_price"]');
+      const qtyInput = row.querySelector('input[name$="-quantity"]');
+      const unitInput = row.querySelector('input[name$="-unit"]');
+      const selectedOption = e.target.options[e.target.selectedIndex];
+      
+      if (selectedOption && selectedOption.dataset.price) {
+        // ✅ Set đơn giá từ PO (mặc định của nhà cung cấp)
+priceInput.value = parseInt(selectedOption.dataset.price);
+
+        
+        // ✅ Giới hạn số lượng <= số lượng trong PO
+        if (selectedOption.dataset.maxQty) {
+          const maxQty = parseInt(selectedOption.dataset.maxQty);
+          qtyInput.max = maxQty;
+          qtyInput.placeholder = `Tối đa: ${maxQty}`;
+          qtyInput.setAttribute('data-max', maxQty);
+        }
+        
+        // ✅ Set đơn vị từ PO
+        if (unitInput && poProducts[selectedOption.value]) {
+          // Có thể lấy từ PO item nếu cần
+        }
+        
+        updateLineTotals();
+      }
+    }
+    
+    // ✅ Validate số lượng khi nhập
+    if (e.target.name && e.target.name.indexOf("-quantity") !== -1) {
+      const row = e.target.closest('tr');
+      const qtyInput = e.target;
+      const maxQty = parseInt(qtyInput.getAttribute('data-max') || qtyInput.max || 999999);
+      const enteredQty = parseInt(qtyInput.value) || 0;
+      
+      if (enteredQty > maxQty) {
+        alert(`Số lượng không được vượt quá ${maxQty} (số lượng còn lại trong PO).`);
+        qtyInput.value = maxQty;
+      }
+      updateLineTotals();
+    }
+  });
+
+  function updateLineTotals() {
+    let grandTotal = 0;
+    tbody.querySelectorAll("tr").forEach(function (row) {
+      const qtyInput = row.querySelector('input[name$="-quantity"]');
+      const priceInput = row.querySelector('input[name$="-unit_price"]');
+      const totalCell = row.querySelector(".line-total");
+      if (!qtyInput || !priceInput || !totalCell) return;
+
+      const qty = parseFloat(qtyInput.value || 0);
+      const price = parseFloat(priceInput.value || 0);
+      const total = qty * price;
+      totalCell.textContent = isNaN(total)
+        ? "0 ₫"
+        : total.toLocaleString("vi-VN") + " ₫";
+      grandTotal += total;
+    });
+    
+    if (grandTotalCell) {
+      grandTotalCell.textContent = grandTotal.toLocaleString("vi-VN") + " ₫";
+    }
+  }
 
   addButton.addEventListener("click", function(e) {
     e.preventDefault();
     const formIndex = parseInt(totalForms.value);
     const newRow = firstRow.cloneNode(true);
+
     newRow.innerHTML = newRow.innerHTML.replace(/items-\d+/g, `items-${formIndex}`);
+
+    newRow.querySelectorAll("input, select").forEach(el => {
+      if (el.type === "checkbox") {
+        el.checked = false;
+      } else {
+        el.value = "";
+      }
+    });
+
+    // ✅ Cập nhật select sản phẩm nếu đã chọn PO
+    if (poSelect.value) {
+      poSelect.dispatchEvent(new Event('change'));
+    }
+
     tbody.appendChild(newRow);
     totalForms.value = formIndex + 1;
+    updateLineTotals();
   });
+
+  // Cập nhật tổng tiền khi thay đổi số lượng hoặc đơn giá
+  tbody.addEventListener("input", function(e) {
+    if (e.target.name && (e.target.name.indexOf("-quantity") !== -1 || e.target.name.indexOf("-unit_price") !== -1)) {
+      updateLineTotals();
+    }
+  });
+
+  updateLineTotals();
 });
 </script>
 {% endblock %}

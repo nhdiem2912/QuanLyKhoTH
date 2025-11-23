@@ -67,28 +67,45 @@ from django import template
 
 register = template.Library()
 
-@register.filter(name='has_group')
-def has_group(user, group_name):
-    """
-    Dùng trong template: {% if user|has_group:"Cửa hàng trưởng" %}
-    """
-    if not user.is_authenticated:
-        return False
-    if user.is_superuser:
-        return True
-    return user.groups.filter(name=group_name).exists()
-
-
-@register.filter(name='has_any_group')
+@register.filter(name="has_any_group")
 def has_any_group(user, group_names):
     """
-    Dùng trong template:
-    {% if user|has_any_group:"Cửa hàng trưởng,Nhân viên" %}
+    Trả về True nếu user thuộc ÍT NHẤT MỘT nhóm trong danh sách group_names
+    group_names: chuỗi, ngăn cách bởi dấu phẩy, vd: "Cửa hàng trưởng,Nhân viên"
     """
-    if not user.is_authenticated:
+    if not getattr(user, "is_authenticated", False):
         return False
-    if user.is_superuser:
-        return True
 
-    names = [g.strip() for g in group_names.split(',') if g.strip()]
-    return user.groups.filter(name__in=names).exists()
+    names = [g.strip() for g in str(group_names).split(",") if g.strip()]
+    if not names:
+        return False
+
+    return user.groups.filter(name__in=names).exists() or user.is_superuser
+
+
+# -------------------------------------------------
+# 2) Thêm class CSS cho field form
+#    {{ field|add_class:"form-control my-2" }}
+# -------------------------------------------------
+from django.forms.boundfield import BoundField
+
+@register.filter(name="add_class")
+def add_class(field, css):
+    if not isinstance(field, BoundField):
+        return field  # trả lại nguyên, không sửa
+    existing = field.field.widget.attrs.get("class", "")
+    new_class = (existing + " " + css).strip()
+    return field.as_widget(attrs={"class": new_class})
+
+
+@register.filter(name="attr")
+def attr(field, arg):
+    if not isinstance(field, BoundField):
+        return field
+    try:
+        key, val = arg.split(":", 1)
+    except ValueError:
+        return field
+    attrs = field.field.widget.attrs.copy()
+    attrs[key] = val
+    return field.as_widget(attrs=attrs)
