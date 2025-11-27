@@ -173,7 +173,17 @@
                 <strong>Ghi chú:</strong> {{ r.note|default:"-" }}
               </div>
             </div>
-
+ <div class="row mb-3">
+    <div class="col-md-12">
+      <strong>Phiếu xuất liên quan:</strong>
+      {% if r.export_receipt %}
+        <span class="text-primary fw-semibold">{{ r.export_receipt.export_code }}</span>
+        – ngày {{ r.export_receipt.export_date|date:"d/m/Y" }}
+      {% else %}
+        <span class="text-muted">Không có</span>
+      {% endif %}
+    </div>
+  </div>
             <h6 class="fw-semibold mt-3 mb-2">Sản phẩm hoàn</h6>
 
             <table class="table table-bordered text-center align-middle">

@@ -128,7 +128,7 @@
         <th style="width:8%;">ĐVT</th>
         <th style="width:8%;">SL</th>
         <th style="width:13%;">ĐƠN GIÁ (₫)</th>
-        <th style="width:10%;">CK (%)</th>
+        <th style="width:10%;">VỊ TRÍ</th>
         <th style="width:15%;">THÀNH TIỀN (₫)</th>
       </tr>
     </thead>
@@ -141,7 +141,7 @@
         <td class="text-center">{{ item.unit }}</td>
         <td class="text-center">{{ item.quantity }}</td>
         <td class="text-right">{{ item.unit_price|floatformat:0|intcomma }}</td>
-        <td class="text-center">{{ item.discount_percent|floatformat:0 }}</td>
+        <td class="text-center">{{ item.location }}</td>
         <td class="text-right">{{ item.total|floatformat:0|intcomma }}</td>
       </tr>
       {% empty %}

@@ -212,18 +212,18 @@
           <i class="fa-solid fa-layer-group"></i> Danh mục
         </a>
 
-        <a class="nav-link d-flex justify-content-between align-items-center"
-           data-bs-toggle="collapse" href="#collapseProduct" role="button" aria-expanded="false">
-          <span><i class="fa-solid fa-boxes-stacked"></i> Quản lý sản phẩm</span>
-          <i class="fa-solid fa-chevron-down small"></i>
-        </a>
-        <div class="collapse {% if '/stock' in request.path %}show{% endif %}"
-             id="collapseProduct">
+<!--        <a class="nav-link d-flex justify-content-between align-items-center"-->
+<!--           data-bs-toggle="collapse" href="#collapseProduct" role="button" aria-expanded="false">-->
+<!--          <span><i class="fa-solid fa-boxes-stacked"></i> Quản lý sản phẩm</span>-->
+<!--          <i class="fa-solid fa-chevron-down small"></i>-->
+<!--        </a>-->
+<!--        <div class="collapse {% if '/stock' in request.path %}show{% endif %}"-->
+<!--             id="collapseProduct">-->
           <a href="{% url 'stock_list' %}"
-             class="nav-link ms-4 {% if '/stock' in request.path %}active{% endif %}">
+             class="nav-link  {% if '/stock' in request.path %}active{% endif %}">
             <i class="fa-solid fa-warehouse me-1"></i> Hàng tồn kho
           </a>
-        </div>
+<!--        </div>-->
 
         <a class="nav-link d-flex justify-content-between align-items-center"
            data-bs-toggle="collapse" href="#collapseOps" role="button" aria-expanded="false">

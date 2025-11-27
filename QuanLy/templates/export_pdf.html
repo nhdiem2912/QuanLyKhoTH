@@ -48,12 +48,25 @@
     <tr>
       <td>Ngày xuất: <strong>{{ receipt.export_date|date:"d/m/Y" }}</strong></td>
     </tr>
+
     <tr>
-      <td>Nơi nhận hàng: <strong>{{ receipt.destination }}</strong></td>
+      <td>Người nhận hàng:
+        <strong>{{ receipt.receiver_name|default:"................................" }}</strong>
+        &nbsp;&nbsp; SĐT:
+        <strong>{{ receipt.receiver_phone|default:"...................." }}</strong>
+      </td>
     </tr>
+
     <tr>
-      <td>Xuất tại kho: <strong>Kho TH True Mart chi nhánh 397 Núi Thành - Đà Nẵng</strong>
-      &nbsp;&nbsp;&nbsp; Người lập phiếu: <strong>{{ receipt.created_by.username }}</strong></td>
+      <td>Địa điểm giao hàng: <strong>{{ receipt.destination|default:".........................................." }}</strong></td>
+    </tr>
+
+    <tr>
+      <td>Xuất tại kho:
+        <strong>Kho TH True Mart chi nhánh 397 Núi Thành - Đà Nẵng</strong>
+        &nbsp;&nbsp;&nbsp; Người lập phiếu:
+        <strong>{{ receipt.created_by.username }}</strong>
+      </td>
     </tr>
   </table>
 
@@ -71,19 +84,26 @@
         <th style="width:13%;">THÀNH TIỀN (₫)</th>
       </tr>
     </thead>
+
     <tbody>
       {% for item in receipt.items.all %}
       <tr>
         <td class="text-center">{{ forloop.counter }}</td>
+
         <td class="text-left">
           {{ item.stock_item.product.name }}
-          {% if item.stock_item.expiry_date %}<br><small>HSD: {{ item.stock_item.expiry_date|date:"d/m/Y" }}</small>{% endif %}
+          {% if item.stock_item.expiry_date %}
+            <br><small>HSD: {{ item.stock_item.expiry_date|date:"d/m/Y" }}</small>
+          {% endif %}
         </td>
+
         <td class="text-center">{{ item.stock_item.import_receipt.import_code }}</td>
         <td class="text-center">{{ item.unit }}</td>
         <td class="text-center">{{ item.quantity }}</td>
+
         <td class="text-right">{{ item.unit_price|floatformat:0|intcomma }}</td>
         <td class="text-center">{{ item.discount_percent|floatformat:0 }}</td>
+
         <td class="text-right">{{ item.total|floatformat:0|intcomma }}</td>
       </tr>
       {% empty %}

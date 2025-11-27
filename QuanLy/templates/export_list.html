@@ -158,7 +158,9 @@
             <div class="row mb-2">
               <div class="col-md-6"><strong>Ngày xuất:</strong> {{ r.export_date|date:"d/m/Y" }}</div>
               <div class="col-md-6"><strong>Người tạo:</strong> {{ r.created_by.username }}</div>
-              <div class="col-md-12"><strong>Địa điểm giao:</strong> {{ r.destination }}</div>
+                <div class="col-md-6"><strong>Người nhận:</strong>{{ r.receiver_name|default:"-" }}</div>
+                <div class="col-md-6 "><strong>SĐT nhận hàng:</strong>{{ r.receiver_phone|default:"-" }}</div>
+              <div class="col-md-6 "><strong>Địa điểm giao:</strong> {{ r.destination }}</div>
             </div>
 
             <h6 class="fw-semibold mt-3 mb-2">Danh sách sản phẩm</h6>

@@ -688,42 +688,9 @@ def create_import(request):
         },
     )
 
-
-
-
-
-# ===================== DELETE IMPORT =====================
-# @group_required('Cửa hàng trưởng')
-# @transaction.atomic
-# @login_required(login_url='login')
-# def delete_import(request, code):
-#     # LẤY THEO MÃ PHIẾU NHẬP (import_code), KHÔNG PHẢI pk
-#     receipt = get_object_or_404(ImportReceipt, import_code=code)
-#
-#     # Trừ tồn kho / xóa lô tương ứng
-#     for item in receipt.items.all():
-#         item.delete()  # ImportItem.delete() đã xử lý StockItem
-#
-#     # Xóa phiếu nhập
-#     receipt.delete()
-#
-#     messages.success(request, f"🗑️ Đã xóa phiếu nhập {code}.")
-#     return redirect("import_list")
-
-
-import pdfkit
-from django.template.loader import render_to_string
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from django.conf import settings
-
-
 @group_required('Cửa hàng trưởng', 'Nhân viên')
 @login_required(login_url='login')
 def import_export_pdf(request, code):
-    """
-    In phiếu nhập kho dạng PDF
-    """
     receipt = get_object_or_404(ImportReceipt, import_code=code)
     html = render_to_string('import_pdf.html', {'receipt': receipt})
 
@@ -748,7 +715,6 @@ def import_export_pdf(request, code):
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename=\"PhieuNhap_{receipt.import_code}.pdf\"'
     return response
-
 
 # ===================== XUẤT KHO =====================
 @group_required('Cửa hàng trưởng', 'Nhân viên')

@@ -72,7 +72,7 @@ class SupplierProduct(models.Model):
     unit_price = models.DecimalField(
         max_digits=15,
         decimal_places=2,
-        verbose_name="Đơn giá NCC"
+        verbose_name="Đơn giá"
     )
 
     is_active = models.BooleanField(default=True, verbose_name="Đang cung cấp")

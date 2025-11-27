@@ -158,6 +158,8 @@
           </div>
           <div class="modal-body">
             <div class="row mb-3">
+
+                <div class="col-md-6"><strong>Phiếu ASN liên quan:</strong>{{r.asn.asn_code}}</div>
               <div class="col-md-6"><strong>Nhà cung ứng:</strong> {{ r.supplier.company_name }}</div>
               <div class="col-md-6"><strong>Ngày nhập:</strong> {{ r.import_date|date:"d/m/Y" }}</div>
               <div class="col-md-6"><strong>Người tạo:</strong> {{ r.created_by.username }}</div>
@@ -174,6 +176,8 @@
                   <th>Tên sản phẩm</th>
                   <th class="text-end">Số lượng</th>
                   <th class="text-end">Đơn giá (₫)</th>
+                    <th class="text-end">Vị trí</th>
+
                   <th class="text-end">Thành tiền</th>
                   <th>Hạn sử dụng</th>
                 </tr>
@@ -185,7 +189,8 @@
                   <td class="text-start">{{ item.product.name }}</td>
                   <td class="text-end">{{ item.quantity|intcomma }}</td>
                   <td class="text-end">{{ item.unit_price|floatformat:0|intcomma }}</td>
-                  <td class="text-end text-success fw-semibold">{{ item.total|floatformat:0|intcomma }}</td>
+                    <td class="text-end">{{item.location}}</td>
+                    <td class="text-end text-success fw-semibold">{{ item.total|floatformat:0|intcomma }}</td>
                   <td>
                     {% if item.expiry_date %}
                       {% if item.expiry_date < today %}
@@ -206,7 +211,7 @@
               </tbody>
               <tfoot class="table-light fw-semibold">
                 <tr>
-                  <td colspan="4" class="text-end">Tổng cộng:</td>
+                  <td colspan="5" class="text-end">Tổng cộng:</td>
                   <td class="text-end text-success">{{ r.total_price|floatformat:0|intcomma }} ₫</td>
                   <td></td>
                 </tr>
