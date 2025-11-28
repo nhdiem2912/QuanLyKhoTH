@@ -1,77 +1,59 @@
 from django import template
+from django.forms.boundfield import BoundField
 
 register = template.Library()
 
-@register.filter
+# =============================
+# 1) Tổng chiết khấu
+# =============================
+@register.filter(name="total_discount")
 def total_discount(items):
     """
-    Tính tổng chiết khấu (VNĐ) từ danh sách items.
-    Mỗi item phải có property discount_value trong model.
+    Tính tổng tiền chiết khấu của ImportReceipt items.
+    Item phải có: quantity, unit_price, discount_percent.
     """
     total = 0
     try:
         for item in items:
-            total += getattr(item, "discount_value", 0)
+            base = (item.quantity or 0) * (item.unit_price or 0)
+            percent = getattr(item, "discount_percent", 0) or 0
+            total += base * percent / 100
     except Exception:
-        total = 0
+        pass
     return total
-from django import template
 
-register = template.Library()
 
-@register.filter
-def sum(items, field_name):
-    """Tính tổng 1 field trong queryset (vd: sum quantity)."""
-    return sum(getattr(i, field_name, 0) for i in items)
-
-@register.filter
-def sum_price(items):
-    """Tính tổng tiền = tổng field total."""
-    return sum(i.total for i in items if hasattr(i, "total"))
-from django import template
-
-register = template.Library()
-
-@register.filter
-def sum(items, field_name):
-    """Tính tổng 1 trường trong queryset."""
+# =============================
+# 2) Tổng theo một trường
+# =============================
+@register.filter(name="sum_field")
+def sum_field(items, field_name):
+    """Tính tổng 1 trường của queryset (vd: sum_field:quantity)."""
     try:
-        return sum(getattr(i, field_name, 0) for i in items)
+        return sum(getattr(i, field_name, 0) or 0 for i in items)
     except Exception:
         return 0
 
-@register.filter
+
+# =============================
+# 3) Tổng giá tiền (total)
+# =============================
+@register.filter(name="sum_price")
 def sum_price(items):
-    """Tính tổng tiền."""
     try:
         return sum((getattr(i, "total", 0) or 0) for i in items)
-    except:
+    except Exception:
         return 0
-from django import template
 
-register = template.Library()
 
-@register.filter
-def total_discount(items):
-    """
-    Tính tổng tiền chiết khấu của toàn bộ items của ImportReceipt.
-    items phải là queryset: receipt.items.all()
-    """
-    total = 0
-    for item in items:
-        base = item.quantity * item.unit_price
-        discount_amount = base * (item.discount_percent / 100)
-        total += discount_amount
-    return total
-from django import template
-
-register = template.Library()
-
+# =============================
+# 4) Kiểm tra user có thuộc nhóm
+# =============================
 @register.filter(name="has_any_group")
 def has_any_group(user, group_names):
     """
-    Trả về True nếu user thuộc ÍT NHẤT MỘT nhóm trong danh sách group_names
-    group_names: chuỗi, ngăn cách bởi dấu phẩy, vd: "Cửa hàng trưởng,Nhân viên"
+    group_names: "Cửa hàng trưởng,Nhân viên"
+    Trả về True nếu user thuộc ÍT NHẤT 1 group.
     """
     if not getattr(user, "is_authenticated", False):
         return False
@@ -83,23 +65,26 @@ def has_any_group(user, group_names):
     return user.groups.filter(name__in=names).exists() or user.is_superuser
 
 
-# -------------------------------------------------
-# 2) Thêm class CSS cho field form
-#    {{ field|add_class:"form-control my-2" }}
-# -------------------------------------------------
-from django.forms.boundfield import BoundField
-
+# =============================
+# 5) Thêm CSS class cho field
+# =============================
 @register.filter(name="add_class")
 def add_class(field, css):
     if not isinstance(field, BoundField):
-        return field  # trả lại nguyên, không sửa
+        return field
     existing = field.field.widget.attrs.get("class", "")
     new_class = (existing + " " + css).strip()
     return field.as_widget(attrs={"class": new_class})
 
 
+# =============================
+# 6) Thêm bất kỳ attribute
+# =============================
 @register.filter(name="attr")
 def attr(field, arg):
+    """
+    {{ field|attr:"placeholder:Nhập tên" }}
+    """
     if not isinstance(field, BoundField):
         return field
     try:

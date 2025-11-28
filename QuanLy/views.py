@@ -1,28 +1,12 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Sum
-from datetime import date
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from decimal import Decimal
-import pdfkit
-
-from .models import ImportReceipt, ExportReceipt, ReturnReceipt
-
 from .models import (
     Category,  StockItem,
     Supplier, SupplierProduct, ImportReceipt, ImportItem,
     ExportReceipt, ExportItem,
     ReturnReceipt, ReturnItem,
     PurchaseOrder, PurchaseOrderItem,
-    ASN, ASNItem
-)
-# ✅ NOTE: ImportItem đã được import ở trên
+    ASN, ASNItem)
 from .forms import (
     CategoryForm, SupplierForm,
     StockItemForm,
@@ -30,26 +14,42 @@ from .forms import (
     ExportReceiptForm, ExportItemFormSet,
     ReturnReceiptForm, ReturnItemFormSet,
     PurchaseOrderForm, PurchaseOrderItemFormSet,
-    ASNForm, ASNItemFormSet, SupplierProductFormSet,
-)
-
+    ASNForm, ASNItemFormSet, SupplierProductFormSet,)
 from .decorators import group_required, get_permission_flags
 
-
-# ===================== DASHBOARD =====================
-
+# ===================== DASHBOARD TRANG CHỦ =====================
 @group_required('Cửa hàng trưởng', 'Nhân viên')
 def index(request):
-    today = date.today()
+    today = timezone.localdate()
+
+    # --- Đếm phiếu theo hôm nay ---
+    import_today = ImportReceipt.objects.filter(import_date=today).count()
+    export_today = ExportReceipt.objects.filter(export_date=today).count()
+    return_today = ReturnReceipt.objects.filter(return_date=today).count()
+
+    # --- TỔNG SỐ LƯỢNG HÀNG ĐANG LƯU KHO ---
+    stock_total = StockItem.objects.aggregate(total=Sum("quantity"))["total"] or 0
+
+    # (nếu bạn muốn giữ thêm các chỉ số khác:)
+    expired = StockItem.objects.filter(status="expired").count()
+    nearly_expired = StockItem.objects.filter(status="nearly_expired").count()
+    total_products = SupplierProduct.objects.values("product_code").distinct().count()
+
     context = {
         "today": today.strftime("%d/%m/%Y"),
-        "total_products": SupplierProduct.objects.values("product_code").distinct().count(),
-        "total_stock": StockItem.objects.aggregate(total=Sum("quantity"))["total"] or 0,
-        "expired": StockItem.objects.filter(status="expired").count(),
-        "nearly_expired": StockItem.objects.filter(status="nearly_expired").count(),
-        "total_imports": ImportReceipt.objects.count(),
-        "total_exports": ExportReceipt.objects.count(),
-        "total_returns": ReturnReceipt.objects.count(),
+
+        # tổng tồn kho (dùng cho cả hero + thẻ "Tồn kho hiện tại")
+        "stock_total": stock_total,
+
+        # tổng quan hôm nay
+        "import_count_today": import_today,
+        "export_count_today": export_today,
+        "return_count_today": return_today,
+
+        # nếu bạn còn dùng ở nơi khác thì giữ lại:
+        "expired": expired,
+        "nearly_expired": nearly_expired,
+        "total_products": total_products,
     }
     return render(request, "index.html", context)
 
@@ -150,7 +150,7 @@ def add_category(request):
     form = CategoryForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         form.save()
-        messages.success(request, "✅ Thêm danh mục mới thành công!")
+        messages.success(request, "Thêm danh mục mới thành công!")
         return redirect("categories")
     return render(request, "category_add.html", {"form": form})
 
@@ -162,7 +162,7 @@ def edit_category(request, pk):
     form = CategoryForm(request.POST or None, request.FILES or None, instance=category)
     if request.method == "POST" and form.is_valid():
         form.save()
-        messages.success(request, "✅ Đã cập nhật danh mục!")
+        messages.success(request, " Đã cập nhật danh mục!")
         return redirect("categories")
     return render(request, "category_edit.html", {"form": form, "category": category})
 
@@ -195,7 +195,14 @@ def suppliers(request):
     city = request.GET.get("city", "")
     count_filter = request.GET.get("count", "")
 
-    suppliers = Supplier.objects.all()
+    user = request.user
+    perms = get_permission_flags(user)
+
+    if perms["is_supplier"]:
+        # username của user NCC = supplier_code
+        suppliers = Supplier.objects.filter(supplier_code=user.username)
+    else:
+        suppliers = Supplier.objects.all()
 
     # --- Search (Tên, mã, người liên hệ, email, số điện thoại…) ---
     if q:
@@ -268,11 +275,11 @@ def add_supplier(request):
                 for obj in formset.deleted_objects:
                     obj.delete()
 
-                messages.success(request, "✅ Đã thêm NCC kèm sản phẩm cung cấp.")
+                messages.success(request, "Đã thêm nhà cung ứng mới.")
                 return redirect("suppliers")
             except Exception as e:
                 import traceback
-                messages.error(request, f"❌ Lỗi khi lưu: {str(e)}")
+                messages.error(request, f"Lỗi khi lưu: {str(e)}")
                 print(f"Error in add_supplier: {str(e)}")
                 print(traceback.format_exc())
         else:
@@ -289,6 +296,12 @@ def add_supplier(request):
 @login_required(login_url='login')
 @transaction.atomic
 def edit_supplier(request, pk):
+    user = request.user
+    perms = get_permission_flags(user)
+
+    if perms["is_supplier"] and pk != user.username:
+        return redirect("suppliers")  # silent redirect
+
     supplier = get_object_or_404(Supplier, pk=pk)
 
     supplier_form = SupplierForm(request.POST or None, instance=supplier)
@@ -325,11 +338,11 @@ def edit_supplier(request, pk):
                 for obj in formset.deleted_objects:
                     obj.delete()
 
-                messages.success(request, "✅ Đã cập nhật NCC.")
+                messages.success(request, "Đã cập nhật nhà cung ứng.")
                 return redirect("suppliers")
             except Exception as e:
                 import traceback
-                messages.error(request, f"❌ Lỗi khi lưu: {str(e)}")
+                messages.error(request, f"Lỗi khi lưu: {str(e)}")
                 print(f"Error in edit_supplier: {str(e)}")
                 print(traceback.format_exc())
         else:
@@ -341,25 +354,6 @@ def edit_supplier(request, pk):
     })
 
 
-# @group_required('Cửa hàng trưởng', 'Nhà cung ứng')
-# @login_required(login_url='login')
-# @transaction.atomic
-# def delete_supplier(request, pk):
-#     supplier = get_object_or_404(Supplier, pk=pk)
-#     if request.method == "POST":
-#         try:
-#             supplier.delete()
-#             messages.success(request, f"✅ Đã xóa nhà cung ứng {supplier.company_name}.")
-#             return JsonResponse({"success": True})
-#         except Exception as e:
-#             messages.error(request, f"❌ Lỗi khi xóa: {str(e)}")
-#             return JsonResponse({"success": False, "error": str(e)})
-#     return JsonResponse({"success": False})
-
-
-# ===================== SẢN PHẨM KINH DOANH - ĐÃ XÓA =====================
-# ✅ Đã chuyển logic quản lý sản phẩm sang trang nhà cung ứng
-# Sản phẩm được quản lý thông qua SupplierProduct trong formset của nhà cung ứng
 
 
 # ===================== TỒN KHO =====================
@@ -379,11 +373,18 @@ def stock_list(request):
 
     # Lấy danh sách tất cả category và location để fill vào select box
     categories = Category.objects.all().order_by("name")
-    locations = StockItem.objects.exclude(location__isnull=True).exclude(location="").values_list("location",
-                                                                                                  flat=True).distinct()
+    locations = StockItem.objects.exclude(location__isnull=True)\
+                                 .exclude(location="")\
+                                 .values_list("location", flat=True)\
+                                 .distinct()
 
     # Lọc tồn kho
-    stocks = StockItem.objects.select_related("product", "product__category", "import_receipt")
+    stocks = StockItem.objects.select_related(
+        "product",
+        "product__category",
+        "import_receipt",
+        "return_receipt"
+    )
 
     # Tìm kiếm theo nhiều trường
     if query:
@@ -413,12 +414,16 @@ def stock_list(request):
         models.When(status="valid", then=models.Value(1)),
         models.When(status="expired", then=models.Value(2)),
         default=models.Value(3),
-        output_field=models.IntegerField()
+        output_field=models.IntegerField(),
     )
     stocks = stocks.order_by(sort_order, "-import_receipt__import_date")
 
+    # Cập nhật trạng thái hạn sử dụng nếu cần
     for s in stocks:
-        s.save()  # cập nhật trạng thái hạn nếu cần
+        s.save()
+
+    # ⭐ TÍNH TỔNG TỒN KHO (quantity toàn bộ StockItem)
+    stock_total = StockItem.objects.aggregate(total=models.Sum("quantity"))["total"] or 0
 
     return render(request, "stock_list.html", {
         "stocks": stocks,
@@ -428,6 +433,7 @@ def stock_list(request):
         "category_filter": category_filter,
         "status_filter": status_filter,
         "location_filter": location_filter,
+        "stock_total": stock_total,  # ⭐ THÊM VÀO CONTEXT
     })
 
 
@@ -438,7 +444,7 @@ def edit_stock(request, pk):
     form = StockItemForm(request.POST or None, instance=stock)
     if request.method == "POST" and form.is_valid():
         form.save()
-        messages.success(request, "✅ Cập nhật tồn kho thành công!")
+        messages.success(request, "Cập nhật tồn kho thành công!")
         return redirect("stock_list")
     return render(request, "stock_edit.html", {"form": form, "stock": stock})
 
@@ -587,7 +593,7 @@ def create_import(request):
 
                 messages.success(
                     request,
-                    f"✅ Đã tạo phiếu nhập {receipt.import_code} thành công."
+                    f" Đã tạo phiếu nhập {receipt.import_code} thành công."
                 )
                 return redirect("import_list")
 
@@ -595,7 +601,7 @@ def create_import(request):
                 import traceback
                 print("Error when saving import:", e)
                 print(traceback.format_exc())
-                messages.error(request, f"❌ Lỗi khi lưu phiếu nhập: {e}")
+                messages.error(request, f" Lỗi khi lưu phiếu nhập: {e}")
         else:
             # log lỗi chi tiết
             print("IMPORT FORM ERRORS:", form.errors)
@@ -603,18 +609,18 @@ def create_import(request):
             if form.errors:
                 for field, errs in form.errors.items():
                     for er in errs:
-                        messages.error(request, f"❌ {field}: {er}")
+                        messages.error(request, f" {field}: {er}")
             if formset.errors:
                 for i, err_dict in enumerate(formset.errors):
                     for field, errs in err_dict.items():
                         for er in errs:
                             messages.error(
                                 request,
-                                f"❌ Dòng {i+1} - {field}: {er}"
+                                f"Dòng {i+1} - {field}: {er}"
                             )
             if formset.non_form_errors():
                 for er in formset.non_form_errors():
-                    messages.error(request, f"❌ {er}")
+                    messages.error(request, f"{er}")
 
         # nếu tới đây là có lỗi → render lại form với dữ liệu người dùng
         return render(
@@ -631,6 +637,10 @@ def create_import(request):
     asn_code = request.GET.get("asn")
     asn = ASN.objects.filter(pk=asn_code).first() if asn_code else None
 
+    # 🔥 Chỉ lấy ASN chưa được nhập kho
+    available_asn = ASN.objects.filter(
+        importreceipt__asn__isnull=True
+    )
     initial = {}
     if asn:
         initial["asn"] = asn
@@ -685,6 +695,7 @@ def create_import(request):
             "form": form,
             "formset": formset,
             "categories": categories,
+            "available_asn": available_asn,
         },
     )
 
@@ -770,104 +781,103 @@ def export_list(request):
     })
 
 
-@group_required('Cửa hàng trưởng', 'Nhân viên')
-@login_required(login_url='login')
+@group_required("Cửa hàng trưởng", "Nhân viên")
+@login_required(login_url="login")
 @transaction.atomic
 def create_export(request):
+
+    # ================== FEFO STOCK QUERYSET ==================
+    stock_queryset = StockItem.objects.filter(quantity__gt=0).order_by("expiry_date")
+
     if request.method == "POST":
         form = ExportReceiptForm(request.POST)
         formset = ExportItemFormSet(request.POST, prefix="items")
 
-        print("=== DEBUG EXPORT FORM ===")
-        print("POST DATA:", request.POST)
-
+        # Validate form + formset
         if form.is_valid() and formset.is_valid():
-            # 🔹 Kiểm tra tồn kho TRƯỚC khi lưu
-            for idx, f in enumerate(formset):
-                cd = f.cleaned_data
-                if not cd or cd.get("DELETE"):
+
+            # ===== VALIDATE TRƯỚC KHI LƯU =====
+            for f in formset.forms:
+                if f.cleaned_data.get("DELETE"):
                     continue
 
-                stock_item = cd.get("stock_item")
-                qty = cd.get("quantity") or 0
+                stock_item = f.cleaned_data.get("stock_item")
+                qty = f.cleaned_data.get("quantity") or 0
 
-                if not stock_item:
+                # Dòng trống → bỏ qua
+                if not stock_item or qty <= 0:
                     continue
 
+                # Số lượng vượt tồn kho
                 if qty > stock_item.quantity:
                     messages.error(
                         request,
-                        f"❌ Dòng {idx+1}: Số lượng {qty} vượt tồn kho hiện có ({stock_item.quantity})."
+                        f"Số lượng xuất ({qty}) lớn hơn tồn kho của lô {stock_item} ({stock_item.quantity})."
                     )
                     return render(request, "export_create.html", {
                         "form": form,
-                        "formset": formset
+                        "formset": formset,
+                        "stock_queryset": stock_queryset,
                     })
 
-            # 🔹 Lưu phiếu xuất
-            receipt = form.save(commit=False)
-            receipt.created_by = request.user
+            # ===== LƯU PHIẾU XUẤT =====
+            export = form.save(commit=False)
+            export.created_by = request.user
+            export.save()
 
-            if not receipt.export_code:
-                receipt.export_code = ExportReceipt.generate_new_code()
+            saved_count = 0
 
-            receipt.save()
+            # ===== LƯU TỪNG ITEM =====
+            for f in formset.forms:
+                if f.cleaned_data.get("DELETE"):
+                    continue
 
-            saved = 0
-            for f in formset:
-                cd = f.cleaned_data
-                if not cd or cd.get("DELETE"):
+                stock_item = f.cleaned_data.get("stock_item")
+                qty = f.cleaned_data.get("quantity") or 0
+
+                # Bỏ dòng trống
+                if not stock_item or qty <= 0:
                     continue
 
                 item = f.save(commit=False)
-                if not item.stock_item:
-                    continue
+                item.receipt = export
+                item.save()     # <-- ExportItem.save() sẽ tự trừ tồn
 
-                item.receipt = receipt
-                item.save()      # ExportItem.save() sẽ tự trừ tồn kho
-                saved += 1
+                saved_count += 1
 
-            if saved == 0:
-                receipt.delete()
-                messages.error(request, "❌ Không có dòng hợp lệ.")
+            # Nếu không có dòng nào hợp lệ → xoá phiếu export vừa tạo
+            if saved_count == 0:
+                export.delete()
+                messages.error(request, "Không có dòng hàng hợp lệ. Hãy chọn ít nhất 1 lô.")
                 return render(request, "export_create.html", {
                     "form": form,
-                    "formset": formset
+                    "formset": formset,
+                    "stock_queryset": stock_queryset,
                 })
 
-            messages.success(request, f"✅ Đã tạo phiếu xuất {receipt.export_code}.")
+            messages.success(request, f"Tạo phiếu xuất {export.export_code} thành công!")
             return redirect("export_list")
 
-        messages.error(request, "❌ Lỗi dữ liệu.")
-        print("FORM ERROR:", form.errors)
-        print("FORMSET ERROR:", formset.errors)
+        # Form không hợp lệ
+        messages.error(request, "Dữ liệu nhập chưa đúng. Vui lòng kiểm tra.")
+        return render(request, "export_create.html", {
+            "form": form,
+            "formset": formset,
+            "stock_queryset": stock_queryset,
+        })
 
-        return render(request, "export_create.html", {"form": form, "formset": formset})
-
-    # GET: hiển thị form với mã PX mới
+    # ================== GET REQUEST ==================
+    # → tạo form mới + code mới
     new_code = ExportReceipt.generate_new_code()
     form = ExportReceiptForm(initial={"export_code": new_code})
     formset = ExportItemFormSet(prefix="items")
-    return render(request, "export_create.html", {"form": form, "formset": formset})
 
+    return render(request, "export_create.html", {
+        "form": form,
+        "formset": formset,
+        "stock_queryset": stock_queryset,
+    })
 
-# @group_required('Cửa hàng trưởng')
-# @login_required(login_url='login')
-# @transaction.atomic
-# def delete_export(request, code):
-#     receipt = get_object_or_404(ExportReceipt, export_code=code)
-#
-#     for item in receipt.items.select_related("stock_item"):
-#         si = item.stock_item
-#         si.quantity += item.quantity
-#         si.save()
-#
-#         item.delete()
-#
-#     receipt.delete()
-#
-#     messages.success(request, f"🗑️ Đã xóa phiếu xuất {code} và hoàn tồn.")
-#     return redirect("export_list")
 
 
 # views.py
@@ -909,7 +919,6 @@ def export_export_pdf(request, code):
     return response
 
 
-# ------------------------ DANH SÁCH PHIẾU HOÀN ------------------------
 # ------------------------ DANH SÁCH PHIẾU HOÀN ------------------------
 # ===================== HOÀN HÀNG =====================
 @group_required('Cửa hàng trưởng', 'Nhân viên')
@@ -1024,15 +1033,15 @@ def create_return(request):
 
                 if saved == 0:
                     receipt.delete()
-                    messages.warning(request, "⚠️ Chưa có sản phẩm hợp lệ.")
+                    messages.warning(request, "Chưa có sản phẩm hợp lệ.")
                     return redirect("return_list")
 
-                messages.success(request, f"✅ Đã tạo phiếu hoàn {receipt.return_code}.")
+                messages.success(request, f"Đã tạo phiếu hoàn {receipt.return_code}.")
                 return redirect("return_list")
 
             except Exception as e:
                 import traceback
-                messages.error(request, f"❌ Lỗi khi lưu: {str(e)}")
+                messages.error(request, f"Lỗi khi lưu: {str(e)}")
                 print(f"Error in create_return: {str(e)}")
                 print(traceback.format_exc())
         else:
@@ -1040,15 +1049,15 @@ def create_return(request):
             if form.errors:
                 for field, errors in form.errors.items():
                     for error in errors:
-                        messages.error(request, f"❌ {field}: {error}")
+                        messages.error(request, f"{field}: {error}")
             if formset.errors:
                 for error_dict in formset.errors:
                     for field, errors in error_dict.items():
                         for error in errors:
-                            messages.error(request, f"❌ {field}: {error}")
+                            messages.error(request, f" {field}: {error}")
             if formset.non_form_errors():
                 for error in formset.non_form_errors():
-                    messages.error(request, f"❌ {error}")
+                    messages.error(request, f"{error}")
 
         return render(request, "return_create.html", {"form": form, "formset": formset})
 
@@ -1061,23 +1070,6 @@ def create_return(request):
     )
     return render(request, "return_create.html", {"form": form, "formset": formset})
 
-
-# @group_required('Cửa hàng trưởng')
-# @login_required(login_url='login')
-# @transaction.atomic
-# def delete_return(request, code):
-#     receipt = get_object_or_404(ReturnReceipt, return_code=code)
-#
-#     for item in receipt.items.all():
-#         # nếu có lô tồn kho thì xóa
-#         if item.stock_item_id:
-#             item.stock_item.delete()
-#         item.delete()
-#
-#     receipt.delete()
-#
-#     messages.success(request, f"🗑️ Đã xóa phiếu hoàn {code}.")
-#     return redirect("return_list")
 
 
 from .models import ReturnReceipt
@@ -1141,6 +1133,11 @@ def po_list(request):
     ).prefetch_related(
         "items__product"
     )
+    user = request.user
+    perms = get_permission_flags(user)
+
+    if perms["is_supplier"]:
+        pos = pos.filter(supplier__supplier_code=user.username)
 
     # --- SEARCH ---
     if q:
@@ -1231,10 +1228,10 @@ def create_po(request):
         formset.instance = po
         formset.save()
 
-        messages.success(request, f"✅ Đã tạo đơn đặt hàng {po.po_code} thành công!")
+        messages.success(request, f"Đã tạo đơn đặt hàng {po.po_code} thành công!")
         return redirect("po_list")
 
-    messages.error(request, "❌ Dữ liệu chưa hợp lệ.")
+    messages.error(request, " Dữ liệu chưa hợp lệ.")
     return render(request, "po_create.html", {"form": form, "formset": formset})
 
 
@@ -1243,30 +1240,37 @@ def create_po(request):
 @login_required(login_url='login')
 @transaction.atomic
 def po_edit(request, code):
+    user = request.user
+    perms = get_permission_flags(user)
+
+    if perms["is_supplier"]:
+        po_obj = get_object_or_404(PurchaseOrder, pk=code)
+        if po_obj.supplier.supplier_code != user.username:
+            return redirect("po_list")  # silent redirect
+
     po = get_object_or_404(PurchaseOrder, pk=code)
     form = PurchaseOrderForm(request.POST or None, instance=po)
     if request.method == "POST":
         if form.is_valid():
             form.save()
-            messages.success(request, f"✅ Đã cập nhật đơn đặt hàng {po.po_code}.")
+            messages.success(request, f" Đã cập nhật đơn đặt hàng {po.po_code}.")
             return redirect("po_list")
-        messages.error(request, "❌ Cập nhật thất bại, vui lòng kiểm tra lại.")
+        messages.error(request, " Cập nhật thất bại, vui lòng kiểm tra lại.")
     return render(request, "po_edit.html", {"form": form, "po": po})
 
 
-# @group_required('Cửa hàng trưởng')
-# @login_required(login_url='login')
-# def delete_po(request, code):
-#     po = get_object_or_404(PurchaseOrder, pk=code)
-#     po.delete()
-#     messages.success(request, f"🗑️ Đã xóa đơn đặt hàng {code} thành công.")
-#     return redirect("po_list")
 
-
-@group_required('Cửa hàng trưởng', 'Nhân viên')
+@group_required('Cửa hàng trưởng', 'Nhân viên', 'Nhà cung ứng')
 @login_required(login_url='login')
 def po_export_pdf(request, code):
+    user = request.user
+    perms = get_permission_flags(user)
+
+    # lấy PO trước
     po = get_object_or_404(PurchaseOrder, po_code=code)
+
+    if perms["is_supplier"] and po.supplier.supplier_code != user.username:
+        return redirect("po_list")
 
     html = render_to_string("po_pdf.html", {"po": po})
 
@@ -1278,19 +1282,13 @@ def po_export_pdf(request, code):
         html,
         False,
         configuration=config,
-        options={
-            "encoding": "utf-8",
-            "page-size": "A4",
-            "margin-top": "10mm",
-            "margin-bottom": "15mm",
-            "margin-left": "10mm",
-            "margin-right": "10mm",
-        }
+        options={"encoding": "utf-8"}
     )
 
     response = HttpResponse(pdf, content_type="application/pdf")
     response["Content-Disposition"] = f'inline; filename="PO_{po.po_code}.pdf"'
     return response
+
 
 
 # ===================== ASN =====================
@@ -1306,50 +1304,53 @@ from datetime import date, timedelta
 @group_required('Cửa hàng trưởng', 'Nhân viên', 'Nhà cung ứng')
 @login_required(login_url='login')
 def asn_list(request):
+    user = request.user
+    perms = get_permission_flags(user)
+
+    # supplier_id an toàn (không lỗi user.supplier)
+    supplier_id_user = getattr(user, "supplier_id", None)
+    supplier_code_user = getattr(user, "username", None)
+
+    # load base queryset
+    asns = ASN.objects.all().select_related("supplier", "po")
+
+    # NCC chỉ xem phiếu của chính họ
+    if perms["is_supplier"]:
+        asns = asns.filter(supplier__supplier_code=supplier_code_user)
+
+    # ----- FILTER FORM -----
     q = request.GET.get("q", "").strip()
     supplier_id = request.GET.get("supplier", "")
     date_from = request.GET.get("date_from", "")
     date_to = request.GET.get("date_to", "")
-    status = request.GET.get("status", "")  # overdue | soon | normal
+    status = request.GET.get("status", "")
     count_filter = request.GET.get("count", "")
 
-    today = date.today()
-
-    asns = ASN.objects.prefetch_related(
-        "items__product",
-        "po",
-        "supplier",
-        "created_by"
-    )
-
-
-    # --- SEARCH ---
+    # SEARCH
     if q:
         asns = asns.filter(
             Q(asn_code__icontains=q) |
             Q(po__po_code__icontains=q) |
             Q(supplier__company_name__icontains=q) |
-            Q(note__icontains=q) |
             Q(items__product__name__icontains=q) |
-            Q(created_by__username__icontains=q)
+            Q(deliverer_name__icontains=q)
         ).distinct()
 
-    # --- FILTER SUPPLIER ---
-    if supplier_id:
+    # FILTER SUPPLIER (chỉ cho nhân viên / cửa hàng trưởng)
+    if not perms["is_supplier"] and supplier_id:
         asns = asns.filter(supplier_id=supplier_id)
 
-    # --- FILTER DATE RANGE ---
+    # DATE RANGE
     if date_from:
         asns = asns.filter(expected_date__gte=date_from)
-
     if date_to:
         asns = asns.filter(expected_date__lte=date_to)
 
-    # --- FILTER BY ASN STATUS ---
+    # STATUS
     if status:
         asns = asns.filter(status=status)
 
-    # --- FILTER BY ITEM COUNT ---
+    # COUNT SP
     if count_filter == "0":
         asns = asns.annotate(total_items=Count("items")).filter(total_items=0)
     elif count_filter == "1":
@@ -1357,10 +1358,8 @@ def asn_list(request):
 
     asns = asns.order_by("-expected_date")
 
-    # Supplier list for filter
     suppliers = Supplier.objects.all()
 
-    perms = get_permission_flags(request.user)
     return render(request, "asn_list.html", {
         "asns": asns,
         "suppliers": suppliers,
@@ -1370,36 +1369,50 @@ def asn_list(request):
         "date_to": date_to,
         "status": status,
         "count_filter": count_filter,
-        "today": today,
-        "today_plus_30": today + timedelta(days=30),
-        **perms,
+        "can_edit_asn": perms["is_supplier"],
+        "can_create_asn": perms["is_supplier"],
+        **perms
     })
 
 
-@group_required('Nhà cung ứng')
-@login_required(login_url='login')
+
+@group_required("Nhà cung ứng")
+@login_required(login_url="login")
 @transaction.atomic
 def create_asn(request):
+    user = request.user
+    supplier = Supplier.objects.filter(supplier_code=user.username).first()
+
+    if not supplier:
+        messages.error(request, "Tài khoản chưa được gán Nhà cung ứng.")
+        return redirect("asn_list")
+
+    # PO của NCC này
+    allowed_po = PurchaseOrder.objects.filter(supplier=supplier)
+
     po = None
 
     if request.method == "POST":
         po_id = request.POST.get("po")
+
+        # chặn chọn PO không thuộc về NCC này
         if po_id:
-            po = PurchaseOrder.objects.filter(pk=po_id).first()
+            po = PurchaseOrder.objects.filter(pk=po_id, supplier=supplier).first()
+            if not po:
+                messages.error(request, "Bạn không có quyền tạo ASN từ PO này.")
+                return redirect("asn_list")
 
         mutable_post = request.POST.copy()
-        if po and (not mutable_post.get("supplier") or mutable_post.get("supplier") == ""):
-            mutable_post["supplier"] = str(po.supplier_id)
+        mutable_post["supplier"] = str(supplier.pk)
 
         form = ASNForm(mutable_post)
-
         if form.is_valid():
             asn = form.save(commit=False)
             if not asn.asn_code:
                 asn.asn_code = ASN.generate_new_code()
-            if po and not asn.supplier:
-                asn.supplier = po.supplier
-            asn.created_by = request.user
+
+            asn.supplier = supplier
+            asn.created_by = user
             asn.save()
 
             formset = ASNItemFormSet(
@@ -1410,26 +1423,30 @@ def create_asn(request):
 
             if formset.is_valid():
                 items = formset.save(commit=False)
+
                 for item in items:
-                    if not item.product_id or not item.quantity:
+                    if not item.product_id:
                         continue
+                    if not item.quantity or item.quantity <= 0:
+                        messages.error(request, "Số lượng phải > 0")
+                        return render(request, "asn_create.html", {
+                            "form": form,
+                            "formset": formset,
+                            "allowed_po": allowed_po
+                        })
                     item.asn = asn
                     item.save()
 
                 for obj in formset.deleted_objects:
                     obj.delete()
 
-                messages.success(request, f"✅ Phiếu ASN {asn.asn_code} đã được tạo!")
+                messages.success(request, f"Tạo ASN {asn.asn_code} thành công.")
                 return redirect("asn_list")
+
             else:
-                for error_dict in formset.errors:
-                    for field, errors in error_dict.items():
-                        for error in errors:
-                            messages.error(request, f"❌ {field}: {error}")
+                messages.error(request, " Lỗi sản phẩm.")
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"❌ {field}: {error}")
+            messages.error(request, " Lỗi thông tin phiếu.")
 
         formset = ASNItemFormSet(
             mutable_post,
@@ -1447,84 +1464,83 @@ def create_asn(request):
     return render(request, "asn_create.html", {
         "form": form,
         "formset": formset,
+        "allowed_po": allowed_po
     })
 
 
+# ================= ASN EXPORT PDF =================
 @group_required('Cửa hàng trưởng', 'Nhân viên', 'Nhà cung ứng')
+@login_required(login_url='login')
 def asn_export_pdf(request, code):
+    user = request.user
+    perms = get_permission_flags(user)
+
     asn = get_object_or_404(ASN, asn_code=code)
 
-    # Render HTML từ template
+    # Nhà cung ứng chỉ xem được phiếu của chính mình
+    if perms["is_supplier"] and asn.supplier.supplier_code != user.username:
+        return redirect("asn_list")
+
     html = render_to_string("asn_pdf.html", {"asn": asn})
 
-    # Cấu hình wkhtmltopdf (giống po_export_pdf)
     config = pdfkit.configuration(
         wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
     )
 
-    pdf = pdfkit.from_string(
-        html,
-        False,
-        configuration=config,
-        options={
-            "encoding": "utf-8",
-            "page-size": "A4",
-            "margin-top": "10mm",
-            "margin-bottom": "15mm",
-            "margin-left": "10mm",
-            "margin-right": "10mm",
-        }
-    )
+    pdf = pdfkit.from_string(html, False, configuration=config)
 
     response = HttpResponse(pdf, content_type="application/pdf")
-    response["Content-Disposition"] = f'inline; filename=\"ASN_{asn.asn_code}.pdf\"'
+    # ✅ SỬA LẠI DÒNG NÀY: nháy đơn/bép phải khớp
+    response['Content-Disposition'] = f'inline; filename="ASN_{asn.asn_code}.pdf"'
     return response
 
 
+# ================= EDIT ASN STATUS (NHÀ CUNG ỨNG) =================
 from .forms import ASNStatusForm
 from .decorators import group_required
-@group_required("Nhà cung ứng")   # chỉ NCC được sửa
+@group_required("Nhà cung ứng")
 @login_required(login_url="login")
 def edit_asn(request, code):
+    user = request.user
+    perms = get_permission_flags(user)
 
-    asn = get_object_or_404(ASN, pk=code)
+    # Lấy ASN
+    asn = get_object_or_404(ASN, asn_code=code)
 
+    # Chỉ người tạo mới được sửa
+    if asn.supplier.supplier_code != user.username:
+        messages.error(request, "Bạn không có quyền chỉnh sửa phiếu này.")
+        return redirect("asn_list")
+
+    # ----- POST -----
     if request.method == "POST":
         form = ASNStatusForm(request.POST, instance=asn)
+
         if form.is_valid():
             form.save()
-            messages.success(request, f"✅ Đã cập nhật trạng thái của ASN {asn.asn_code}.")
+            messages.success(request, f"Đã cập nhật trạng thái ASN {asn.asn_code} thành công!")
             return redirect("asn_list")
         else:
-            messages.error(request, "❌ Dữ liệu chưa hợp lệ.")
+            messages.error(request, " Dữ liệu không hợp lệ.")
+
+    # ----- GET -----
     else:
         form = ASNStatusForm(instance=asn)
 
     return render(request, "asn_edit.html", {
         "asn": asn,
         "form": form,
+        "is_supplier": True,
     })
 
 
-from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect
 
 
-# @group_required('Nhà cung ứng')
-# @login_required(login_url='login')
-# def delete_asn(request, code):
-#     """Xóa phiếu giao hàng ASN cùng các chi tiết liên quan."""
-#     asn = get_object_or_404(ASN, pk=code)
-#     asn.delete()
-#     messages.success(request, f"🗑️ Đã xóa phiếu giao hàng {code} thành công.")
-#     return redirect("asn_list")
+
+
 
 
 # ===================== BÁO CÁO =====================
-# views.py
-from django.db.models import Sum
-from datetime import date
-import json
 
 
 
@@ -1836,6 +1852,13 @@ from .models import Supplier, SupplierProduct, ImportItem   # thêm ImportItem n
 @group_required('Cửa hàng trưởng', 'Nhân viên', 'Nhà cung ứng')
 @login_required(login_url='login')
 def supplier_history(request, pk):
+    user = request.user
+    perms = get_permission_flags(user)
+
+    # NCC chỉ xem được lịch sử của chính họ
+    if perms["is_supplier"] and pk != user.username:
+        return redirect("suppliers")  # silent redirect
+
     # pk chính là supplier_code
     supplier = get_object_or_404(Supplier, pk=pk)
 

@@ -90,7 +90,8 @@
 
           <td class="text-center">
   <div class="btn-group btn-group-sm">
-    <!-- Xem: ai vào được trang này đều xem được -->
+
+    <!-- Xem luôn cho phép -->
     <button class="btn btn-outline-primary"
             data-bs-toggle="modal"
             data-bs-target="#supplierDetail{{ s.supplier_code }}"
@@ -98,31 +99,47 @@
       <i class="fa-solid fa-eye"></i>
     </button>
 
-      {% if is_manager or is_employee or is_supplier %}
-<a href="{% url 'supplier_history' s.supplier_code %}" class="btn btn-outline-info btn-sm">
-    <i class="fa-solid fa-clock-rotate-left"></i>
-</a>
-{% endif %}
+    {% if not is_supplier %}
+        <!-- Chỉ Manager + Employee xem lịch sử -->
+        <a href="{% url 'supplier_history' s.supplier_code %}"
+           class="btn btn-outline-info btn-sm">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+        </a>
+    {% else %}
+        <!-- NCC chỉ được xem lịch sử của chính họ -->
+        {% if s.supplier_code == user.username %}
+            <a href="{% url 'supplier_history' s.supplier_code %}"
+               class="btn btn-outline-info btn-sm">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+            </a>
+        {% endif %}
+    {% endif %}
 
-    <!-- Sửa: chỉ Cửa hàng trưởng + Nhà cung ứng -->
+    <!-- Sửa: Chỉ manager + NCC chính họ -->
     {% if can_edit_supplier %}
-    <a href="{% url 'edit_supplier' s.supplier_code %}"
-       class="btn btn-outline-warning"
-       title="Chỉnh sửa">
-      <i class="fa-solid fa-pen"></i>
-    </a>
+        {% if not is_supplier or s.supplier_code == user.username %}
+        <a href="{% url 'edit_supplier' s.supplier_code %}"
+           class="btn btn-outline-warning"
+           title="Chỉnh sửa">
+          <i class="fa-solid fa-pen"></i>
+        </a>
+        {% endif %}
     {% endif %}
 
-    <!-- Xóa: chỉ Cửa hàng trưởng -->
+    <!-- Xóa: chỉ cho cửa hàng trưởng -->
     {% if can_delete_supplier %}
-    <button class="btn btn-outline-danger"
-            onclick="deleteSupplier('{{ s.supplier_code }}')"
-            title="Xóa">
-      <i class="fa-solid fa-trash"></i>
-    </button>
+      {% if not is_supplier %}
+      <button class="btn btn-outline-danger"
+              onclick="deleteSupplier('{{ s.supplier_code }}')"
+              title="Xóa">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+      {% endif %}
     {% endif %}
+
   </div>
 </td>
+
 
         </tr>
         {% empty %}

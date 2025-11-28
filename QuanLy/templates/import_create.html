@@ -44,15 +44,28 @@
         </div>
 
         <div class="col-md-3">
-          {{ form.asn.label_tag }}
-          {{ form.asn }}
-          {% if form.asn.errors %}
-            <div class="text-danger small">{{ form.asn.errors }}</div>
-          {% endif %}
-          <small class="text-muted d-block mt-1">
-            Khi chọn ASN, trang sẽ tự tải lại và hiển thị sẵn các dòng sản phẩm.
-          </small>
-        </div>
+  {{ form.asn.label_tag }}
+
+  <select name="asn" id="id_asn" class="form-select">
+      <option value="">---------</option>
+
+      {% for a in available_asn %}
+          <option value="{{ a.asn_code }}"
+                  {% if form.initial.asn and form.initial.asn.asn_code == a.asn_code %}selected{% endif %}>
+              {{ a.asn_code }} — {{ a.supplier.company_name }}
+          </option>
+      {% endfor %}
+  </select>
+
+  {% if form.asn.errors %}
+    <div class="text-danger small">{{ form.asn.errors }}</div>
+  {% endif %}
+
+  <small class="text-muted d-block mt-1">
+    Chỉ hiển thị ASN chưa được nhập kho.
+  </small>
+</div>
+
 
         <div class="col-md-3">
           {{ form.import_date.label_tag }}

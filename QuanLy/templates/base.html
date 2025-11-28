@@ -173,11 +173,80 @@
 
         @media (max-width: 768px) {
             .sidebar {
-                display: none; /* nếu muốn responsive chi tiết hơn thì sau này thêm offcanvas */
+                display: none; /* sau này nếu muốn làm offcanvas thì chỉnh ở đây */
             }
             .main {
                 margin-left: 0;
             }
+        }
+
+        /* ========== TOAST MESSAGE ========== */
+        #toast-container {
+            position: fixed;
+            bottom: 26px;
+            right: 26px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast-message {
+            min-width: 260px;
+            max-width: 360px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            font-size: 14px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            animation: fadeInRight .4s ease, fadeOut .4s ease 4s forwards;
+        }
+
+        .toast-message.success {
+            background: linear-gradient(135deg, #22c55e, #15803d);
+        }
+        .toast-message.error {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+        }
+        .toast-message.warning {
+            background: linear-gradient(135deg, #f59e0b, #b45309);
+        }
+        .toast-message.info {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+
+        .toast-icon {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+        }
+
+        .toast-text {
+            flex: 1;
+            font-weight: 500;
+            line-height: 1.35;
+        }
+
+        .toast-close {
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0.85;
+        }
+        .toast-close:hover {
+            opacity: 1;
+        }
+
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to   { opacity: 0; transform: translateX(40px); }
         }
     </style>
 
@@ -185,6 +254,34 @@
 </head>
 
 <body>
+
+<!-- ========== TOAST MESSAGES ========== -->
+{% if messages %}
+<div id="toast-container">
+  {% for message in messages %}
+    <div class="toast-message {{ message.tags }}">
+      <div class="toast-icon">
+        {% if message.tags == 'success' %}
+          <i class="fa-solid fa-circle-check"></i>
+        {% elif message.tags == 'error' %}
+          <i class="fa-solid fa-circle-xmark"></i>
+        {% elif message.tags == 'warning' %}
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        {% else %}
+          <i class="fa-solid fa-circle-info"></i>
+        {% endif %}
+      </div>
+
+      <span class="toast-text">{{ message }}</span>
+
+      <span class="toast-close">
+        <i class="fa-solid fa-xmark"></i>
+      </span>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <!-- Sidebar -->
 <div class="sidebar">
   <div>
@@ -212,18 +309,10 @@
           <i class="fa-solid fa-layer-group"></i> Danh mục
         </a>
 
-<!--        <a class="nav-link d-flex justify-content-between align-items-center"-->
-<!--           data-bs-toggle="collapse" href="#collapseProduct" role="button" aria-expanded="false">-->
-<!--          <span><i class="fa-solid fa-boxes-stacked"></i> Quản lý sản phẩm</span>-->
-<!--          <i class="fa-solid fa-chevron-down small"></i>-->
-<!--        </a>-->
-<!--        <div class="collapse {% if '/stock' in request.path %}show{% endif %}"-->
-<!--             id="collapseProduct">-->
-          <a href="{% url 'stock_list' %}"
-             class="nav-link  {% if '/stock' in request.path %}active{% endif %}">
-            <i class="fa-solid fa-warehouse me-1"></i> Hàng tồn kho
-          </a>
-<!--        </div>-->
+        <a href="{% url 'stock_list' %}"
+           class="nav-link  {% if '/stock' in request.path %}active{% endif %}">
+          <i class="fa-solid fa-warehouse me-1"></i> Hàng tồn kho
+        </a>
 
         <a class="nav-link d-flex justify-content-between align-items-center"
            data-bs-toggle="collapse" href="#collapseOps" role="button" aria-expanded="false">
@@ -261,7 +350,7 @@
           </a>
           <a href="{% url 'asn_list' %}"
              class="nav-link ms-4 {% if '/asn' in request.path %}active{% endif %}">
-            <i class="fa-solid fa-truck me-1"></i> Phiếu giao hàng (ASN)
+            <i class="fa-solid fa-truck me-1"></i> Thông báo giao hàng (ASN)
           </a>
         </div>
 
@@ -281,7 +370,7 @@
 
   </div>
 
-  <!-- 🚪 Đăng xuất -->
+  <!-- Đăng xuất -->
   <div class="logout">
     <a href="{% url 'logout' %}">
       <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
@@ -303,6 +392,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Cập nhật thời gian thực
     function updateDateTime() {
         const now = new Date();
         const d = String(now.getDate()).padStart(2, '0');
@@ -318,6 +408,25 @@
     }
     setInterval(updateDateTime, 1000);
     updateDateTime();
+
+    // Đóng toast khi bấm X
+    document.addEventListener("click", function(e) {
+        if (e.target.closest(".toast-close")) {
+            const toast = e.target.closest(".toast-message");
+            if (toast) {
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 300);
+            }
+        }
+    });
+
+    // Tự ẩn toast sau 4.5s
+    setTimeout(() => {
+        document.querySelectorAll('.toast-message').forEach(t => {
+            t.style.opacity = "0";
+            setTimeout(() => t.remove(), 400);
+        });
+    }, 4500);
 </script>
 </body>
 </html>

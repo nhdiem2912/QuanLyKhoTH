@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load humanize %}
-{% block title %}Quản lý phiếu giao hàng (ASN) - TH True Mart{% endblock %}
-{% block page_title %}Quản lý phiếu giao hàng (ASN){% endblock %}
+{% block title %}Quản lý thông báo giao hàng (ASN) - TH True Mart{% endblock %}
+{% block page_title %}Quản lý thông báo giao hàng (ASN){% endblock %}
 
 {% block extra_head %}
 <style>
@@ -11,44 +11,23 @@
     color: #fff;
     padding: 16px 18px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
     margin-bottom: 18px;
   }
-  .hero-card h5 {
-    margin: 0 0 4px;
-    font-weight: 600;
-  }
-  .hero-card p {
-    margin: 0;
-    font-size: 14px;
-    opacity: 0.92;
-  }
+  .hero-card h5 { margin: 0; font-weight: 600; }
+  .hero-card p { margin: 0; opacity: .92; font-size: 14px; }
   .hero-icon {
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.18);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
+    background: rgba(255,255,255,0.18);
+    display: flex; align-items: center; justify-content: center;
   }
 
-  .table td, .table th {
-    vertical-align: middle !important;
-  }
-  .btn-group .btn {
-    min-width: 36px;
-    padding: 6px 8px;
-    border-radius: 6px !important;
-  }
-  .badge-status {
-    font-size: 12px;
-    padding: 4px 8px;
-    border-radius: 999px;
-  }
+  .table th, .table td { vertical-align: middle !important; }
+  .btn-group .btn { padding: 6px 8px; border-radius: 6px !important; }
+  .badge-status { border-radius: 999px; padding: 4px 8px; font-size: 12px; }
 </style>
 {% endblock %}
 
@@ -58,49 +37,45 @@
   <!-- HERO -->
   <div class="hero-card">
     <div>
-      <h5>Quản lý phiếu giao hàng (ASN)</h5>
+      <h5>Quản lý thông báo giao hàng (ASN)</h5>
       <p>Theo dõi tình trạng giao hàng: Chưa giao – Đang giao – Đã giao.</p>
     </div>
-    {% if can_create_asn %}
-<a href="{% url 'create_asn' %}" class="btn btn-light btn-sm text-primary fw-semibold">
-  <i class="fa-solid fa-plus me-1"></i> Tạo Phiếu giao hàng
-</a>
-{% endif %}
 
-{% if is_supplier and a.asn_code %}
-<a href="{% url 'asn_edit' a.asn_code %}"
-   class="btn btn-outline-warning"
-   title="Cập nhật trạng thái">
-  <i class="fa-solid fa-pen"></i>
-</a>
-{% endif %}
-
+    {% if is_supplier %}
+      <a href="{% url 'create_asn' %}"
+         class="btn btn-light btn-sm text-primary fw-semibold">
+        <i class="fa-solid fa-plus me-1"></i> Tạo Phiếu giao hàng
+      </a>
+    {% endif %}
   </div>
 
-  <!-- Filters -->
+  <!-- FILTER -->
   <div class="bg-white p-3 rounded-3 shadow-sm mb-4">
     <form method="get" class="row g-3 align-items-end">
 
       <div class="col-md-3">
-        <label class="form-label">Tìm kiếm</label>
-        <input type="text" name="q" value="{{ q }}" class="form-control"
-               placeholder="Mã ASN, PO, NCC, người giao…">
+        <label>Tìm kiếm</label>
+        <input type="text" name="q" class="form-control"
+               value="{{ q }}" placeholder="Mã ASN, PO, người giao...">
       </div>
 
+      {% if not is_supplier %}
       <div class="col-md-3">
-        <label class="form-label">Nhà cung ứng</label>
+        <label>Nhà cung ứng</label>
         <select name="supplier" class="form-select">
           <option value="">Tất cả</option>
           {% for s in suppliers %}
-            <option value="{{ s.id }}" {% if supplier_id == s.id|stringformat:"s" %}selected{% endif %}>
+            <option value="{{ s.id }}"
+              {% if supplier_id == s.id|stringformat:"s" %}selected{% endif %}>
               {{ s.company_name }}
             </option>
           {% endfor %}
         </select>
       </div>
+      {% endif %}
 
       <div class="col-md-2">
-        <label class="form-label">Trạng thái</label>
+        <label>Trạng thái</label>
         <select name="status" class="form-select">
           <option value="">Tất cả</option>
           <option value="not_delivered" {% if status == "not_delivered" %}selected{% endif %}>Chưa giao</option>
@@ -110,13 +85,13 @@
       </div>
 
       <div class="col-md-2">
-        <label class="form-label">Từ ngày</label>
-        <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+        <label>Từ ngày</label>
+        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
       </div>
 
       <div class="col-md-2">
-        <label class="form-label">Đến ngày</label>
-        <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+        <label>Đến ngày</label>
+        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
       </div>
 
       <div class="col-12 text-end">
@@ -125,138 +100,125 @@
         </button>
         <a href="{% url 'asn_list' %}" class="btn btn-secondary">Reset</a>
       </div>
+
     </form>
   </div>
 
-  <!-- DANH SÁCH ASN -->
+  <!-- LIST -->
   <div class="bg-white p-3 rounded-3 shadow-sm">
+
     {% if asns %}
     <table class="table table-hover align-middle mb-0">
-      <thead class="table-light text-center align-middle">
+      <thead class="table-light text-center">
         <tr>
-          <th style="width: 10%">Mã ASN</th>
-          <th style="width: 12%">Liên kết PO</th>
-          <th style="width: 12%">Nhà cung ứng</th>
-          <th style="width: 12%">Ngày giao dự kiến</th>
-          <th style="width: 18%">Người giao</th>
-          <th style="width: 8%" class="text-end">Tổng SP</th>
-          <th style="width: 13%" class="text-end">Tổng tiền (₫)</th>
-          <th style="width: 12%">Trạng thái</th>
-          <th style="width: 8%" class="text-center">Thao tác</th>
+          <th width="10%">Mã ASN</th>
+          <th width="12%">PO</th>
+          {% if not is_supplier %}
+          <th width="12%">Nhà cung ứng</th>
+          {% endif %}
+          <th width="12%">Ngày giao</th>
+          <th width="18%">Người giao</th>
+          <th width="8%" class="text-end">Tổng SP</th>
+          <th width="13%" class="text-end">Tổng tiền</th>
+          <th width="12%">Trạng thái</th>
+          <th width="10%">Thao tác</th>
         </tr>
       </thead>
+
       <tbody>
         {% for a in asns %}
         <tr>
           <td class="fw-semibold text-primary text-center">{{ a.asn_code }}</td>
           <td class="text-center">{{ a.po.po_code|default:"-" }}</td>
+
+          {% if not is_supplier %}
           <td class="text-center">{{ a.supplier.company_name }}</td>
+          {% endif %}
+
           <td class="text-center">{{ a.expected_date|date:"d/m/Y" }}</td>
+
           <td>
-            <span class="fw-semibold">{{ a.deliverer_name }}</span><br>
-            <small class="text-muted">{{ a.deliverer_phone|default:"-" }}</small>
+            <strong>{{ a.deliverer_name }}</strong><br>
+            <small class="text-muted">{{ a.deliverer_phone }}</small>
           </td>
-          <td class="text-end">{{ a.items.count|intcomma }}</td>
-          <td class="text-success text-end fw-semibold">
+
+          <td class="text-end">{{ a.items.count }}</td>
+
+          <td class="text-end text-success fw-semibold">
             {{ a.total_value|floatformat:0|intcomma }} ₫
           </td>
-         <td class="text-center">
-  {% if a.status == "not_delivered" %}
-    <span class="badge-status bg-secondary text-white">Chưa giao</span>
-
-  {% elif a.status == "delivering" %}
-    <span class="badge-status bg-warning text-white">Đang giao</span>
-
-  {% elif a.status == "delivered" %}
-    <span class="badge-status bg-success text-white">Đã giao</span>
-
-  {% else %}
-    <span class="badge-status bg-light text-muted">-</span>
-  {% endif %}
-</td>
 
           <td class="text-center">
-            <div class="btn-group btn-group-sm" role="group">
-              <button class="btn btn-outline-primary" data-bs-toggle="modal"
-                      data-bs-target="#viewModal{{ a.asn_code }}" title="Xem chi tiết">
-                <i class="fa-solid fa-eye"></i>
-              </button>
-{% if is_supplier and a.asn_code %}
-<a href="{% url 'asn_edit' a.asn_code %}"
-   class="btn btn-outline-warning"
-   title="Cập nhật trạng thái">
-  <i class="fa-solid fa-pen"></i>
-</a>
-{% endif %}
-
-              <a href="{% url 'asn_export_pdf' a.asn_code %}"
-                 target="_blank"
-                 class="btn btn-outline-secondary"
-                 title="In / Xuất PDF">
-                <i class="fa-solid fa-print"></i>
-              </a>
-
-
-            </div>
+            {% if a.status == "not_delivered" %}
+              <span class="badge-status bg-secondary text-white">Chưa giao</span>
+            {% elif a.status == "delivering" %}
+              <span class="badge-status bg-warning text-white">Đang giao</span>
+            {% else %}
+              <span class="badge-status bg-success text-white">Đã giao</span>
+            {% endif %}
           </td>
+
+          <td class="text-center">
+    <div class="btn-group btn-group-sm">
+
+        <!-- Xem -->
+        <button class="btn btn-outline-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#viewModal{{ a.asn_code }}">
+            <i class="fa-solid fa-eye"></i>
+        </button>
+
+        <!-- Sửa – CHỈ hiển thị nếu user là Nhà cung ứng và sở hữu ASN -->
+        {% if is_supplier and a.supplier.supplier_code == user.username %}
+        <a href="{% url 'asn_edit' a.asn_code %}"
+           class="btn btn-outline-warning">
+            <i class="fa-solid fa-pen"></i>
+        </a>
+        {% endif %}
+
+        <!-- PDF -->
+        <a href="{% url 'asn_export_pdf' a.asn_code %}" target="_blank"
+           class="btn btn-outline-secondary">
+            <i class="fa-solid fa-print"></i>
+        </a>
+
+    </div>
+</td>
+
+
         </tr>
         {% endfor %}
       </tbody>
     </table>
 
-    <!-- MODAL CHI TIẾT ASN -->
+    <!-- MODALS -->
     {% for a in asns %}
     <div class="modal fade" id="viewModal{{ a.asn_code }}" tabindex="-1">
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
+
           <div class="modal-header bg-light">
             <h5 class="modal-title fw-bold text-primary">
-              Chi tiết phiếu giao hàng {{ a.asn_code }}
+              Phiếu giao hàng {{ a.asn_code }}
             </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
           </div>
 
           <div class="modal-body">
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <strong>Liên kết PO:</strong> {{ a.po.po_code|default:"-" }}
-              </div>
-              <div class="col-md-6">
-                <strong>Nhà cung ứng:</strong> {{ a.supplier.company_name }}
-              </div>
-              <div class="col-md-6 mt-2">
-                <strong>Ngày giao dự kiến:</strong> {{ a.expected_date|date:"d/m/Y" }}
-              </div>
-              <div class="col-md-6 mt-2">
-                <strong>Trạng thái:</strong>
-                {% if a.status == "not_delivered" %}
-                  Chưa giao
-                {% elif a.status == "delivering" %}
-                  Đang giao
-                {% elif a.status == "delivered" %}
-                  Đã giao
-                {% else %}
-                  -
-                {% endif %}
-              </div>
-              <div class="col-md-6 mt-2">
-                <strong>Người giao:</strong> {{ a.deliverer_name }}
-              </div>
-              <div class="col-md-6 mt-2">
-                <strong>SĐT:</strong> {{ a.deliverer_phone|default:"-" }}
-              </div>
-            </div>
+            <strong>PO:</strong> {{ a.po.po_code }} <br>
+            <strong>Ngày giao:</strong> {{ a.expected_date|date:"d/m/Y" }} <br>
+            <strong>Người giao:</strong> {{ a.deliverer_name }} – {{ a.deliverer_phone }}
+            <hr>
 
-            <h6 class="fw-semibold mt-3 mb-2">Danh sách sản phẩm giao</h6>
-            <table class="table table-bordered align-middle text-center">
+            <table class="table table-bordered mt-2">
               <thead class="table-light">
                 <tr>
                   <th>Mã SP</th>
-                  <th class="text-start">Tên sản phẩm</th>
-                  <th class="text-end">Số lượng</th>
+                  <th class="text-start">Tên SP</th>
+                  <th class="text-end">SL</th>
                   <th>Đơn vị</th>
-                  <th class="text-end">Đơn giá (₫)</th>
-                  <th>Hạn sử dụng</th>
+                  <th class="text-end">Đơn giá</th>
+                  <th>HSD</th>
                   <th class="text-end">Thành tiền</th>
                 </tr>
               </thead>
@@ -265,40 +227,27 @@
                 <tr>
                   <td>{{ i.product.product_code }}</td>
                   <td class="text-start">{{ i.product.name }}</td>
-                  <td class="text-end">{{ i.quantity|intcomma }}</td>
+                  <td class="text-end">{{ i.quantity }}</td>
                   <td>{{ i.unit }}</td>
                   <td class="text-end">{{ i.unit_price|floatformat:0|intcomma }}</td>
-                  <td>{{ i.expiry_date|date:"d/m/Y"|default:"-" }}</td>
-                  <td class="text-success text-end fw-semibold">
-                    {{ i.total_value|floatformat:0|intcomma }} ₫
+                  <td>{{ i.expiry_date|date:"d/m/Y" }}</td>
+                  <td class="text-end text-success fw-semibold">
+                    {{ i.total_value|floatformat:0|intcomma }}
                   </td>
                 </tr>
-                {% empty %}
-                <tr><td colspan="7" class="text-muted">Không có sản phẩm</td></tr>
                 {% endfor %}
               </tbody>
             </table>
-
-            {% if a.note %}
-            <div class="mt-2">
-              <strong>Ghi chú:</strong>
-              <p class="text-muted">{{ a.note }}</p>
-            </div>
-            {% endif %}
           </div>
 
-          <div class="modal-footer justify-content-between">
-            <button class="btn btn-secondary" data-bs-dismiss="modal">
-              <i class="fa-solid fa-xmark me-1"></i> Đóng
-            </button>
-
-            <a href="{% url 'asn_export_pdf' a.asn_code %}"
-               target="_blank"
+          <div class="modal-footer">
+            <a href="{% url 'asn_export_pdf' a.asn_code %}" target="_blank"
                class="btn btn-outline-primary">
-              <i class="fa-solid fa-print me-1"></i> In / Xuất PDF
+              <i class="fa-solid fa-print me-1"></i> In PDF
             </a>
-
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
           </div>
+
         </div>
       </div>
     </div>
@@ -307,11 +256,10 @@
     {% else %}
     <div class="text-center text-muted py-5">
       <i class="fa-regular fa-file-lines fa-2x mb-3"></i>
-      <div>Chưa có phiếu giao hàng nào trong hệ thống</div>
+      <div>Chưa có phiếu giao hàng nào</div>
     </div>
     {% endif %}
+
   </div>
 </div>
-
-
 {% endblock %}

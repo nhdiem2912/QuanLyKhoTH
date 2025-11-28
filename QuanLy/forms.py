@@ -251,6 +251,11 @@ class ImportItemForm(forms.ModelForm):
         if asn_item and (not quantity or quantity <= 0):
             cleaned["quantity"] = asn_item.quantity
 
+            # ❗ Quantity phải > 0
+        qty = cleaned.get("quantity")
+        if qty is not None and qty <= 0:
+            self.add_error("quantity", "Số lượng phải lớn hơn 0.")
+
         return cleaned
 
 
@@ -311,8 +316,12 @@ class ExportItemForm(forms.ModelForm):
         model = ExportItem
         fields = ["stock_item", "quantity", "unit_price",
                   "discount_percent", "unit", "total"]
+
         widgets = {
-            "stock_item": forms.Select(attrs={"class": "form-select stock-select"}),
+            "stock_item": forms.Select(attrs={
+                "class": "form-select stock-select",
+                "size": 6
+            }),
             "quantity": forms.NumberInput(attrs={
                 "class": "form-control text-end quantity",
                 "min": 1
@@ -320,25 +329,46 @@ class ExportItemForm(forms.ModelForm):
             "unit_price": forms.NumberInput(attrs={
                 "class": "form-control text-end unit-price",
                 "step": "0.01",
-                "readonly": True,   # đơn giá auto theo lô
+                "readonly": True
             }),
             "discount_percent": forms.NumberInput(attrs={
                 "class": "form-control text-end discount",
                 "step": "0.01",
                 "min": 0
             }),
-            "unit": forms.TextInput(attrs={
-                "class": "form-control unit-field",
-            }),
+            "unit": forms.TextInput(attrs={"class": "form-control unit-field"}),
             "total": forms.NumberInput(attrs={
                 "class": "form-control text-end total-input",
-                "readonly": True,
+                "readonly": True
             }),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["unit_price"].widget.attrs["readonly"] = "readonly"
+
+        from django.db import models as dj
+
+        base_qs = StockItem.objects.all().order_by(
+            dj.Case(
+                dj.When(status="nearly_expired", then=0),
+                dj.When(status="expired", then=1),
+                dj.When(status="valid", then=2),
+                default=3,
+                output_field=dj.IntegerField()
+            ),
+            "expiry_date"
+        )
+
+        # >>> FIX LỖI TẠI ĐÂY <<<
+        try:
+            if self.instance and hasattr(self.instance, "stock_item") and self.instance.stock_item:
+                p = self.instance.stock_item.product
+                base_qs = base_qs.filter(product=p)
+        except:
+            pass
+
+        self.fields["stock_item"].queryset = base_qs
+
 
 
 ExportItemFormSet = inlineformset_factory(
@@ -460,6 +490,9 @@ class ReturnItemForm(forms.ModelForm):
                 raise forms.ValidationError(
                     f"Số lượng hoàn tối đa cho dòng này là {max_qty}."
                 )
+            qty = cleaned.get("quantity")
+            if qty is not None and qty <= 0:
+                raise forms.ValidationError("Số lượng phải lớn hơn 0.")
 
         return cleaned
 
@@ -524,8 +557,10 @@ class PurchaseOrderItemForm(forms.ModelForm):
                 supplier=supplier,
                 is_active=True
             ).order_by("product_code")
+
         else:
             self.fields["product"].queryset = SupplierProduct.objects.none()
+
 
 
 PurchaseOrderItemFormSet = inlineformset_factory(

@@ -90,7 +90,7 @@ def get_permission_flags(user):
 
         # --- Nhà cung ứng ---
         # add_supplier & edit_supplier đang dùng group_required('Cửa hàng trưởng', 'Nhà cung ứng')
-        "can_add_supplier": is_manager or is_supplier,
+        "can_add_supplier": is_manager ,
         "can_edit_supplier": is_manager or is_supplier,
         # delete_supplier nếu có thì nên chỉ cho Cửa hàng trưởng
         "can_delete_supplier": is_manager,
@@ -106,6 +106,6 @@ def get_permission_flags(user):
         # ASN permissions
         "can_view_asn": True,  # tất cả đều xem được
         "can_create_asn": is_supplier,  # chỉ Nhà cung ứng
-        "can_edit_asn": is_supplier,  # không ai được sửa
+        "can_edit_asn": is_supplier,
 
     }
