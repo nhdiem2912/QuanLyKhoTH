@@ -18,28 +18,10 @@
     <form method="post" novalidate>
       {% csrf_token %}
 
-      {# ------------ HIỂN THỊ LỖI TỔNG FORM -------------- #}
-      {% if form.non_field_errors %}
-      <div class="alert alert-danger">
-        {% for err in form.non_field_errors %}
-          <div>{{ err }}</div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
       <div class="mb-3">
         <label class="form-label fw-semibold">Trạng thái giao hàng</label>
         {{ form.status|add_class:"form-select" }}
-
-        {# ------------ Lỗi riêng của field -------------- #}
-        {% if form.status.errors %}
-        <div class="text-danger small mt-1">
-          {% for error in form.status.errors %}
-            <div>{{ error }}</div>
-          {% endfor %}
         </div>
-        {% endif %}
-      </div>
 
       <div class="text-end mt-4">
         <button type="submit" class="btn btn-primary px-4">

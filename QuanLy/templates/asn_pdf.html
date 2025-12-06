@@ -73,7 +73,7 @@
 
   <div class="title">PHIẾU GIAO HÀNG (ASN)</div>
 
-  <!-- INFO -->
+  <!-- Thông tin -->
   <table class="info-table">
     <tr>
       <td>Ngày tạo phiếu: <strong>{{ asn.created_date|date:"d/m/Y" }}</strong></td>
@@ -119,7 +119,7 @@
     {% endif %}
   </table>
 
-  <!-- MAIN TABLE -->
+  <!-- Bảng chính -->
   <table style="margin-top: 14px;">
     <thead>
       <tr>
@@ -166,7 +166,7 @@
     </tfoot>
   </table>
 
-  <!-- SIGNATURE -->
+  <!-- Phần ký tên -->
   <div class="signature-date">
     Đà Nẵng, ngày {{ asn.created_date|date:"d" }} tháng {{ asn.created_date|date:"m" }} năm {{ asn.created_date|date:"Y" }}
   </div>

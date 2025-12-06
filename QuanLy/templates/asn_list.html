@@ -104,7 +104,7 @@
     </form>
   </div>
 
-  <!-- LIST -->
+  <!-- LIST DANH SÁCH-->
   <div class="bg-white p-3 rounded-3 shadow-sm">
 
     {% if asns %}
@@ -168,7 +168,7 @@
             <i class="fa-solid fa-eye"></i>
         </button>
 
-        <!-- Sửa – CHỈ hiển thị nếu user là Nhà cung ứng và sở hữu ASN -->
+        <!-- Chỉ hiển thị nếu user là Nhà cung ứng và sở hữu ASN -->
         {% if is_supplier and a.supplier.supplier_code == user.username %}
         <a href="{% url 'asn_edit' a.asn_code %}"
            class="btn btn-outline-warning">
@@ -176,7 +176,7 @@
         </a>
         {% endif %}
 
-        <!-- PDF -->
+        <!-- In PDF -->
         <a href="{% url 'asn_export_pdf' a.asn_code %}" target="_blank"
            class="btn btn-outline-secondary">
             <i class="fa-solid fa-print"></i>
@@ -191,7 +191,7 @@
       </tbody>
     </table>
 
-    <!-- MODALS -->
+    <!-- MODALS xem chi tiết -->
     {% for a in asns %}
     <div class="modal fade" id="viewModal{{ a.asn_code }}" tabindex="-1">
       <div class="modal-dialog modal-lg modal-dialog-centered">
