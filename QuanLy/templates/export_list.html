@@ -118,7 +118,7 @@
             {% endfor %}
           </td>
 
-          <!-- Nếu model có @property total_quantity/total_price -->
+
           <td class="text-end">{{ r.total_quantity|intcomma }}</td>
           <td class="fw-semibold text-success text-end">{{ r.total_price|floatformat:0|intcomma }} ₫</td>
 
@@ -131,7 +131,7 @@
                 <i class="fa-solid fa-eye"></i>
               </button>
 
-              <!-- ✅ Nút in phiếu PDF -->
+              <!-- Nút in phiếu PDF -->
               <a href="{% url 'export_export_pdf' r.export_code %}"
                  class="btn btn-outline-secondary" title="In phiếu xuất (PDF)" target="_blank">
                 <i class="fa-solid fa-print"></i>
@@ -145,7 +145,7 @@
       </tbody>
     </table>
 
-    <!-- POPUP CHI TIẾT -->
+    <!-- POPUP XEM CHI TIẾT -->
     {% for r in exports %}
     <div class="modal fade" id="viewModal{{ r.export_code }}" tabindex="-1">
       <div class="modal-dialog modal-lg modal-dialog-centered">

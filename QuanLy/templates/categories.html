@@ -97,7 +97,7 @@
   </div>
 </form>
 
-{# CSRF ẩn để JS dùng khi gọi fetch DELETE #}
+
 <form id="csrf-token-form" style="display:none;">
   {% csrf_token %}
 </form>
@@ -165,7 +165,7 @@
   {% endif %}
 </div>
 
-<!-- ✅ MODAL CHI TIẾT DANH MỤC - CHỈ HIỂN THỊ KHI BẤM XEM CHI TIẾT -->
+<!-- MODAL CHI TIẾT DANH MỤC - CHỈ HIỂN THỊ KHI BẤM XEM CHI TIẾT -->
 {% for c in categories %}
 <div class="modal fade" id="categoryDetail{{ c.category_code }}" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -187,7 +187,7 @@
 
         <hr>
 
-        {# ✅ YÊU CẦU: Danh sách sản phẩm từ phiếu nhập (không trùng mã) #}
+        {# YÊU CẦU: Danh sách sản phẩm từ phiếu nhập #}
         <h6 class="fw-semibold text-primary mb-3">Sản phẩm đã nhập kho trong danh mục này</h6>
         {% if c.products_from_imports %}
         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">

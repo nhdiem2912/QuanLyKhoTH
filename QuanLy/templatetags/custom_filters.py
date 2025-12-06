@@ -2,16 +2,9 @@ from django import template
 from django.forms.boundfield import BoundField
 
 register = template.Library()
-
-# =============================
 # 1) Tổng chiết khấu
-# =============================
 @register.filter(name="total_discount")
 def total_discount(items):
-    """
-    Tính tổng tiền chiết khấu của ImportReceipt items.
-    Item phải có: quantity, unit_price, discount_percent.
-    """
     total = 0
     try:
         for item in items:
@@ -23,21 +16,18 @@ def total_discount(items):
     return total
 
 
-# =============================
 # 2) Tổng theo một trường
-# =============================
+
 @register.filter(name="sum_field")
 def sum_field(items, field_name):
-    """Tính tổng 1 trường của queryset (vd: sum_field:quantity)."""
     try:
         return sum(getattr(i, field_name, 0) or 0 for i in items)
     except Exception:
         return 0
 
 
-# =============================
 # 3) Tổng giá tiền (total)
-# =============================
+
 @register.filter(name="sum_price")
 def sum_price(items):
     try:
@@ -46,15 +36,11 @@ def sum_price(items):
         return 0
 
 
-# =============================
 # 4) Kiểm tra user có thuộc nhóm
-# =============================
+
 @register.filter(name="has_any_group")
 def has_any_group(user, group_names):
-    """
-    group_names: "Cửa hàng trưởng,Nhân viên"
-    Trả về True nếu user thuộc ÍT NHẤT 1 group.
-    """
+
     if not getattr(user, "is_authenticated", False):
         return False
 
@@ -65,9 +51,7 @@ def has_any_group(user, group_names):
     return user.groups.filter(name__in=names).exists() or user.is_superuser
 
 
-# =============================
 # 5) Thêm CSS class cho field
-# =============================
 @register.filter(name="add_class")
 def add_class(field, css):
     if not isinstance(field, BoundField):
@@ -77,14 +61,11 @@ def add_class(field, css):
     return field.as_widget(attrs={"class": new_class})
 
 
-# =============================
+
 # 6) Thêm bất kỳ attribute
-# =============================
 @register.filter(name="attr")
 def attr(field, arg):
-    """
-    {{ field|attr:"placeholder:Nhập tên" }}
-    """
+
     if not isinstance(field, BoundField):
         return field
     try:

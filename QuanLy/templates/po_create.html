@@ -187,10 +187,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (!firstRow) return;
 
-  // ✅ Lấy danh sách sản phẩm theo nhà cung cấp từ server
+  // Lấy danh sách sản phẩm theo nhà cung cấp từ server
   let supplierProducts = {};
   
-  // ✅ Khi chọn nhà cung cấp, filter sản phẩm và set đơn giá
+  // Khi chọn nhà cung cấp, filter sản phẩm và set đơn giá
   if (supplierSelect) {
     supplierSelect.addEventListener("change", function() {
       const supplierId = this.value;
@@ -232,7 +232,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // ✅ Khi chọn sản phẩm, tự động set đơn giá
+  // Khi chọn sản phẩm, tự động set đơn giá
   tbody.addEventListener("change", function(e) {
     if (e.target.classList.contains('product-select')) {
       const row = e.target.closest('tr');
@@ -287,7 +287,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    // ✅ Cập nhật select sản phẩm nếu đã chọn nhà cung cấp
+    // Cập nhật select sản phẩm nếu đã chọn nhà cung cấp
     if (supplierSelect.value) {
       supplierSelect.dispatchEvent(new Event('change'));
     }

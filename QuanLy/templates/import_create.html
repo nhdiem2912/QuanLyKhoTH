@@ -223,7 +223,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const asnSelect = document.getElementById("id_asn");
   const grandTotalCell = document.getElementById("grand-total");
 
-  // 🔁 Khi đổi ASN → reload trang với ?asn=...
+  // Khi đổi ASN → reload trang với ?asn=...
   if (asnSelect) {
     asnSelect.addEventListener("change", function() {
       const value = this.value;
@@ -242,14 +242,14 @@ document.addEventListener("DOMContentLoaded", function() {
   document.querySelectorAll('input[name$="-unit_price"]').forEach(i => {
     i.classList.add("unit-price");
 
-    // ✅ Bỏ .00: convert về số nguyên nếu có giá trị
+    // Bỏ .00: convert về số nguyên nếu có giá trị
     if (i.value) {
       const v = parseFloat(i.value);
       if (!isNaN(v)) {
         i.value = parseInt(v);
       }
     }
-    // ✅ Chỉ cho nhập bước 1 (không số lẻ)
+    // Chỉ cho nhập bước 1 (không số lẻ)
     i.step = "1";
   });
 

@@ -12,23 +12,32 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        box-shadow: 0 10px 25px rgba(15,23,42,0.15);
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
         margin-bottom: 20px;
     }
+    .hero-card h5 { margin: 0; font-weight: 600; }
+    .hero-card p { margin: 0; opacity: .92; }
     .hero-icon {
-        width: 44px; height: 44px;
+        width: 44px;
+        height: 44px;
         border-radius: 999px;
         background: rgba(255,255,255,0.2);
-        display: flex; align-items: center; justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 22px;
     }
-    label { font-weight: 600; margin-bottom: 4px; }
+    label {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
     .section-title {
         font-weight: 600;
         font-size: 17px;
         color: #0d6efd;
         margin-bottom: 14px;
     }
+    .table td, .table th { vertical-align: middle !important; }
 </style>
 {% endblock %}
 
@@ -39,21 +48,13 @@
     <div class="hero-card">
         <div>
             <h5>Cập nhật thông tin nhà cung ứng</h5>
-            <p>Sửa thông tin NCC theo quyền của bạn.</p>
+            <p>Sửa thông tin NCC và quản lý sản phẩm NCC đang cung cấp.</p>
         </div>
-        <div class="hero-icon"><i class="fa-solid fa-pen-to-square"></i></div>
+        <div class="hero-icon">
+            <i class="fa-solid fa-pen-to-square"></i>
+        </div>
     </div>
 
-    {% if is_supplier and supplier_code != user.username %}
-        <!-- NCC cố truy cập NCC khác → silent view trong views.py, còn template phòng ngừa -->
-        <div class="alert alert-warning mt-3">
-            Bạn không có quyền chỉnh sửa nhà cung ứng này.
-        </div>
-        <a href="{% url 'suppliers' %}" class="btn btn-secondary mt-2">
-            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
-        </a>
-
-    {% else %}
     <form method="post">
         {% csrf_token %}
 
@@ -63,32 +64,22 @@
 
             <div class="row g-3">
 
-                {% if not is_supplier %}
-                <!-- Manager/Employee thấy đầy đủ -->
                 <div class="col-md-4">
                     <label>{{ form.supplier_code.label }}</label>
                     {{ form.supplier_code }}
                     <div class="text-danger small">{{ form.supplier_code.errors }}</div>
                 </div>
 
-                <div class="col-md-4">
-                    <label>{{ form.tax_code.label }}</label>
-                    {{ form.tax_code }}
-                    <div class="text-danger small">{{ form.tax_code.errors }}</div>
-                </div>
-
-                <div class="col-md-4">
-                    <label>{{ form.status.label }}</label>
-                    {{ form.status }}
-                    <div class="text-danger small">{{ form.status.errors }}</div>
-                </div>
-                {% endif %}
-
-                <!-- Các trường NCC được sửa -->
                 <div class="col-md-8">
                     <label>{{ form.company_name.label }}</label>
                     {{ form.company_name }}
                     <div class="text-danger small">{{ form.company_name.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>{{ form.tax_code.label }}</label>
+                    {{ form.tax_code }}
+                    <div class="text-danger small">{{ form.tax_code.errors }}</div>
                 </div>
 
                 <div class="col-md-4">
@@ -110,6 +101,12 @@
                 </div>
 
                 <div class="col-md-6">
+                    <label>{{ form.status.label }}</label>
+                    {{ form.status }}
+                    <div class="text-danger small">{{ form.status.errors }}</div>
+                </div>
+
+                <div class="col-12">
                     <label>{{ form.address.label }}</label>
                     {{ form.address }}
                     <div class="text-danger small">{{ form.address.errors }}</div>
@@ -118,50 +115,89 @@
             </div>
         </div>
 
-        {% if not is_supplier %}
-        <!-- FORMSET SẢN PHẨM – chỉ cho Manager/Employee -->
+        <!-- SẢN PHẨM CUNG CẤP (FORMSET) -->
+        {% if formset %}
         <div class="card p-4 shadow-sm mb-4">
-            <div class="section-title">Sản phẩm NCC cung cấp</div>
+            <div class="section-title">Sản phẩm nhà cung ứng đang cung cấp</div>
 
             {{ formset.management_form }}
 
             <table class="table table-bordered text-center">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã SP NCC</th>
-                        <th>Tên SP NCC</th>
-                        <th>Danh mục</th>
-                        <th>Đơn giá NCC</th>
-                        <th>Đang cung cấp</th>
-                        <th>Xóa</th>
+                        <th style="width:15%">Mã SP NCC</th>
+                        <th style="width:30%">Tên sản phẩm NCC</th>
+                        <th style="width:20%">Danh mục</th>
+                        <th style="width:15%">Đơn giá NCC (₫)</th>
+                        <th style="width:10%">Đang cung cấp</th>
+                        <th style="width:10%">Xóa</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for f in formset.forms %}
                     <tr>
-                        {{ f.id }}
-                        <td>{{ f.product_code }}</td>
-                        <td>{{ f.name }}</td>
-                        <td>{{ f.category }}</td>
-                        <td>{{ f.unit_price }}</td>
+                        {{ f.id }} {# hidden id field để edit đúng record #}
+                        <td>
+                            {{ f.product_code }}
+                            {% if f.product_code.errors %}
+                                <div class="text-danger small">{{ f.product_code.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ f.name }}
+                            {% if f.name.errors %}
+                                <div class="text-danger small">{{ f.name.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ f.category }}
+                            {% if f.category.errors %}
+                                <div class="text-danger small">{{ f.category.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ f.unit_price }}
+                            {% if f.unit_price.errors %}
+                                <div class="text-danger small">{{ f.unit_price.errors }}</div>
+                            {% endif %}
+                        </td>
                         <td>{{ f.is_active }}</td>
-                        <td>{% if formset.can_delete %}{{ f.DELETE }}{% endif %}</td>
+                        <td>
+                            {% if formset.can_delete %}
+                                {{ f.DELETE }}
+                            {% endif %}
+                        </td>
                     </tr>
-
                     {% if f.non_field_errors %}
-                    <tr><td colspan="6" class="text-danger small">{{ f.non_field_errors }}</td></tr>
+                    <tr>
+                        <td colspan="6" class="text-danger small">
+                            {{ f.non_field_errors }}
+                        </td>
+                    </tr>
                     {% endif %}
-
                     {% endfor %}
                 </tbody>
+                {% if formset.non_form_errors %}
+                <tfoot>
+                    <tr>
+                        <td colspan="6" class="text-danger">
+                            {{ formset.non_form_errors }}
+                        </td>
+                    </tr>
+                </tfoot>
+                {% endif %}
             </table>
 
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fw-semibold">Danh sách sản phẩm NCC</span>
+                <span class="fw-semibold">Danh sách sản phẩm cung cấp</span>
                 <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
                     <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm
                 </button>
             </div>
+
+            <small class="text-muted fst-italic">
+                * Bạn có thể thêm nhiều sản phẩm NCC cung cấp bằng cách tăng số dòng.
+            </small>
         </div>
         {% endif %}
 
@@ -174,7 +210,55 @@
             </button>
         </div>
     </form>
-    {% endif %}
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const addButton = document.getElementById("add-row");
+    const totalForms = document.querySelector('input[name$="-TOTAL_FORMS"]');
+    const tableBody = document.querySelector("table tbody");
+
+    if (!addButton || !totalForms || !tableBody) return;
+
+    // Lấy prefix formset từ name của TOTAL_FORMS (vd: supplierproduct_set)
+    const match = totalForms.name.match(/^(.*)-TOTAL_FORMS$/);
+    const prefix = match ? match[1] : "";
+
+    addButton.addEventListener("click", function(e) {
+        e.preventDefault();
+
+        let currentIndex = parseInt(totalForms.value);
+        let firstRow = tableBody.querySelector("tr");
+
+        if (!firstRow) return;
+
+        let newRow = firstRow.cloneNode(true);
+
+        // Cập nhật index trong HTML (name, id, for, ...)
+        if (prefix) {
+            const regex = new RegExp(prefix + "-\\d+", "g");
+            newRow.innerHTML = newRow.innerHTML.replace(regex, prefix + "-" + currentIndex);
+        }
+
+        // Reset dữ liệu trong form mới
+        newRow.querySelectorAll("input, select, textarea").forEach(el => {
+            if (el.type === "checkbox") {
+                el.checked = false;
+            } else if (el.type !== "hidden") {
+                el.value = "";
+            }
+        });
+
+        // Xóa lỗi cũ nếu có
+        newRow.querySelectorAll(".text-danger").forEach(el => {
+            el.innerHTML = "";
+        });
+
+        tableBody.appendChild(newRow);
+
+        totalForms.value = currentIndex + 1;
+    });
+});
+</script>
 
 {% endblock %}

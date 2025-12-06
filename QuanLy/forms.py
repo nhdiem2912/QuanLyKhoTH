@@ -95,11 +95,9 @@ class SupplierProductForm(forms.ModelForm):
         name = cleaned.get("name")
         price = cleaned.get("unit_price")
 
-        # DÒNG TRẮNG → bỏ qua (không validate lỗi)
         if not code and not name and (price is None or price == 0):
             return cleaned
 
-        # Ngược lại: đã nhập thì phải đủ
         if not code:
             self.add_error("product_code", "Vui lòng nhập mã sản phẩm NCC.")
         if not name:
@@ -218,12 +216,12 @@ class ImportItemForm(forms.ModelForm):
 
         qs = SupplierProduct.objects.all()
 
-        # Nếu có ASN → chỉ cho chọn các sản phẩm có trong ASN đó
+        # Nếu có ASN thì chỉ cho chọn các sản phẩm có trong ASN đó
         if asn is not None:
             qs = SupplierProduct.objects.filter(
                 pk__in=asn.items.values_list("product_id", flat=True)
             )
-        # Nếu không có ASN nhưng có NCC → lọc theo NCC
+        # Nếu không có ASN nhưng có NCC thì lọc theo NCC
         elif supplier is not None:
             qs = SupplierProduct.objects.filter(
                 supplier=supplier,
@@ -239,19 +237,19 @@ class ImportItemForm(forms.ModelForm):
         product = cleaned.get("product")
         quantity = cleaned.get("quantity")
 
-        # Dòng hoàn toàn trống → bỏ qua
+        # Dòng hoàn toàn trống thì bỏ qua
         if not asn_item and not product and not quantity:
             return cleaned
 
-        # Nếu đã chọn ASNItem mà chưa chọn product → tự set product = ASNItem.product
+        # Nếu đã chọn ASNItem mà chưa chọn product thì tự set product = ASNItem.product
         if asn_item and not product:
             cleaned["product"] = asn_item.product
 
-        # Nếu đã chọn ASNItem mà chưa nhập quantity → lấy mặc định từ ASN
+        # Nếu đã chọn ASNItem mà chưa nhập quantity thì lấy mặc định từ ASN
         if asn_item and (not quantity or quantity <= 0):
             cleaned["quantity"] = asn_item.quantity
 
-            # ❗ Quantity phải > 0
+            # Quantity phải > 0
         qty = cleaned.get("quantity")
         if qty is not None and qty <= 0:
             self.add_error("quantity", "Số lượng phải lớn hơn 0.")
@@ -359,7 +357,7 @@ class ExportItemForm(forms.ModelForm):
             "expiry_date"
         )
 
-        # >>> FIX LỖI TẠI ĐÂY <<<
+
         try:
             if self.instance and hasattr(self.instance, "stock_item") and self.instance.stock_item:
                 p = self.instance.stock_item.product
@@ -472,7 +470,7 @@ class ReturnItemForm(forms.ModelForm):
         if not export_item and not product and not quantity:
             return cleaned
 
-        # có dữ liệu nhưng không chọn dòng xuất → lỗi
+        # có dữ liệu nhưng không chọn dòng xuất -> lỗi
         if not export_item:
             raise forms.ValidationError("Vui lòng chọn dòng phiếu xuất.")
 

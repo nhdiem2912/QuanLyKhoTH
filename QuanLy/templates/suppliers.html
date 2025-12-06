@@ -126,19 +126,7 @@
         {% endif %}
     {% endif %}
 
-    <!-- Xóa: chỉ cho cửa hàng trưởng -->
-    {% if can_delete_supplier %}
-      {% if not is_supplier %}
-      <button class="btn btn-outline-danger"
-              onclick="deleteSupplier('{{ s.supplier_code }}')"
-              title="Xóa">
-        <i class="fa-solid fa-trash"></i>
-      </button>
-      {% endif %}
-    {% endif %}
 
-  </div>
-</td>
 
 
         </tr>
@@ -239,29 +227,5 @@
   {% endfor %}
 </div>
 
-<script>
-function deleteSupplier(id){
-  if(confirm("Bạn có chắc muốn xóa nhà cung ứng này?")){
-    fetch(`/suppliers/delete/${id}/`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": "{{ csrf_token }}",
-        "Content-Type": "application/json"
-      }
-    })
-    .then(r => r.json())
-    .then(data => {
-      if(data.success){
-        location.reload();
-      } else {
-        alert("❌ Lỗi: " + (data.error || "Không thể xóa nhà cung ứng này."));
-      }
-    })
-    .catch(err => {
-      console.error("Error:", err);
-      alert("❌ Lỗi khi xóa nhà cung ứng.");
-    });
-  }
-}
-</script>
+
 {% endblock %}

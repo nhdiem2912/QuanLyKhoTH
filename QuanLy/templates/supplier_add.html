@@ -30,7 +30,18 @@
         color: #0d6efd;
         margin-bottom: 14px;
     }
-    label { font-weight: 600; margin-bottom: 4px; }
+    label {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    .table thead th {
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    .table tbody td {
+        vertical-align: middle;
+        font-size: 13px;
+    }
 </style>
 {% endblock %}
 
@@ -48,130 +59,206 @@
         </div>
     </div>
 
-    {% if is_supplier %}
-        <!-- ❌ Nhà cung ứng KHÔNG CÓ QUYỀN THÊM NCC -->
-        <div class="alert alert-warning mt-3">
-            <i class="fa-solid fa-circle-info me-2"></i>
-            Bạn không có quyền thêm nhà cung ứng mới.
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <!-- THÔNG TIN NHÀ CUNG ỨNG -->
+        <div class="card p-4 shadow-sm mb-4">
+            <div class="section-title">Thông tin nhà cung ứng</div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label>{{ form.supplier_code.label }}</label>
+                    {{ form.supplier_code }}
+                    <div class="text-danger small">{{ form.supplier_code.errors }}</div>
+                </div>
+
+                <div class="col-md-8">
+                    <label>{{ form.company_name.label }}</label>
+                    {{ form.company_name }}
+                    <div class="text-danger small">{{ form.company_name.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>{{ form.tax_code.label }}</label>
+                    {{ form.tax_code }}
+                    <div class="text-danger small">{{ form.tax_code.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>{{ form.contact_name.label }}</label>
+                    {{ form.contact_name }}
+                    <div class="text-danger small">{{ form.contact_name.errors }}</div>
+                </div>
+
+                <div class="col-md-4">
+                    <label>{{ form.phone.label }}</label>
+                    {{ form.phone }}
+                    <div class="text-danger small">{{ form.phone.errors }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>{{ form.email.label }}</label>
+                    {{ form.email }}
+                    <div class="text-danger small">{{ form.email.errors }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label>{{ form.status.label }}</label>
+                    {{ form.status }}
+                    <div class="text-danger small">{{ form.status.errors }}</div>
+                </div>
+
+                <div class="col-12">
+                    <label>{{ form.address.label }}</label>
+                    {{ form.address }}
+                    <div class="text-danger small">{{ form.address.errors }}</div>
+                </div>
+            </div>
         </div>
 
-        <a href="{% url 'suppliers' %}" class="btn btn-secondary mt-3">
-            <i class="fa-solid fa-arrow-left-long me-1"></i> Quay lại danh sách
-        </a>
+        <!-- SẢN PHẨM NCC CUNG CẤP -->
+        {% if formset %}
+        <div class="card p-4 shadow-sm mb-4">
+            <div class="section-title">Sản phẩm nhà cung ứng cung cấp</div>
 
-    {% else %}
-        <!-- ✅ CHỈ MANAGER + EMPLOYEE THẤY FORM -->
+            {{ formset.management_form }}
 
-        <form method="post" class="needs-validation" novalidate>
-            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle text-center mb-3">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 15%">Mã SP NCC</th>
+                            <th style="width: 25%">Tên sản phẩm NCC</th>
+                            <th style="width: 20%">Danh mục</th>
+                            <th style="width: 20%">Đơn giá NCC (₫)</th>
+                            <th style="width: 10%">Đang cung cấp</th>
+                            <th style="width: 10%">Xóa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for f in formset.forms %}
+                        <tr>
+                            <td class="text-start">
+                                {{ f.product_code }}
+                                {% if f.product_code.errors %}
+                                    <div class="text-danger small">{{ f.product_code.errors }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="text-start">
+                                {{ f.name }}
+                                {% if f.name.errors %}
+                                    <div class="text-danger small">{{ f.name.errors }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ f.category }}
+                                {% if f.category.errors %}
+                                    <div class="text-danger small">{{ f.category.errors }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ f.unit_price }}
+                                {% if f.unit_price.errors %}
+                                    <div class="text-danger small">{{ f.unit_price.errors }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ f.is_active }}</td>
+                            <td>
+                                {% if formset.can_delete %}
+                                    {{ f.DELETE }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if f.non_field_errors %}
+                        <tr>
+                            <td colspan="6" class="text-danger small text-start">
+                                {{ f.non_field_errors }}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </tbody>
 
-            <!-- THÔNG TIN NHÀ CUNG ỨNG -->
-            <div class="card p-4 shadow-sm mb-4">
-                <div class="section-title">Thông tin nhà cung ứng</div>
-
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label>{{ form.supplier_code.label }}</label>
-                        {{ form.supplier_code }}
-                        <div class="text-danger small">{{ form.supplier_code.errors }}</div>
-                    </div>
-
-                    <div class="col-md-8">
-                        <label>{{ form.company_name.label }}</label>
-                        {{ form.company_name }}
-                        <div class="text-danger small">{{ form.company_name.errors }}</div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label>{{ form.tax_code.label }}</label>
-                        {{ form.tax_code }}
-                        <div class="text-danger small">{{ form.tax_code.errors }}</div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label>{{ form.contact_name.label }}</label>
-                        {{ form.contact_name }}
-                        <div class="text-danger small">{{ form.contact_name.errors }}</div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label>{{ form.phone.label }}</label>
-                        {{ form.phone }}
-                        <div class="text-danger small">{{ form.phone.errors }}</div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label>{{ form.email.label }}</label>
-                        {{ form.email }}
-                        <div class="text-danger small">{{ form.email.errors }}</div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label>{{ form.status.label }}</label>
-                        {{ form.status }}
-                        <div class="text-danger small">{{ form.status.errors }}</div>
-                    </div>
-
-                    <div class="col-12">
-                        <label>{{ form.address.label }}</label>
-                        {{ form.address }}
-                        <div class="text-danger small">{{ form.address.errors }}</div>
-                    </div>
-                </div>
+                    {% if formset.non_form_errors %}
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" class="text-danger small text-start">
+                                {{ formset.non_form_errors }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
             </div>
 
-            <!-- FORMSET SẢN PHẨM -->
-            {% if formset %}
-            <div class="card p-4 shadow-sm mb-4">
-                <div class="section-title">Sản phẩm nhà cung ứng cung cấp</div>
-
-                {{ formset.management_form }}
-
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle text-center mb-3">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Mã SP NCC</th>
-                                <th>Tên SP NCC</th>
-                                <th>Danh mục</th>
-                                <th>Đơn giá</th>
-                                <th>Đang cung cấp</th>
-                                <th>Xóa</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for f in formset.forms %}
-                            <tr>
-                                <td>{{ f.product_code }}</td>
-                                <td>{{ f.name }}</td>
-                                <td>{{ f.category }}</td>
-                                <td>{{ f.unit_price }}</td>
-                                <td>{{ f.is_active }}</td>
-                                <td>{% if formset.can_delete %}{{ f.DELETE }}{% endif %}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-semibold">Danh sách sản phẩm NCC</span>
-                    <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
-                        <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm
-                    </button>
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="text-end">
-                <a href="{% url 'suppliers' %}" class="btn btn-secondary">
-                    <i class="fa-solid fa-arrow-left-long me-1"></i> Hủy
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fa-solid fa-floppy-disk me-1"></i> Lưu nhà cung ứng
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Danh sách sản phẩm cung cấp</span>
+                <button type="button" id="add-row" class="btn btn-outline-primary btn-sm">
+                    <i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm
                 </button>
             </div>
-        </form>
-    {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="text-end">
+            <a href="{% url 'suppliers' %}" class="btn btn-secondary">
+                <i class="fa-solid fa-arrow-left-long me-1"></i> Hủy
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk me-1"></i> Lưu nhà cung ứng
+            </button>
+        </div>
+    </form>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const addButton = document.getElementById("add-row");
+    const totalForms = document.querySelector('input[name$="-TOTAL_FORMS"]');
+    const tableBody = document.querySelector("table tbody");
+
+    if (!addButton || !totalForms || !tableBody) return;
+
+    // Lấy prefix formset từ name của TOTAL_FORMS (vd: supplierproduct_set)
+    const match = totalForms.name.match(/^(.*)-TOTAL_FORMS$/);
+    const prefix = match ? match[1] : "";
+
+    addButton.addEventListener("click", function(e) {
+        e.preventDefault();
+
+        let currentIndex = parseInt(totalForms.value);
+        let firstRow = tableBody.querySelector("tr");
+
+        if (!firstRow) return;
+
+        let newRow = firstRow.cloneNode(true);
+
+        // Cập nhật index trong HTML (name, id, for, ...)
+        if (prefix) {
+            const regex = new RegExp(prefix + "-\\d+", "g");
+            newRow.innerHTML = newRow.innerHTML.replace(regex, prefix + "-" + currentIndex);
+        }
+
+        // Reset dữ liệu trong form mới
+        newRow.querySelectorAll("input, select, textarea").forEach(el => {
+            if (el.type === "checkbox") {
+                el.checked = false;
+            } else if (el.type !== "hidden") {
+                el.value = "";
+            }
+        });
+
+        // Xóa lỗi cũ nếu có
+        newRow.querySelectorAll(".text-danger").forEach(el => {
+            el.innerHTML = "";
+        });
+
+        tableBody.appendChild(newRow);
+
+        totalForms.value = currentIndex + 1;
+    });
+});
+</script>
+
 {% endblock %}

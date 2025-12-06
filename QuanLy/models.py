@@ -39,7 +39,7 @@ class Supplier(models.Model):
 
     def __str__(self):
         return f"{self.company_name} ({self.supplier_code})"
-    # ❌ Bỏ property products lỗi cũ, dùng reverse manager supplier.products (related_name ở SupplierProduct)
+    # Bỏ property products lỗi cũ, dùng reverse manager supplier.products (related_name ở SupplierProduct)
 
 
 # ===================== SẢN PHẨM NHÀ CUNG ỨNG (PRODUCT CHÍNH) =====================
@@ -152,7 +152,7 @@ class ImportReceipt(models.Model):
         super().save(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        # nếu có ASN mà chưa set supplier → tự set
+        # nếu có ASN mà chưa set supplier -> tự set
         if self.asn and not self.supplier:
             self.supplier = self.asn.supplier
 
@@ -164,7 +164,7 @@ class ImportReceipt(models.Model):
 
     def clean(self):
         from django.core.exceptions import ValidationError
-        # ✅ Nếu chọn ASN thì supplier phải trùng
+        # Nếu chọn ASN thì supplier phải trùng
         if self.asn and self.supplier and self.asn.supplier != self.supplier:
             raise ValidationError("Nhà cung ứng của phiếu nhập phải trùng với phiếu ASN được chọn.")
 
@@ -466,7 +466,7 @@ class ReturnItem(models.Model):
     detail_note = models.Textarea = models.TextField(blank=True, null=True)
     total = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
-    # 🔥 THÊM FIELD LÔ TỒN KHO CHO HÀNG HOÀN
+    # THÊM FIELD LÔ TỒN KHO CHO HÀNG HOÀN
     stock_item = models.OneToOneField(
         StockItem,
         on_delete=models.SET_NULL,
@@ -555,10 +555,7 @@ class PurchaseOrder(models.Model):
 
     @staticmethod
     def generate_new_code():
-        """
-        Sinh mã PO001, PO002, PO003...
-        Dựa trên mã lớn nhất hiện có.
-        """
+
         prefix = "PO"
         last = PurchaseOrder.objects.filter(po_code__startswith=prefix).order_by("-po_code").first()
 
@@ -602,8 +599,6 @@ class PurchaseOrder(models.Model):
         verbose_name_plural = "Đơn đặt hàng (PO)"
         ordering = ["-created_date"]
 
-
-from django.db.models import Sum as DjangoSum  # tránh đè Sum ở dưới
 
 
 class PurchaseOrderItem(models.Model):
@@ -722,7 +717,7 @@ class ASN(models.Model):
         super().save(*args, **kwargs)
 
     def clean(self):
-        # ✅ Nếu có PO thì nhà cung ứng của ASN phải trùng PO
+        # Nếu có PO thì nhà cung ứng của ASN phải trùng PO
         if self.po and self.supplier and self.po.supplier_id != self.supplier_id:
             raise ValidationError("Nhà cung ứng của ASN phải trùng với nhà cung ứng của PO.")
         super().clean()
@@ -763,9 +758,9 @@ class ASNItem(models.Model):
         verbose_name_plural = "Chi tiết ASN"
 
     def clean(self):
-        """
-        Ràng buộc: tổng số lượng giao (tất cả ASN cùng PO) không vượt số lượng đặt trong PO.
-        """
+
+        # tổng số lượng giao (tất cả ASN cùng PO) không vượt số lượng đặt trong PO.
+
         if self.asn_id and self.product_id and self.asn.po_id:
             po = self.asn.po
 

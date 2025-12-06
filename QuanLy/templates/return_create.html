@@ -138,7 +138,7 @@
   </form>
 </div>
 
-<!-- ---------------- TEMPLATE ROW (HIDDEN) ---------------- -->
+<!-- ---------------- TEMPLATE ROW ---------------- -->
 <table style="display:none;">
   <tbody id="empty-form-template">
     <tr class="item-row">
@@ -258,7 +258,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // ---------------- ON SELECT CHANGE ----------------
+  // ---------------- SELECT CHANGE ----------------
   tbody.addEventListener("change", function (e) {
     if (!e.target.classList.contains("export-item-select")) return;
 
@@ -294,7 +294,7 @@ document.addEventListener("DOMContentLoaded", function () {
     calcTotals();
   });
 
-  // ---------------- AUTO CALC ----------------
+  // ---------------- Tính tự động ----------------
   tbody.addEventListener("input", function (e) {
     if (e.target.name.includes("-quantity") ||
         e.target.name.includes("-unit_price")) {
@@ -329,7 +329,7 @@ document.addEventListener("DOMContentLoaded", function () {
 }
 
 
-  // ---------------- ADD ROW ----------------
+  // ---------------- Thêm dòng ----------------
   document.getElementById("add-row").addEventListener("click", function () {
     let index = parseInt(totalFormsInput.value);
 

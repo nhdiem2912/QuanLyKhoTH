@@ -84,7 +84,7 @@
 
     </form>
   </div>
-  <!-- TABLE -->
+  <!-- Danh sách -->
   <div class="bg-white p-3 rounded-3 shadow-sm">
     {% if returns %}
     <table class="table table-hover align-middle mb-0">
@@ -137,11 +137,6 @@
 </a>
 
 
-<!--              &lt;!&ndash; Xóa &ndash;&gt;-->
-<!--              <button class="btn btn-outline-danger" title="Xóa phiếu hoàn"-->
-<!--                      onclick="confirmDelete('{{ r.return_code }}')">-->
-<!--                <i class="fa-solid fa-trash"></i>-->
-<!--              </button>-->
             </div>
           </td>
         </tr>
@@ -150,7 +145,7 @@
       </tbody>
     </table>
 
-    <!-- MODAL CHI TIẾT -->
+    <!-- MODAL XEM CHI TIẾT -->
     {% for r in returns %}
     <div class="modal fade" id="viewModal{{ r.return_code }}" tabindex="-1">
       <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -238,14 +233,7 @@
 
 </div>
 
-<!--&lt;!&ndash; Confirm delete &ndash;&gt;-->
-<!--<script>-->
-<!--function confirmDelete(code){-->
-<!--  if(confirm("Bạn có chắc muốn xóa phiếu hoàn " + code + " ?")){-->
-<!--    window.location.href = "/return/delete/" + code + "/";-->
-<!--  }-->
-<!--}-->
-<!--</script>-->
+
 
 <style>
 .btn-group .btn {

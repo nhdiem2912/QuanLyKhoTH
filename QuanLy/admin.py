@@ -24,10 +24,6 @@ class SupplierAdmin(admin.ModelAdmin):
     list_filter = ("status",)
 
 
-# ===================== PRODUCT MASTER =====================
-
-
-
 # ===================== STOCK ITEM =====================
 @admin.register(StockItem)
 class StockItemAdmin(admin.ModelAdmin):
