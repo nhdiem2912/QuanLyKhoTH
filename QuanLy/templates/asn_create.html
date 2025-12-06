@@ -71,7 +71,6 @@
     </div>
   {% endif %}
 
-  <!-- 🔹 NEW: thêm id để bắt submit validate -->
   <form method="post" id="asnForm">
     {% csrf_token %}
 
@@ -103,32 +102,6 @@
             * Chỉ hiển thị PO thuộc nhà cung ứng của bạn.
           </small>
         </div>
-
-        <!-- 🔹 NEW: Supplier auto cho NCC, không cho chọn sai -->
-<!--        <div class="col-md-3">-->
-<!--    {{ form.supplier.label_tag }}-->
-
-<!--    {% if user.is_authenticated and user.supplier %}-->
-<!--        &lt;!&ndash; Hiển thị tên NCC cho đẹp, không cho chỉnh &ndash;&gt;-->
-<!--        <input type="text" class="form-control"-->
-<!--               value="{{ user.supplier.company_name }}"-->
-<!--               readonly style="background:#e9ecef;">-->
-
-<!--        &lt;!&ndash; Gửi id thật lên server bằng hidden &ndash;&gt;-->
-<!--        <input type="hidden"-->
-<!--               name="{{ form.supplier.html_name }}"-->
-<!--               value="{{ user.supplier.id }}">-->
-<!--    {% else %}-->
-<!--        &lt;!&ndash; Admin / Manager vẫn có dropdown &ndash;&gt;-->
-<!--        {{ form.supplier }}-->
-<!--    {% endif %}-->
-
-<!--    {{ form.supplier.errors }}-->
-
-<!--    <small class="text-muted d-block" style="font-size:11px;">-->
-<!--        * Tự động theo tài khoản nhà cung ứng, không thể thay đổi.-->
-<!--    </small>-->
-<!--</div>-->
 
 
         <div class="col-md-3">
@@ -261,12 +234,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
   let poProducts = {}; // Sản phẩm và số lượng trong PO
 
-  // 🔹 NEW: gắn class product-select cho tất cả select product (không cần add_class)
+  // Gắn class product-select cho tất cả select product (không cần add_class)
   tbody.querySelectorAll('select[name$="-product"]').forEach(sel => {
     sel.classList.add('product-select');
   });
 
-  // ✅ Khi chọn PO, tự động set nhà cung cấp và filter sản phẩm
+  // Khi chọn PO, tự động set nhà cung cấp và filter sản phẩm
   if (poSelect) {
     poSelect.addEventListener("change", function() {
       const poId = this.value;
@@ -306,7 +279,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // ✅ Khi chọn sản phẩm, set đơn giá và giới hạn số lượng
+  // Khi chọn sản phẩm, set đơn giá và giới hạn số lượng
   tbody.addEventListener("change", function(e) {
     if (e.target.classList.contains('product-select')) {
       const row = e.target.closest('tr');
@@ -315,10 +288,10 @@ document.addEventListener("DOMContentLoaded", function() {
       const selectedOption = e.target.options[e.target.selectedIndex];
 
       if (selectedOption && selectedOption.dataset.price) {
-        // ✅ Set đơn giá từ PO (mặc định của nhà cung cấp)
+        // Set đơn giá từ PO (mặc định của nhà cung cấp)
         priceInput.value = parseInt(selectedOption.dataset.price) || 0;
 
-        // ✅ Giới hạn số lượng <= số lượng trong PO
+        // Giới hạn số lượng <= số lượng trong PO
         if (selectedOption.dataset.maxQty) {
           const maxQty = parseInt(selectedOption.dataset.maxQty);
           qtyInput.max = maxQty;
@@ -330,13 +303,13 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     }
 
-    // ✅ Validate số lượng khi nhập
+    // Validate số lượng khi nhập
     if (e.target.name && e.target.name.indexOf("-quantity") !== -1) {
       const qtyInput = e.target;
       const maxQty = parseInt(qtyInput.getAttribute('data-max') || qtyInput.max || 999999);
       let enteredQty = parseInt(qtyInput.value) || 0;
 
-      // 🔹 NEW: không được ≤ 0
+      // không được ≤ 0
       if (enteredQty <= 0) {
         alert("Số lượng phải lớn hơn 0.");
         qtyInput.value = "";
@@ -395,7 +368,7 @@ document.addEventListener("DOMContentLoaded", function() {
       newProductSelect.classList.add('product-select');
     }
 
-    // ✅ Cập nhật select sản phẩm nếu đã chọn PO
+    // Cập nhật select sản phẩm nếu đã chọn PO
     if (poSelect && poSelect.value) {
       // gọi lại change để đổ danh sách sản phẩm
       poSelect.dispatchEvent(new Event('change'));
@@ -413,7 +386,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // 🔹 NEW: validate lần cuối trước khi submit – không cho lưu nếu có quantity ≤0 hoặc rỗng
+  // validate lần cuối trước khi submit – không cho lưu nếu có quantity ≤0 hoặc rỗng
   if (asnForm) {
     asnForm.addEventListener("submit", function(e) {
       const qtyInputs = tbody.querySelectorAll('input[name$="-quantity"]');
