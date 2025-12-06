@@ -79,7 +79,6 @@ path('suppliers/<str:pk>/history/', views.supplier_history, name='supplier_histo
 
 
     # ===================== ĐĂNG NHẬP / ĐĂNG XUẤT =====================
-    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path("forgot-password/", views.forgot_password, name="forgot_password"),
     path("verify-otp/", views.verify_otp, name="verify_otp"),

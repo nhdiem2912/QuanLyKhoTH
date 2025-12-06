@@ -6,20 +6,47 @@
   <meta charset="UTF-8">
   <style>
     @page { size: A4 portrait; margin: 1.5cm; }
-    body { font-family: "DejaVu Sans", sans-serif; font-size: 13px; line-height: 1.4; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #000; padding: 6px; }
-    th { background:#f2f2f2; text-align:center; }
-    .fw-bold { font-weight:700; }
-    .text-center { text-align:center; }
-    .text-right { text-align:right; }
+    body {
+      font-family: "DejaVu Sans", sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      border: 1px solid #000;
+      padding: 6px 8px;
+      vertical-align: middle;
+    }
+    th { background: #f2f2f2; text-align: center; }
+    .fw-bold { font-weight: 700; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
     .text-primary { color: #0d6efd; }
-    .title { font-size:18px; font-weight:700; text-align:center; margin:10px 0; }
-    .header-table td { border:none; padding:2px 0; }
-    .info-table td { border:none; padding:4px 0; }
-    .sign-table { border:none; width:100%; margin-top:40px; text-align:center; table-layout:fixed; }
-    .sign-table td { border:none; padding-top:30px; }
-    .signature-date { text-align:right; margin-top:10px; }
+    .text-success { color: #16a34a; }
+    .title {
+      margin: 16px 0 12px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .header-table td {
+      border: none;
+      padding: 2px 0;
+      font-size: 12px;
+    }
+    .info-table td {
+      border: none;
+      padding: 3px 0;
+    }
+    .summary-row td {
+      background: #fafafa;
+      font-weight: 700;
+    }
+    .no-right-border { border-right: none !important; }
+    .no-left-border  { border-left: none !important; }
+    .sign-table { border: none; margin-top: 45px; text-align: center; table-layout: fixed; }
+    .sign-table td { border: none; padding-top: 35px; font-size: 12px; }
+    .signature-date { text-align: right; margin-top: 8px; font-size: 12px; }
   </style>
 </head>
 
@@ -28,14 +55,14 @@
   <!-- HEADER -->
   <table class="header-table">
     <tr>
-      <td width="70%">
-        <strong>TH True Mart chi nhánh 397 Núi Thành - Đà Nẵng</strong><br>
-        Địa chỉ: 397 Núi Thành - Đà Nẵng<br>
-        Điện thoại: 0236 3734 001 &nbsp;&nbsp; Hotline: 094 266 9368
+      <td width="65%">
+        <strong>TH True Mart - Chi nhánh 397 Núi Thành, Đà Nẵng</strong><br>
+        Địa chỉ: 397 Núi Thành, Bình Thuận, Hải Châu, Đà Nẵng<br>
+        Hotline: 094 266 9368 – Điện thoại: 0236 3734 001
       </td>
-      <td width="30%" style="text-align:right;">
-        <strong>Số PO:</strong> <span class="text-primary">{{ po.po_code }}</span><br>
-        <strong>Trạng thái:</strong> {{ po.get_status_display }}
+      <td width="35%" style="text-align:right;">
+        <div><strong>Số PO:</strong> <span class="text-primary">{{ po.po_code }}</span></div>
+        <div><strong>Trạng thái:</strong> {{ po.get_status_display }}</div>
       </td>
     </tr>
   </table>
@@ -44,20 +71,20 @@
 
   <!-- INFO -->
   <table class="info-table">
-    <tr>
-      <td>Ngày tạo PO: <strong>{{ po.created_date|date:"d/m/Y" }}</strong></td>
-    </tr>
+    <tr><td>Ngày tạo PO: <strong>{{ po.created_date|date:"d/m/Y" }}</strong></td></tr>
+
     <tr>
       <td>
         Nhà cung ứng:
         <strong>{{ po.supplier.company_name }}</strong>
         {% if po.supplier.contact_name or po.supplier.phone %}
-          &nbsp;– Người liên hệ:
+          – Người liên hệ:
           {% if po.supplier.contact_name %}{{ po.supplier.contact_name }}{% endif %}
           {% if po.supplier.phone %} ({{ po.supplier.phone }}){% endif %}
         {% endif %}
       </td>
     </tr>
+
     <tr>
       <td>
         Người lập phiếu:
@@ -72,21 +99,21 @@
     </tr>
 
     {% if po.note %}
-    <tr>
-      <td>Ghi chú: <strong>{{ po.note }}</strong></td>
-    </tr>
+    <tr><td>Ghi chú: <strong>{{ po.note }}</strong></td></tr>
     {% endif %}
   </table>
 
   <!-- MAIN TABLE -->
-  <table style="margin-top:15px;">
+  <table style="margin-top: 14px;">
     <thead>
       <tr>
-        <th style="width:6%;">STT</th>
-        <th style="width:14%;">Mã SP</th>
-        <th style="width:50%;">Tên sản phẩm</th>
+        <th style="width:5%;">STT</th>
+        <th style="width:10%;">Mã SP</th>
+        <th style="width:38%;">Tên sản phẩm</th>
         <th style="width:10%;">ĐVT</th>
         <th style="width:10%;">SL đặt</th>
+        <th style="width:12%;">Đơn giá (₫)</th>
+        <th style="width:15%;">Thành tiền (₫)</th>
       </tr>
     </thead>
 
@@ -97,19 +124,31 @@
         <td class="text-center">{{ item.product.product_code }}</td>
         <td>{{ item.product.name }}</td>
         <td class="text-center">{{ item.unit }}</td>
-        <td class="text-center">{{ item.quantity|intcomma }}</td>
+        <td class="text-right">{{ item.quantity|intcomma }}</td>
+        <td class="text-right">{{ item.unit_price|floatformat:0|intcomma }}</td>
+        <td class="text-right text-success fw-bold">
+          {{ item.total|floatformat:0|intcomma }} ₫
+        </td>
       </tr>
       {% empty %}
-      <tr>
-        <td colspan="5" class="text-center">Không có sản phẩm trong đơn đặt hàng</td>
-      </tr>
+      <tr><td colspan="7" class="text-center">Không có sản phẩm trong PO</td></tr>
       {% endfor %}
     </tbody>
-  </table>
 
-<!--  <p style="margin-top:10px; text-align:right;">-->
-<!--    <strong>Tổng số dòng sản phẩm:</strong> {{ po.items.count }} mặt hàng-->
-<!--  </p>-->
+    <tfoot>
+      <tr class="summary-row">
+        <td colspan="4" class="text-right no-right-border">Tổng số lượng:</td>
+        <td class="text-right no-left-border">
+          {{ po.total_quantity|intcomma }}
+        </td>
+
+        <td class="text-right no-right-border">Tổng tiền:</td>
+        <td class="text-right no-left-border text-primary">
+          {{ po.total_amount|floatformat:0|intcomma }} ₫
+        </td>
+      </tr>
+    </tfoot>
+  </table>
 
   <!-- SIGNATURE -->
   <div class="signature-date">
@@ -118,7 +157,7 @@
 
   <table class="sign-table">
     <tr>
-      <td>Người lập PO<br><em>(Ký, ghi rõ họ tên)</em></td>
+      <td>Nhà cung ứng<br><em>(Ký, ghi rõ họ tên)</em></td>
       <td>Quản lý cửa hàng<br><em>(Ký, ghi rõ họ tên)</em></td>
     </tr>
   </table>

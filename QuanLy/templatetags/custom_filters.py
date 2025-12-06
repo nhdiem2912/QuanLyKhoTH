@@ -94,3 +94,4 @@ def attr(field, arg):
     attrs = field.field.widget.attrs.copy()
     attrs[key] = val
     return field.as_widget(attrs=attrs)
+

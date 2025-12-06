@@ -117,7 +117,7 @@ THOUSAND_SEPARATOR = '.'
 NUMBER_GROUPING = 3
 
 LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'      # sau login → gọi home_redirect
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -134,8 +134,8 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = "thtruemartnuithanhdanang@gmail.com"       # Gmail dùng để GỬI
-EMAIL_HOST_PASSWORD = "fivw tiaw ppit iphq"       # App Password 16 ký tự
+EMAIL_HOST_USER = "thtruemartnuithanhdanang@gmail.com"
+EMAIL_HOST_PASSWORD = "fivw tiaw ppit iphq"
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 

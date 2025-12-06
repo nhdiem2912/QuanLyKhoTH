@@ -544,6 +544,7 @@ class PurchaseOrder(models.Model):
 
     po_code = models.CharField(max_length=20, primary_key=True, verbose_name="Mã PO")
     supplier = models.ForeignKey("Supplier", on_delete=models.CASCADE, verbose_name="Nhà cung ứng")
+    unit_price = models.DecimalField( max_digits=12, decimal_places=2, null=True, blank=True,verbose_name="Đơn giá NCC")
     created_date = models.DateField(auto_now_add=True, verbose_name="Ngày tạo")
     note = models.TextField(blank=True, null=True, verbose_name="Ghi chú")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending", verbose_name="Trạng thái")
@@ -586,6 +587,15 @@ class PurchaseOrder(models.Model):
     @property
     def total_amount(self):
         return sum(item.total for item in self.items.all())
+
+    @property
+    def total_value(self):
+        return sum((item.quantity * (item.unit_price or 0)) for item in self.items.all())
+
+    def save(self, *args, **kwargs):
+        if self.product and not self.unit_price:
+            self.unit_price = self.product.unit_price  # Lấy từ bảng SupplierProduct
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Đơn đặt hàng (PO)"

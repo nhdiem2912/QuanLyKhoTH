@@ -160,8 +160,8 @@
     </button>
 
     <!-- SỬA – CHỈ NHÀ CUNG ỨNG SỞ HỮU -->
-    {% if is_supplier and a.supplier.supplier_code == user.username %}
-    <a href="{% url 'asn_edit' a.asn_code %}" class="btn btn-outline-warning">
+    {% if can_edit_po %}
+    <a href="{% url 'po_edit' p.po_code %}" class="btn btn-outline-warning">
       <i class="fa-solid fa-pen"></i>
     </a>
     {% endif %}
@@ -255,11 +255,7 @@
             </div>
 
             {% if can_edit_po %}
-<div class="text-end mt-3">
-  <a href="{% url 'po_edit' p.po_code %}" class="btn btn-primary btn-sm">
-    <i class="fa-solid fa-pen me-1"></i> Cập nhật
-  </a>
-</div>
+
 {% endif %}
 
           </div>
