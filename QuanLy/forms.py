@@ -57,14 +57,42 @@ class SupplierForm(forms.ModelForm):
         widgets = {
             "supplier_code": forms.TextInput(attrs={"class": "form-control"}),
             "company_name": forms.TextInput(attrs={"class": "form-control"}),
-            "tax_code": forms.TextInput(attrs={"class": "form-control"}),
+            "tax_code": forms.TextInput(attrs={"class": "form-control", "inputmode": "numeric", }),
             "contact_name": forms.TextInput(attrs={"class": "form-control"}),
-            "phone": forms.TextInput(attrs={"class": "form-control"}),
+            "phone": forms.TextInput(attrs={"class": "form-control", "inputmode": "numeric", "pattern": r"\d*",}),
             "email": forms.EmailInput(attrs={"class": "form-control"}),
             "address": forms.TextInput(attrs={"class": "form-control"}),
             "status": forms.Select(attrs={"class": "form-select"}),
         }
 
+    def clean_phone(self):
+        phone = (self.cleaned_data.get("phone") or "").strip()
+
+        # Nếu để trống → cho phép (NCC không muốn cập nhật SĐT)
+        if not phone:
+            return phone
+
+        if not phone.isdigit():
+            raise forms.ValidationError("Số điện thoại chỉ được chứa chữ số.")
+        if len(phone) != 10:
+            raise forms.ValidationError("Số điện thoại phải gồm đúng 10 chữ số.")
+        if not phone.startswith("0"):
+            raise forms.ValidationError("SĐT phải bắt đầu bằng 0.")
+
+        return phone
+
+    def clean_tax_code(self):
+        tax = (self.cleaned_data.get("tax_code") or "").strip()
+
+        if not tax:
+            return tax  # Cho phép rỗng
+
+        if not tax.isdigit():
+            raise forms.ValidationError("Mã số thuế chỉ được chứa số.")
+        if len(tax) not in (10, 13):
+            raise forms.ValidationError("Mã số thuế phải 10 hoặc 13 số.")
+
+        return tax
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -305,6 +333,8 @@ class ExportReceiptForm(forms.ModelForm):
             }),
             "receiver_phone": forms.TextInput(attrs={
                 "class": "form-control",
+                "inputmode": "numeric",
+                "pattern": r"\d*",
                 "placeholder": "SĐT liên hệ khi giao hàng"
             }),
             "note": forms.Textarea(attrs={
@@ -321,7 +351,15 @@ class ExportReceiptForm(forms.ModelForm):
             "receiver_phone": "SĐT người nhận",
             "note": "Ghi chú",
         }
-
+    def clean_receiver_phone(self):
+        receiver_phone = (self.cleaned_data.get("receiver_phone") or "").strip()
+        if not receiver_phone.isdigit():
+            raise forms.ValidationError("Số điện thoại chỉ được chứa chữ số.")
+        if len(receiver_phone) != 10:
+            raise forms.ValidationError("Số điện thoại phải gồm đúng 10 chữ số.")
+        if not receiver_phone.startswith("0"):
+            raise forms.ValidationError("Số điện thoại phải bắt đầu bằng số 0.")
+        return receiver_phone
 
 class ExportItemForm(forms.ModelForm):
     class Meta:

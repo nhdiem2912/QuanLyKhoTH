@@ -64,7 +64,7 @@ def home_redirect(request):
 @login_required(login_url='login')
 def categories(request):
     q = (request.GET.get("q") or "").strip()
-    count_filter = request.GET.get("count", "")
+
 
 
     data = Category.objects.all()
@@ -84,13 +84,7 @@ def categories(request):
             Q(products__product_code__icontains=search)
         ).distinct()
 
-    # Lọc theo số lượng sản phẩm
-    if count_filter == "0":
-        data = data.annotate(total_products=Count("products")).filter(total_products=0)
-    elif count_filter == "1":
-        data = data.annotate(total_products=Count("products")).filter(total_products__gt=0)
 
-    data = data.order_by("category_code")
 
     # Lấy danh sách sản phẩm duy nhất từ phiếu nhập
     for category in data:
@@ -115,7 +109,7 @@ def categories(request):
     return render(request, "categories.html", {
         "categories": data,
         "q": q,
-        "count_filter": count_filter,
+
     })
 
 # ===================== THÊM DANH MỤC =====================
@@ -163,10 +157,8 @@ from .forms import ( SupplierForm, SupplierProductFormSet,)
 @group_required('Cửa hàng trưởng', 'Nhân viên', 'Nhà cung ứng')
 @login_required(login_url='login')
 def suppliers(request):
-    q = request.GET.get("q", "").strip()
-    city = request.GET.get("city", "")
-    count_filter = request.GET.get("count", "")
 
+    city = request.GET.get("city", "")
     user = request.user
     perms = get_permission_flags(user)
 
@@ -176,30 +168,13 @@ def suppliers(request):
     else:
         suppliers = Supplier.objects.all()
 
-    # --- Search (Tên, mã, người liên hệ, email, số điện thoại…) ---
-    if q:
-        suppliers = suppliers.filter(
-            Q(company_name__icontains=q) |
-            Q(supplier_code__icontains=q) |
-            Q(contact_name__icontains=q) |
-            Q(phone__icontains=q) |
-            Q(email__icontains=q) |
-            Q(address__icontains=q)
-        )
-
-    # --- Lọc theo thành phố ---
-    if city:
-        suppliers = suppliers.filter(address__icontains=city)
-
-    suppliers = suppliers.order_by("company_name")
 
     perms = get_permission_flags(request.user)
 
     context = {
         "suppliers": suppliers,
-        "q": q,
         "city_filter": city,
-        "count_filter": count_filter,
+
         **perms,  # Đẩy toàn bộ cờ quyền xuống template
     }
     return render(request, "suppliers.html", context)
@@ -416,7 +391,7 @@ def import_list(request):
     supplier_filter = request.GET.get("supplier", "")
     date_from = request.GET.get("date_from", "")
     date_to = request.GET.get("date_to", "")
-    count_filter = request.GET.get("count", "")
+
 
     imports = ImportReceipt.objects.select_related("supplier") \
         .prefetch_related("items__product")
@@ -443,7 +418,6 @@ def import_list(request):
     if supplier_filter:
         imports = imports.filter(supplier_id=supplier_filter)
 
-
     # LỌC THEO NGÀY
     if date_from:
         imports = imports.filter(import_date__gte=date_from)
@@ -451,12 +425,6 @@ def import_list(request):
     if date_to:
         imports = imports.filter(import_date__lte=date_to)
 
-
-    # LỌC THEO SỐ LƯỢNG DÒNG SẢN PHẨM
-    if count_filter == "0":
-        imports = imports.annotate(total_items=Count("items")).filter(total_items=0)
-    elif count_filter == "1":
-        imports = imports.annotate(total_items=Count("items")).filter(total_items__gt=0)
 
     imports = imports.order_by("-import_code")
 
@@ -470,7 +438,6 @@ def import_list(request):
         "supplier_filter": supplier_filter,
         "date_from": date_from,
         "date_to": date_to,
-        "count_filter": count_filter,
         **perms,
     })
 
@@ -1042,7 +1009,7 @@ def po_list(request):
     supplier_id = request.GET.get("supplier", "")
     date_from = request.GET.get("date_from", "")
     date_to = request.GET.get("date_to", "")
-    count_filter = request.GET.get("count", "")
+
     status = request.GET.get("status", "")
 
     pos = PurchaseOrder.objects.select_related(
@@ -1080,11 +1047,6 @@ def po_list(request):
     if date_to:
         pos = pos.filter(created_date__lte=date_to)
 
-    # --- FILTER BY NUMBER OF PRODUCTS ---
-    if count_filter == "0":
-        pos = pos.annotate(total_items=Count("items")).filter(total_items=0)
-    elif count_filter == "1":
-        pos = pos.annotate(total_items=Count("items")).filter(total_items__gt=0)
 
     # Sắp xếp theo mã PO, cái tạo sau (PO lớn hơn) đứng trên cùng
     pos = pos.order_by("-po_code")
@@ -1101,7 +1063,6 @@ def po_list(request):
         "supplier_id": supplier_id,
         "date_from": date_from,
         "date_to": date_to,
-        "count_filter": count_filter,
         "status": status,
         **perms,
     })
@@ -1243,7 +1204,7 @@ def asn_list(request):
     date_from = request.GET.get("date_from", "")
     date_to = request.GET.get("date_to", "")
     status = request.GET.get("status", "")
-    count_filter = request.GET.get("count", "")
+
 
     # SEARCH
     if q:
@@ -1269,11 +1230,6 @@ def asn_list(request):
     if status:
         asns = asns.filter(status=status)
 
-    # COUNT SP
-    if count_filter == "0":
-        asns = asns.annotate(total_items=Count("items")).filter(total_items=0)
-    elif count_filter == "1":
-        asns = asns.annotate(total_items=Count("items")).filter(total_items__gt=0)
 
     # Sắp xếp theo mã ASN: cái nào tạo sau (mã lớn hơn) ở trên
     asns = asns.order_by("-asn_code")
@@ -1288,7 +1244,6 @@ def asn_list(request):
         "date_from": date_from,
         "date_to": date_to,
         "status": status,
-        "count_filter": count_filter,
         "can_edit_asn": perms["is_supplier"],
         "can_create_asn": perms["is_supplier"],
         **perms
@@ -1474,34 +1429,6 @@ def reports(request):
     start_date = parse_date(request.GET.get("start_date"))
     end_date = parse_date(request.GET.get("end_date"))
 
-    # ---- Áp dụng bộ lọc thời gian nhanh----
-    if quick_range:
-        if quick_range == "today":
-            start_date = end_date = today
-
-        elif quick_range == "this_week":
-            start_date = today - timedelta(days=today.weekday())
-            end_date = today
-
-        elif quick_range == "this_month":
-            start_date = today.replace(day=1)
-            end_date = today
-
-        elif quick_range == "last_month":
-            first = today.replace(day=1)
-            last_month_end = first - timedelta(days=1)
-            start_date = last_month_end.replace(day=1)
-            end_date = last_month_end
-
-        elif quick_range == "this_quarter":
-            quarter = (today.month - 1) // 3 + 1
-            start_month = 3 * (quarter - 1) + 1
-            start_date = date(today.year, start_month, 1)
-            end_date = today
-
-        elif quick_range == "this_year":
-            start_date = date(today.year, 1, 1)
-            end_date = today
 
     # Nếu chưa có ngày -> set mặc định đầu tháng đến hôm nay
     if start_date is None:
@@ -1910,7 +1837,6 @@ def forgot_password(request):
 
         # 7) Lưu user vào session để bước sau xác minh OTP
         request.session["reset_user_id"] = user.id
-
         return redirect("verify_otp")
 
     return render(request, "forgot_password.html")

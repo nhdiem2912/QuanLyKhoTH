@@ -25,9 +25,11 @@ class Category(models.Model):
 class Supplier(models.Model):
     supplier_code = models.CharField(max_length=10, primary_key=True, verbose_name="Mã NCC")
     company_name = models.CharField(max_length=200, verbose_name="Tên công ty")
-    tax_code = models.CharField(max_length=10, verbose_name="Mã số thuế", blank=True, null=True)
+    phone = models.CharField(max_length=10, blank=True, null=True)
+    tax_code = models.CharField(max_length=13, blank=True, null=True)
+
     contact_name = models.CharField(max_length=100, verbose_name="Người liên hệ")
-    phone = models.CharField(max_length=10, verbose_name="SĐT")
+
     email = models.EmailField(blank=True, null=True)
     address = models.CharField(max_length=255, verbose_name="Địa chỉ", blank=True, null=True)
     status = models.CharField(
@@ -39,7 +41,7 @@ class Supplier(models.Model):
 
     def __str__(self):
         return f"{self.company_name} ({self.supplier_code})"
-    # Bỏ property products lỗi cũ, dùng reverse manager supplier.products (related_name ở SupplierProduct)
+
 
 
 # ===================== SẢN PHẨM NHÀ CUNG ỨNG (PRODUCT CHÍNH) =====================
