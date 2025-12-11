@@ -98,9 +98,7 @@
           {% if form.po.errors %}
               <div class="text-danger small">{{ form.po.errors }}</div>
           {% endif %}
-          <small class="text-muted d-block" style="font-size:11px;">
-            * Chỉ hiển thị PO thuộc nhà cung ứng của bạn.
-          </small>
+
         </div>
 
 
@@ -161,16 +159,12 @@
             <td>
               {{ f.product }}
               {{ f.product.errors }}
-              <small class="text-muted d-block" style="font-size:11px;">
-                Chỉ từ PO đã chọn.
-              </small>
+
             </td>
             <td>
               {{ f.quantity }}
               {{ f.quantity.errors }}
-              <small class="text-muted d-block" style="font-size:11px;">
-                ≤ SL trong PO, &gt; 0.
-              </small>
+
             </td>
             <td>
               {{ f.unit }}
@@ -179,9 +173,7 @@
             <td>
               {{ f.unit_price }}
               {{ f.unit_price.errors }}
-              <small class="text-muted d-block" style="font-size:11px;">
-                Tự động từ PO.
-              </small>
+
             </td>
             <td class="text-end fw-semibold text-primary">
               <span class="line-total">0 ₫</span>
@@ -267,6 +259,7 @@ document.addEventListener("DOMContentLoaded", function() {
               option.textContent = `${product.code} - ${product.name} (Còn lại: ${product.max_quantity})`;
               option.dataset.price = product.unit_price;
               option.dataset.maxQty = product.max_quantity; // Số lượng còn lại trong PO
+              option.dataset.unit = product.unit;
               if (productId === currentValue) option.selected = true;
               select.appendChild(option);
             });
@@ -290,7 +283,13 @@ document.addEventListener("DOMContentLoaded", function() {
       if (selectedOption && selectedOption.dataset.price) {
         // Set đơn giá từ PO (mặc định của nhà cung cấp)
         priceInput.value = parseInt(selectedOption.dataset.price) || 0;
-
+        priceInput.readOnly = true
+        // Set đơn vị tự động theo PO
+    const unitInput = row.querySelector('input[name$="-unit"]');
+    if (selectedOption.dataset.unit) {
+        unitInput.value = selectedOption.dataset.unit;
+    }
+    unitInput.readOnly = true;
         // Giới hạn số lượng <= số lượng trong PO
         if (selectedOption.dataset.maxQty) {
           const maxQty = parseInt(selectedOption.dataset.maxQty);

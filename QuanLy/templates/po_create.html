@@ -84,14 +84,23 @@
           {{ form.supplier }}
           {{ form.supplier.errors }}
           <small class="text-muted fst-italic">
-            * Chỉ nên chọn sản phẩm thuộc nhà cung ứng này (hệ thống sẽ kiểm tra lại).
+
           </small>
         </div>
         <div class="col-md-3">
-          {{ form.status.label_tag }}
-          {{ form.status }}
-          {{ form.status.errors }}
-        </div>
+  {{ form.status.label_tag }}
+  {% if is_staff %}
+    {# Ẩn field thật, nhưng vẫn gửi giá trị lên form #}
+    {{ form.status.as_hidden }}
+
+    {# Hiển thị text readonly cho người dùng xem #}
+    <input class="form-control bg-light" value="Chờ duyệt" readonly>
+  {% else %}
+    {{ form.status }}
+  {% endif %}
+  {{ form.status.errors }}
+</div>
+
         <div class="col-md-12">
           {{ form.note.label_tag }}
           {{ form.note }}
@@ -139,9 +148,7 @@
             <td>
               {{ f.unit_price }}
               {{ f.unit_price.errors }}
-              <small class="text-muted d-block" style="font-size:11px;">
-                Tự động từ nhà cung ứng.
-              </small>
+
             </td>
             <td class="text-end fw-semibold text-primary">
               <span class="line-total">0 ₫</span>

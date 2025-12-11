@@ -121,8 +121,9 @@
                 <div class="text-muted small mb-1">
                   {{ c.description|default:"Không có mô tả" }}
                 </div>
+
                 <div class="text-muted small">
-                  {{ c.products.count }} sản phẩm
+                  {{ c.products_from_imports|length }} sản phẩm
                 </div>
               </div>
             </div>

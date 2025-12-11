@@ -66,21 +66,19 @@
 
                 <div class="col-md-4">
                     <label>{{ form.supplier_code.label }}</label>
-                    {{ form.supplier_code }}
-                    <div class="text-danger small">{{ form.supplier_code.errors }}</div>
+    <input class="form-control bg-light" value="{{ form.instance.supplier_code }}" readonly>
                 </div>
 
                 <div class="col-md-8">
-                    <label>{{ form.company_name.label }}</label>
-                    {{ form.company_name }}
-                    <div class="text-danger small">{{ form.company_name.errors }}</div>
-                </div>
+    <label>{{ form.company_name.label }}</label>
+    <input class="form-control bg-light" value="{{ form.instance.company_name }}" readonly>
+</div>
+
 
                 <div class="col-md-4">
-                    <label>{{ form.tax_code.label }}</label>
-                    {{ form.tax_code }}
-                    <div class="text-danger small">{{ form.tax_code.errors }}</div>
-                </div>
+    <label>{{ form.tax_code.label }}</label>
+    <input class="form-control bg-light" value="{{ form.instance.tax_code }}" readonly>
+</div>
 
                 <div class="col-md-4">
                     <label>{{ form.contact_name.label }}</label>

@@ -458,7 +458,7 @@ def import_list(request):
     elif count_filter == "1":
         imports = imports.annotate(total_items=Count("items")).filter(total_items__gt=0)
 
-    imports = imports.order_by("-import_date")
+    imports = imports.order_by("-import_code")
 
     suppliers = Supplier.objects.all()
     perms = get_permission_flags(request.user)
@@ -699,7 +699,7 @@ def export_list(request):
     if date_to:
         exports = exports.filter(export_date__lte=date_to)
 
-    exports = exports.order_by("-export_date")
+    exports = exports.order_by("-export_code")
 
     # Danh sách nơi nhận gợi ý
     destinations = (
@@ -878,7 +878,7 @@ def return_list(request):
     if date_to:
         returns = returns.filter(return_date__lte=date_to)
 
-    returns = returns.order_by("-return_date")
+    returns = returns.order_by("-return_code")
 
     return render(request, "return_list.html", {
         "returns": returns,
@@ -1086,7 +1086,8 @@ def po_list(request):
     elif count_filter == "1":
         pos = pos.annotate(total_items=Count("items")).filter(total_items__gt=0)
 
-    pos = pos.order_by("-created_date")
+    # Sắp xếp theo mã PO, cái tạo sau (PO lớn hơn) đứng trên cùng
+    pos = pos.order_by("-po_code")
 
     suppliers = Supplier.objects.all()
 
@@ -1111,12 +1112,19 @@ def po_list(request):
 @login_required(login_url='login')
 def create_po(request):
 
+    # Xác định xem người tạo có phải Nhân viên hay không
+    is_staff = request.user.groups.filter(name='Nhân viên').exists()
+
     if request.method == "GET":
         # Tạo mã mới để hiển thị trên form
         new_code = PurchaseOrder.generate_new_code()
-        form = PurchaseOrderForm(initial={"po_code": new_code})
+        form = PurchaseOrderForm(initial={
+            "po_code": new_code,
+            # Nhân viên -> mặc định trạng thái pending
+            "status": "pending" if is_staff else "pending"
+        })
         formset = PurchaseOrderItemFormSet(form_kwargs={"supplier": None})
-        return render(request, "po_create.html", {"form": form, "formset": formset})
+        return render(request, "po_create.html", {"form": form, "formset": formset,"is_staff": is_staff,})
 
     # POST request
     form = PurchaseOrderForm(request.POST)
@@ -1134,6 +1142,10 @@ def create_po(request):
         po = form.save(commit=False)
         po.created_by = request.user
 
+        # Nhân viên -> luôn ép trạng thái pending
+        if is_staff:
+            po.status = "pending"
+
         if not po.po_code:
             po.po_code = PurchaseOrder.generate_new_code()
 
@@ -1145,7 +1157,7 @@ def create_po(request):
         return redirect("po_list")
 
     messages.error(request, " Dữ liệu chưa hợp lệ.")
-    return render(request, "po_create.html", {"form": form, "formset": formset})
+    return render(request, "po_create.html", {"form": form, "formset": formset,"is_staff": is_staff,})
 
 
 # =====================SỬA ĐƠN ĐẶT HÀNG (PO) =====================
@@ -1263,7 +1275,8 @@ def asn_list(request):
     elif count_filter == "1":
         asns = asns.annotate(total_items=Count("items")).filter(total_items__gt=0)
 
-    asns = asns.order_by("-expected_date")
+    # Sắp xếp theo mã ASN: cái nào tạo sau (mã lớn hơn) ở trên
+    asns = asns.order_by("-asn_code")
 
     suppliers = Supplier.objects.all()
 
@@ -1652,6 +1665,7 @@ def api_po_details(request, po_id):
                 'code': po_item.product.product_code,
                 'name': po_item.product.name,
                 'unit_price': float(po_item.unit_price),
+                'unit': po_item.unit,
                 'max_quantity': max_quantity,  # Số lượng còn lại trong PO
                 'ordered_quantity': po_item.quantity,  # Tổng số lượng đặt
             }

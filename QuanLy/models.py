@@ -8,7 +8,7 @@ from decimal import Decimal
 # ===================== DANH MỤC =====================
 class Category(models.Model):
     category_code = models.CharField(max_length=10, primary_key=True, verbose_name="Mã danh mục")
-    name = models.CharField(max_length=100, verbose_name="Tên danh mục")
+    name = models.CharField(max_length=100,unique=True, verbose_name="Tên danh mục")
     description = models.TextField(blank=True, null=True, verbose_name="Mô tả")
     image = models.ImageField(
         upload_to="categories/",
@@ -25,9 +25,9 @@ class Category(models.Model):
 class Supplier(models.Model):
     supplier_code = models.CharField(max_length=10, primary_key=True, verbose_name="Mã NCC")
     company_name = models.CharField(max_length=200, verbose_name="Tên công ty")
-    tax_code = models.CharField(max_length=20, verbose_name="Mã số thuế", blank=True, null=True)
+    tax_code = models.CharField(max_length=10, verbose_name="Mã số thuế", blank=True, null=True)
     contact_name = models.CharField(max_length=100, verbose_name="Người liên hệ")
-    phone = models.CharField(max_length=15, verbose_name="SĐT")
+    phone = models.CharField(max_length=10, verbose_name="SĐT")
     email = models.EmailField(blank=True, null=True)
     address = models.CharField(max_length=255, verbose_name="Địa chỉ", blank=True, null=True)
     status = models.CharField(
@@ -590,8 +590,8 @@ class PurchaseOrder(models.Model):
         return sum((item.quantity * (item.unit_price or 0)) for item in self.items.all())
 
     def save(self, *args, **kwargs):
-        if self.product and not self.unit_price:
-            self.unit_price = self.product.unit_price  # Lấy từ bảng SupplierProduct
+        if not self.po_code:
+            self.po_code = PurchaseOrder.generate_new_code()
         super().save(*args, **kwargs)
 
     class Meta:

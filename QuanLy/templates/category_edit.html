@@ -22,20 +22,15 @@
       <div class="row g-3">
 
         <div class="col-md-4">
-          <label class="form-label fw-semibold">{{ form.category_code.label }}</label>
-          {{ form.category_code }}
-          {% if form.category_code.errors %}
-            <div class="text-danger small">{{ form.category_code.errors|join:", " }}</div>
-          {% endif %}
-        </div>
+    <label class="form-label fw-semibold">Mã danh mục</label>
+    {{ form.category_code }}
+</div>
 
-        <div class="col-md-8">
-          <label class="form-label fw-semibold">{{ form.name.label }}</label>
-          {{ form.name }}
-          {% if form.name.errors %}
-            <div class="text-danger small">{{ form.name.errors|join:", " }}</div>
-          {% endif %}
-        </div>
+<div class="col-md-8">
+    <label class="form-label fw-semibold">Tên danh mục</label>
+    {{ form.name }}
+</div>
+
 
         <div class="col-12">
           <label class="form-label fw-semibold">{{ form.description.label }}</label>

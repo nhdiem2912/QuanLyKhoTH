@@ -30,6 +30,13 @@ class CategoryForm(forms.ModelForm):
             "image": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Nếu đang chỉnh sửa → khóa mã + tên
+        if self.instance and self.instance.pk:
+            self.fields["category_code"].disabled = True
+            self.fields["name"].disabled = True
 
 # ===================== SUPPLIER =====================
 class SupplierForm(forms.ModelForm):
@@ -58,6 +65,13 @@ class SupplierForm(forms.ModelForm):
             "status": forms.Select(attrs={"class": "form-select"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk:
+            self.fields["supplier_code"].disabled = True
+            self.fields["company_name"].disabled = True
+            self.fields["tax_code"].disabled = True
 
 # ===================== SUPPLIER PRODUCT =====================
 class SupplierProductForm(forms.ModelForm):
@@ -524,6 +538,12 @@ class PurchaseOrderForm(forms.ModelForm):
             "note": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk:
+            self.fields["supplier"].disabled = True
+            self.fields["po_code"].disabled = True
 
 class PurchaseOrderItemForm(forms.ModelForm):
     class Meta:

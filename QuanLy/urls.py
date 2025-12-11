@@ -14,6 +14,7 @@ urlpatterns = [
     path('categories/', views.categories, name='categories'),
     path('categories/add/', views.add_category, name='add_category'),
     path('categories/edit/<str:pk>/', views.edit_category, name='edit_category'),
+    path('categories/delete/<str:pk>/', views.delete_category, name='delete_category'),
 
     # ===================== NHÀ CUNG ỨNG =====================
     path('suppliers/', views.suppliers, name='suppliers'),
